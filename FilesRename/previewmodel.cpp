@@ -1,6 +1,5 @@
 // previewmodel.cpp
 #include "previewmodel.h"
-#include <QColor>
 
 PreviewModel::PreviewModel(QObject *parent)
     : QAbstractTableModel(parent)
@@ -52,9 +51,19 @@ QVariant PreviewModel::data(const QModelIndex &index, int role) const
         case Qt::TextAlignmentRole:
             return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
         case Qt::ToolTipRole:
+            if(!item.valid)
+            {
+                return tr("无效的文件名: %1").arg(item.error);
+            }
             if(!item.error.isEmpty())
             {
-                return tr("错误: %1").arg(item.error);
+                return tr("警告: %1").arg(item.error);
+            }
+            // 添加扩展名修改信息
+            if(item.original != item.newName)
+            {
+                return tr("修改详情:\n原文件名: %1\n新文件名: %2")
+                       .arg(item.original).arg(item.newName);
             }
             break;
     }

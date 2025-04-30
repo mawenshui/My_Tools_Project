@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>icons/execute.png</file>
+        <file>icons/exit (1).png</file>
+        <file>icons/exit.png</file>
+        <file>icons/folder.png</file>
+        <file>icons/folder-open.png</file>
+        <file>icons/preview.png</file>
+        <file>icons/refresh.png</file>
+    </qresource>
+</RCC>

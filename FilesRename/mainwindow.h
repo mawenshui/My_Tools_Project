@@ -3,7 +3,6 @@
 
 #include <QMainWindow>
 #include <QFileSystemModel>
-#include <QStringList>
 #include <QAction>
 #include <QMenu>
 #include <QStatusBar>
@@ -13,8 +12,24 @@
 #include <QComboBox>
 #include <QSplitter>
 #include <QTabWidget>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QSettings>
+#include <QDragEnterEvent>
+#include <QMimeData>
+#include <QInputDialog>
+#include <QDir>
+#include <QDateTime>
+#include <QRegularExpression>
+#include <QHeaderView>
+#include <QDesktopServices>
+#include <QProcess>
+#include <QClipboard>
+#include <QDebug>
 
+#include "alldefine.h"
 #include "previewmodel.h"
+#include "filedelegate.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -56,6 +71,12 @@ private:
     QMenu* recentFoldersMenu;
     QStringList recentFolders;
 
+private:
+    // 处理文件后缀修改
+    QString processExtension(const QString& original, const RenameRules& rules) const;
+    // 验证后缀修改规则
+    bool validateExtensionRules(const RenameRules& rules, QString& error) const;
+
     // 初始化方法
     void initFileSystemModel();
     void initRecentFoldersMenu();
@@ -71,6 +92,25 @@ private:
     // 规则数据结构
     RenameRules collectRules() const;
     QString applyRenameRules(const QString &original, int& counter) const;
+
+private:
+    // 文件树相关方法
+    void setupFileTree();
+    void saveFileTreeSettings();
+    void loadFileTreeSettings();
+    void updateFileTreeColumns();
+
+    // 上下文菜单
+    void createFileTreeContextMenu();
+    void showFileTreeHeaderMenu(const QPoint& pos);
+
+    // 文件树设置
+    FileTreeSettings m_fileTreeSettings;
+
+private slots:
+    void onFileTreeHeaderClicked(int logicalIndex);
+    void onFileTreeCustomContextMenuRequested(const QPoint &pos);
+    void onFileTreeHeaderCustomContextMenuRequested(const QPoint &pos);
 };
 
 #endif // MAINWINDOW_H

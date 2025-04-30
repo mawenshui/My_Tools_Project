@@ -1,58 +1,244 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "previewmodel.h"
-#include "alldefine.h"
 
-#include <QFileDialog>
-#include <QMessageBox>
-#include <QSettings>
-#include <QDragEnterEvent>
-#include <QMimeData>
-#include <QInputDialog>
-#include <QDir>
-#include <QDateTime>
-#include <QRegularExpression>
-#include <QHeaderView>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , fsModel(new QFileSystemModel(this))
     , previewModel(new PreviewModel(this))
+    , recentFoldersMenu(new QMenu(this))
 {
     ui->setupUi(this);
     // 初始化文件系统模型
     fsModel->setFilter(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot);
-    fsModel->setRootPath("");
-    ui->treeView->setModel(fsModel);
-    ui->treeView->setHeaderHidden(true);
-    // 初始化预览表格
-    ui->previewTable->setModel(previewModel);
-    ui->previewTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    // 初始化最近文件夹菜单
-    recentFoldersMenu = new QMenu(tr("最近打开的文件夹"), this);
-    ui->menu_File->insertMenu(ui->action_Exit, recentFoldersMenu);
-    // 加载历史记录
-    QSettings settings;
-    recentFolders = settings.value("recentFolders").toStringList();
-    updateRecentFoldersMenu();
-    // 启用拖放
-    setAcceptDrops(true);
-    ui->treeView->setDragEnabled(true);
-    ui->treeView->setAcceptDrops(true);
+    // 设置文件代理
+    ui->treeView_Files->setItemDelegate(new FileDelegate(this));  // 确保使用正确的视图名称
+    // 初始化文件树
+    setupFileTree();
+    loadFileTreeSettings();
+    initRecentFoldersMenu();
     // 连接信号槽
-    connect(ui->action_OpenFolder, &QAction::triggered, this, &MainWindow::onOpenFolder);
-    connect(ui->pushButton_Preview, &QPushButton::clicked, this, &MainWindow::onGeneratePreview);
-    connect(ui->pushButton_Execute, &QPushButton::clicked, this, &MainWindow::onExecuteRename);
-    connect(ui->treeView, &QTreeView::customContextMenuRequested, this, &MainWindow::showContextMenu);
-    connect(ui->comboBox_Path, &QComboBox::currentTextChanged, this, &MainWindow::onPathComboChanged);
+    connect(ui->treeView_Files->header(), &QHeaderView::customContextMenuRequested,
+            this, &MainWindow::onFileTreeHeaderCustomContextMenuRequested);
+    connect(ui->treeView_Files->header(), &QHeaderView::sectionClicked,
+            this, &MainWindow::onFileTreeHeaderClicked);
+    connect(ui->treeView_Files, &QTreeView::customContextMenuRequested,
+            this, &MainWindow::onFileTreeCustomContextMenuRequested);
+    connect(ui->pushButton_Preview, &QPushButton::clicked,
+            this, &MainWindow::onGeneratePreview);
     // 默认打开用户目录
     setCurrentFolder(QDir::homePath());
+    //初始化预览表格
+    ui->previewTable->setModel(previewModel);
+    // 设置表格列宽
+    ui->previewTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->previewTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    ui->previewTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
 }
 
 MainWindow::~MainWindow()
 {
+    // 保存最近文件夹
+    QSettings settings;
+    settings.setValue("recentFolders", recentFolders);
+    saveFileTreeSettings();
     delete ui;
+}
+
+// 初始化文件树设置
+void MainWindow::setupFileTree()
+{
+    // 确保模型已创建
+    if(!fsModel)
+    {
+        fsModel = new QFileSystemModel(this);
+    }
+    // 设置根路径
+    fsModel->setRootPath("");
+    ui->treeView_Files->setModel(fsModel);
+    // 设置列名
+    fsModel->setHeaderData(COLUMN_NAME, Qt::Horizontal, tr("名称"));
+    fsModel->setHeaderData(COLUMN_TYPE, Qt::Horizontal, tr("类型"));
+    fsModel->setHeaderData(COLUMN_SIZE, Qt::Horizontal, tr("大小"));
+    fsModel->setHeaderData(COLUMN_DATE, Qt::Horizontal, tr("修改日期"));
+    // 设置初始列宽
+    for(int i = 0; i < COLUMN_COUNT; ++i)
+    {
+        ui->treeView_Files->setColumnHidden(i, !m_fileTreeSettings.columnsVisible[i]);
+        if(!ui->treeView_Files->isColumnHidden(i))
+        {
+            ui->treeView_Files->setColumnWidth(i, m_fileTreeSettings.columnWidths[i]);
+        }
+    }
+    // 设置文件名列自动扩展
+    ui->treeView_Files->header()->setSectionResizeMode(COLUMN_NAME, QHeaderView::Interactive);
+    ui->treeView_Files->header()->setStretchLastSection(false);
+    // 启用排序
+    ui->treeView_Files->setSortingEnabled(true);
+    ui->treeView_Files->sortByColumn(m_fileTreeSettings.sortColumn, m_fileTreeSettings.sortOrder);
+}
+
+// 保存文件树设置
+void MainWindow::saveFileTreeSettings()
+{
+    QSettings settings;
+    settings.beginGroup("FileTree");
+    // 保存列可见性
+    for(int i = 0; i < COLUMN_COUNT; ++i)
+    {
+        settings.setValue(QString("ColumnVisible%1").arg(i),
+                          ui->treeView_Files->isColumnHidden(i));
+    }
+    // 保存列宽度
+    for(int i = 0; i < COLUMN_COUNT; ++i)
+    {
+        settings.setValue(QString("ColumnWidth%1").arg(i),
+                          ui->treeView_Files->columnWidth(i));
+    }
+    // 保存排序设置
+    settings.setValue("SortColumn", ui->treeView_Files->header()->sortIndicatorSection());
+    settings.setValue("SortOrder", ui->treeView_Files->header()->sortIndicatorOrder());
+    settings.endGroup();
+}
+
+// 加载文件树设置
+void MainWindow::loadFileTreeSettings()
+{
+    QSettings settings;
+    settings.beginGroup("FileTree");
+    // 加载列可见性
+    for(int i = 0; i < COLUMN_COUNT; ++i)
+    {
+        m_fileTreeSettings.columnsVisible[i] = settings.value(
+                QString("ColumnVisible%1").arg(i), true).toBool();
+    }
+    // 加载列宽度
+    for(int i = 0; i < COLUMN_COUNT; ++i)
+    {
+        m_fileTreeSettings.columnWidths[i] = settings.value(
+                QString("ColumnWidth%1").arg(i),
+                i == COLUMN_NAME ? 250 : (i == COLUMN_DATE ? 120 : 80)).toInt();
+    }
+    // 加载排序设置
+    m_fileTreeSettings.sortColumn = settings.value("SortColumn", COLUMN_NAME).toInt();
+    m_fileTreeSettings.sortOrder = static_cast<Qt::SortOrder>(
+                                       settings.value("SortOrder", Qt::AscendingOrder).toInt());
+    settings.endGroup();
+}
+
+// 更新文件树列显示
+void MainWindow::updateFileTreeColumns()
+{
+    for(int i = 0; i < COLUMN_COUNT; ++i)
+    {
+        ui->treeView_Files->setColumnHidden(i, !m_fileTreeSettings.columnsVisible[i]);
+        if(!ui->treeView_Files->isColumnHidden(i))
+        {
+            ui->treeView_Files->setColumnWidth(i, m_fileTreeSettings.columnWidths[i]);
+        }
+    }
+}
+
+// 文件树表头点击事件
+void MainWindow::onFileTreeHeaderClicked(int logicalIndex)
+{
+    // 更新排序设置
+    m_fileTreeSettings.sortColumn = logicalIndex;
+    if(ui->treeView_Files->header()->sortIndicatorOrder() == Qt::AscendingOrder)
+    {
+        m_fileTreeSettings.sortOrder = Qt::DescendingOrder;
+    }
+    else
+    {
+        m_fileTreeSettings.sortOrder = Qt::AscendingOrder;
+    }
+    // 应用排序
+    ui->treeView_Files->sortByColumn(logicalIndex, m_fileTreeSettings.sortOrder);
+    saveFileTreeSettings();
+}
+
+// 文件树表头右键菜单
+void MainWindow::onFileTreeHeaderCustomContextMenuRequested(const QPoint &pos)
+{
+    QMenu menu(this);
+    menu.setToolTipsVisible(true);
+    // 添加列显示选项
+    for(int i = 0; i < COLUMN_COUNT; ++i)
+    {
+        QString columnName = fsModel->headerData(i, Qt::Horizontal).toString();
+        QAction *action = menu.addAction(columnName, [this, i]()
+        {
+            m_fileTreeSettings.columnsVisible[i] = !m_fileTreeSettings.columnsVisible[i];
+            updateFileTreeColumns();
+            saveFileTreeSettings();
+        });
+        action->setCheckable(true);
+        action->setChecked(!ui->treeView_Files->isColumnHidden(i));
+        // 设置工具提示
+        switch(i)
+        {
+            case COLUMN_NAME:
+                action->setToolTip(tr("显示/隐藏文件名列"));
+                break;
+            case COLUMN_TYPE:
+                action->setToolTip(tr("显示/隐藏文件类型列"));
+                break;
+            case COLUMN_SIZE:
+                action->setToolTip(tr("显示/隐藏文件大小列"));
+                break;
+            case COLUMN_DATE:
+                action->setToolTip(tr("显示/隐藏修改日期列"));
+                break;
+        }
+    }
+    menu.addSeparator();
+    // 添加重置列宽选项
+    QAction *resetAction = menu.addAction(tr("重置列宽"), [this]()
+    {
+        for(int i = 0; i < COLUMN_COUNT; ++i)
+        {
+            m_fileTreeSettings.columnWidths[i] =
+                (i == COLUMN_NAME ? 250 : (i == COLUMN_DATE ? 120 : 80));
+        }
+        updateFileTreeColumns();
+        saveFileTreeSettings();
+    });
+    resetAction->setToolTip(tr("恢复默认列宽设置"));
+    menu.exec(ui->treeView_Files->header()->mapToGlobal(pos));
+}
+
+// 文件项右键菜单
+void MainWindow::onFileTreeCustomContextMenuRequested(const QPoint &pos)
+{
+    QModelIndex index = ui->treeView_Files->indexAt(pos);
+    if(!index.isValid())
+    {
+        return;
+    }
+    QString filePath = fsModel->filePath(index);
+    QFileInfo fileInfo(filePath);
+    QMenu menu(this);
+    // 添加常用操作
+    menu.addAction(tr("打开"), [filePath]()
+    {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(filePath));
+    });
+    menu.addAction(tr("在资源管理器中显示"), [filePath]()
+    {
+        QProcess::startDetached("explorer", {"/select,", QDir::toNativeSeparators(filePath)});
+    });
+    menu.addAction(tr("复制完整路径"), [filePath]()
+    {
+        QApplication::clipboard()->setText(QDir::toNativeSeparators(filePath));
+    });
+    menu.addSeparator();
+    // 添加重命名操作
+    menu.addAction(tr("重命名"), [this, index]()
+    {
+        ui->treeView_Files->edit(index);
+    });
+    menu.exec(ui->treeView_Files->mapToGlobal(pos));
 }
 
 // 文件系统操作
@@ -77,10 +263,17 @@ void MainWindow::setCurrentFolder(const QString &path)
     {
         return;
     }
+    // 设置根路径并获取索引
     fsModel->setRootPath(path);
     QModelIndex index = fsModel->index(path);
-    ui->treeView->setRootIndex(index);
-    ui->treeView->expand(index);
+    // 检查索引是否有效
+    if(!index.isValid())
+    {
+        qWarning() << "Invalid folder path:" << path;
+        return;
+    }
+    ui->treeView_Files->setRootIndex(index);
+    ui->treeView_Files->expand(index);
     // 更新路径组合框
     ui->comboBox_Path->blockSignals(true);
     ui->comboBox_Path->clear();
@@ -111,6 +304,10 @@ void MainWindow::addToRecentFolders(const QString &path)
 
 void MainWindow::updateRecentFoldersMenu()
 {
+    if(!recentFoldersMenu)
+    {
+        return;
+    }
     recentFoldersMenu->clear();
     if(recentFolders.isEmpty())
     {
@@ -163,14 +360,18 @@ void MainWindow::showContextMenu(const QPoint &pos)
 {
     QMenu menu;
     menu.addAction(ui->action_OpenFolder);
-    if(!recentFolders.isEmpty())
+    // 添加安全检查
+    if(recentFoldersMenu && !recentFolders.isEmpty())
     {
         menu.addMenu(recentFoldersMenu);
     }
     menu.addSeparator();
     menu.addAction(QIcon(":/icons/icons/refresh.png"), tr("刷新"), [this]()
     {
-        fsModel->setRootPath(fsModel->rootPath()); // 替代refresh()
+        if(fsModel)
+        {
+            fsModel->setRootPath(fsModel->rootPath());
+        }
     });
     menu.addAction(tr("新建文件夹"), [this]()
     {
@@ -185,7 +386,7 @@ void MainWindow::showContextMenu(const QPoint &pos)
                              );
         if(!folderName.isEmpty())
         {
-            QDir currentDir(fsModel->filePath(ui->treeView->rootIndex()));
+            QDir currentDir(fsModel->filePath(ui->treeView_Files->rootIndex()));
             if(currentDir.mkdir(folderName))
             {
                 fsModel->setRootPath(fsModel->rootPath()); // 刷新视图
@@ -196,7 +397,7 @@ void MainWindow::showContextMenu(const QPoint &pos)
             }
         }
     });
-    menu.exec(ui->treeView->viewport()->mapToGlobal(pos));
+    menu.exec(ui->treeView_Files->viewport()->mapToGlobal(pos));
 }
 
 // 路径组合框处理
@@ -213,17 +414,12 @@ void MainWindow::onPathComboChanged(const QString &path)
 QFileInfoList MainWindow::getSelectedFiles() const
 {
     QFileInfoList files;
-    QModelIndexList indexes = ui->treeView->selectionModel()->selectedRows();
+    QModelIndexList indexes = ui->treeView_Files->selectionModel()->selectedRows();
     for(const QModelIndex &index : indexes)
     {
         QString path = fsModel->filePath(index);
         QFileInfo fileInfo(path);
-        if(fileInfo.isDir())
-        {
-            QDir dir(path);
-            files += dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
-        }
-        else
+        if(fileInfo.isFile())    // 只处理文件，不处理目录
         {
             files << fileInfo;
         }
@@ -250,143 +446,226 @@ RenameRules MainWindow::collectRules() const
     rules.caseType = static_cast<RenameRules::CaseType>(ui->comboBox_Case->currentIndex());
     // 扩展名规则
     rules.keepExtension = ui->checkBox_Extension->isChecked();
+    // 后缀修改规则
+    rules.extensionEnabled = ui->checkBox_ExtensionModify->isChecked();
+    rules.extensionAction = static_cast<RenameRules::ExtensionAction>(ui->comboBox_ExtensionAction->currentIndex());
+    rules.extensionValue = ui->lineEdit_ExtensionValue->text().trimmed();
     return rules;
 }
 
-QString MainWindow::applyRenameRules(const QString &original, int& counter) const
+//处理文件后缀修改
+QString MainWindow::processExtension(const QString& original, const RenameRules& rules) const
 {
-    RenameRules rules = collectRules(); // 使用局部变量替代currentRules
+    if(!rules.extensionEnabled)
+    {
+        return original;
+    }
     QFileInfo fi(original);
     QString baseName = fi.completeBaseName();
     QString extension = fi.suffix();
-    // 应用替换规则
+    QString newName = baseName;
+    switch(rules.extensionAction)
+    {
+        case RenameRules::ExtensionAction_Add:
+            if(!extension.isEmpty())
+            {
+                newName += "." + extension;
+            }
+            if(!rules.extensionValue.isEmpty())
+            {
+                newName += "." + rules.extensionValue;
+            }
+            break;
+        case RenameRules::ExtensionAction_Replace:
+            if(!rules.extensionValue.isEmpty())
+            {
+                newName += "." + rules.extensionValue;
+            }
+            break;
+        case RenameRules::ExtensionAction_Remove:
+            break;
+    }
+    return newName;
+}
+
+// 新增方法：验证后缀修改规则
+bool MainWindow::validateExtensionRules(const RenameRules& rules, QString& error) const
+{
+    if(!rules.extensionEnabled)
+    {
+        return true; // 未启用后缀修改，无需验证
+    }
+    // 检查新后缀是否包含非法字符
+    static QRegularExpression illegalChars(R"([\/:*?"<>|])");
+    if(rules.extensionValue.contains(illegalChars))
+    {
+        error = tr("后缀包含非法字符");
+        return false;
+    }
+    // 检查保留文件名
+    static QStringList reservedNames = {"CON", "PRN", "AUX", "NUL", "COM1", "LPT1"};
+    if(reservedNames.contains(rules.extensionValue.toUpper()))
+    {
+        error = tr("后缀是系统保留名称");
+        return false;
+    }
+    // 对于替换操作，必须提供新后缀
+    if(rules.extensionAction == RenameRules::ExtensionAction_Replace && rules.extensionValue.isEmpty())
+    {
+        error = tr("替换后缀操作需要指定新后缀");
+        return false;
+    }
+    return true;
+}
+
+void MainWindow::initRecentFoldersMenu()
+{
+    // 从设置加载最近文件夹列表
+    QSettings settings;
+    recentFolders = settings.value("recentFolders").toStringList();
+    // 设置菜单标题和图标
+    recentFoldersMenu->setTitle(tr("最近文件夹"));
+    recentFoldersMenu->setIcon(QIcon(":/icons/icons/folder.png"));
+    // 更新菜单内容
+    updateRecentFoldersMenu();
+}
+
+
+QString MainWindow::applyRenameRules(const QString &original, int& counter) const
+{
+    RenameRules rules = collectRules();
+    QFileInfo fi(original);
+    QString baseName = fi.completeBaseName();
+    QString extension = fi.suffix();
+    QString newName = baseName;
+    // 处理序号规则
+    if(rules.sequenceEnabled)
+    {
+        QString sequenceStr = QString("%1").arg(counter, rules.minDigits, 10, QChar('0'));
+        counter += rules.sequenceStep;
+        switch(rules.sequencePos)
+        {
+            case RenameRules::SequencePosition_Prefix:
+                newName = sequenceStr + "_" + newName;  // 前缀添加下划线
+                break;
+            case RenameRules::SequencePosition_Suffix:
+                newName = newName + "_" + sequenceStr;  // 后缀添加下划线
+                break;
+            case RenameRules::SequencePosition_Replace:
+                newName = sequenceStr;  // 完全替换原名
+                break;
+        }
+    }
+    // 处理替换规则
     if(rules.replaceEnabled && !rules.replaceFrom.isEmpty())
     {
         if(rules.useRegex)
         {
             QRegularExpression regex(rules.replaceFrom);
-            baseName.replace(regex, rules.replaceTo);
+            newName.replace(regex, rules.replaceTo);
         }
         else
         {
-            baseName.replace(rules.replaceFrom, rules.replaceTo, Qt::CaseInsensitive);
+            newName.replace(rules.replaceFrom, rules.replaceTo);
         }
     }
-    // 应用序号规则
-    if(rules.sequenceEnabled)
-    {
-        QString seq = QString::number(counter).rightJustified(rules.minDigits, '0');
-        switch(rules.sequencePos)
-        {
-            case RenameRules::Prefix:
-                baseName.prepend(seq + "_");
-                break;
-            case RenameRules::Suffix:
-                baseName.append("_" + seq);
-                break;
-            case RenameRules::Replace:
-                baseName = seq;
-                break;
-        }
-        counter += rules.sequenceStep;
-    }
-    // 应用大小写规则
+    // 处理大小写规则
     if(rules.caseEnabled)
     {
         switch(rules.caseType)
         {
-            case RenameRules::Upper:
-                baseName = baseName.toUpper();
+            case RenameRules::CaseType_Upper:
+                newName = newName.toUpper();
                 break;
-            case RenameRules::Lower:
-                baseName = baseName.toLower();
+            case RenameRules::CaseType_Lower:
+                newName = newName.toLower();
                 break;
-            case RenameRules::Title:
-                bool prevSpace = true;
-                for(QChar &c : baseName)
+            case RenameRules::CaseType_Title:
+                if(!newName.isEmpty())
                 {
-                    if(prevSpace && c.isLetter())
-                    {
-                        c = c.toUpper();
-                        prevSpace = false;
-                    }
-                    else
-                    {
-                        c = c.toLower();
-                        prevSpace = c.isSpace();
-                    }
+                    newName = newName[0].toUpper() + newName.mid(1).toLower();
                 }
                 break;
         }
     }
-    // 处理扩展名
-    QString newName = baseName;
+    // 处理扩展名规则
     if(rules.keepExtension && !extension.isEmpty())
     {
         newName += "." + extension;
     }
-    // 清理非法字符
-    static QRegularExpression illegalChars(R"([\/:*?"<>|])");
-    newName.replace(illegalChars, "");
-    // 处理保留文件名
-    static QStringList reservedNames = {"CON", "PRN", "AUX", "NUL", "COM1", "LPT1"};
-    QString namePart = newName.split('.').first().toUpper();
-    if(reservedNames.contains(namePart))
+    // 处理后缀修改规则
+    if(rules.extensionEnabled)
     {
-        newName = "_" + newName;
+        newName = processExtension(newName, rules);
     }
-    return newName.isEmpty() ? "unnamed" : newName;
+    return newName;
 }
 
 void MainWindow::onGeneratePreview()
 {
-    RenameRules rules = collectRules(); // 使用局部变量
+    // 清除旧数据
+    previewModel->clear();
+    // 获取选中的文件
     QFileInfoList files = getSelectedFiles();
     if(files.isEmpty())
     {
-        QMessageBox::warning(this, tr("警告"), tr("请先选择文件或文件夹"));
+        QMessageBox::information(this, tr("提示"), tr("没有选中任何文件"));
         return;
     }
+    // 收集当前规则
+    RenameRules rules = collectRules();
+    // 验证规则
+    QString error;
+    if(!validateExtensionRules(rules, error))
+    {
+        QMessageBox::warning(this, tr("错误"), error);
+        return;
+    }
+    // 生成预览项
     QList<PreviewItem> previewItems;
     int counter = rules.sequenceStart;
-    QSet<QString> usedNames;
-    for(const QFileInfo &fi : files)
+    for(const QFileInfo &fileInfo : files)
     {
+        QString original = fileInfo.fileName();
         PreviewItem item;
-        item.original = fi.fileName();
+        item.original = original;
         try
         {
-            item.newName = applyRenameRules(fi.fileName(), counter);
-            item.valid = !item.newName.isEmpty() && (item.newName != item.original);
-            // 检查重复名称
-            if(usedNames.contains(item.newName))
+            item.newName = applyRenameRules(original, counter);
+            item.valid = true;
+            // 验证新文件名是否合法
+            if(item.newName.isEmpty() || item.newName.contains(QRegularExpression(R"([\/:*?"<>|])")))
             {
                 item.valid = false;
-                item.error = tr("文件名重复");
+                item.error = tr("生成的文件名包含非法字符");
             }
-            else
+            // 检查文件名是否重复
+            for(const PreviewItem &existing : previewItems)
             {
-                usedNames.insert(item.newName);
-            }
-            // 检查目标文件是否存在
-            QString newPath = fi.absolutePath() + QDir::separator() + item.newName;
-            if(QFile::exists(newPath) && newPath != fi.absoluteFilePath())
-            {
-                item.valid = false;
-                item.error = tr("文件已存在");
+                if(existing.newName == item.newName)
+                {
+                    item.valid = false;
+                    item.error = tr("文件名重复");
+                    break;
+                }
             }
         }
         catch(const std::exception &e)
         {
             item.valid = false;
-            item.error = tr("处理错误: %1").arg(e.what());
+            item.error = tr("规则应用错误: %1").arg(e.what());
         }
         previewItems.append(item);
+        // 按步长递增计数器
+        if(rules.sequenceEnabled)
+        {
+            counter += rules.sequenceStep;
+        }
     }
+    // 更新模型
     previewModel->updateData(previewItems);
-    statusBar()->showMessage(tr("生成预览完成，共%1项").arg(previewItems.count()), 3000);
+    ui->tabWidget->setCurrentIndex(1); // 切换到预览标签页
 }
-
 void MainWindow::onExecuteRename()
 {
     const QList<PreviewItem>& items = previewModel->getItems();
@@ -408,7 +687,7 @@ void MainWindow::onExecuteRename()
     }
     // 执行重命名
     int successCount = 0;
-    QModelIndex rootIndex = ui->treeView->rootIndex();
+    QModelIndex rootIndex = ui->treeView_Files->rootIndex();
     QString currentPath = fsModel->filePath(rootIndex);
     for(const auto &item : items)
     {
