@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>OrderSendWidget</class>
+ <widget class="QWidget" name="OrderSendWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>700</width>
+    <height>425</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>网络数据发送工具</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="0" column="0">
+    <widget class="QSplitter" name="splitter_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="title">
+        <string>发送设置</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_7">
+        <item row="0" column="0">
+         <widget class="QGroupBox" name="groupBox_2">
+          <property name="title">
+           <string>目标地址：</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="0" column="0">
+            <widget class="QLineEdit" name="lineEditIP">
+             <property name="toolTip">
+              <string>请输入目标IP地址</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QGroupBox" name="groupBox_3">
+          <property name="title">
+           <string>端口号：</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_5">
+           <item row="0" column="0">
+            <widget class="QLineEdit" name="lineEditPort">
+             <property name="toolTip">
+              <string>请输入端口号（1-65535）</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="title">
+           <string>指令选择：</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_6">
+           <item row="0" column="0">
+            <widget class="QLineEdit" name="lineEdit_searchOrder">
+             <property name="placeholderText">
+              <string>搜索指令...</string>
+             </property>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QComboBox" name="comboBox">
+             <property name="toolTip">
+              <string>请选择要发送的命令</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QPushButton" name="pushButtonstart">
+            <property name="toolTip">
+             <string>点击发送数据</string>
+            </property>
+            <property name="text">
+             <string>开始发送</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton">
+            <property name="toolTip">
+             <string>循环发送选中的命令</string>
+            </property>
+            <property name="text">
+             <string>循环发送</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButtonStop">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="toolTip">
+             <string>停止循环发送</string>
+            </property>
+            <property name="text">
+             <string>停止</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="4" column="0">
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>141</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBoxOptions">
+       <property name="title">
+        <string>选项设置</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="noCRC">
+          <property name="toolTip">
+           <string>启用命令校验错误模拟</string>
+          </property>
+          <property name="text">
+           <string>命令校验错</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="noreplay">
+          <property name="toolTip">
+           <string>模拟无应答场景</string>
+          </property>
+          <property name="text">
+           <string>无应答</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QCheckBox" name="replyNOCRC">
+          <property name="toolTip">
+           <string>模拟应答校验错误</string>
+          </property>
+          <property name="text">
+           <string>应答校验错</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QCheckBox" name="reNOCRC">
+          <property name="toolTip">
+           <string>模拟反馈校验错误</string>
+          </property>
+          <property name="text">
+           <string>反馈校验错</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QCheckBox" name="noReturnReply">
+          <property name="toolTip">
+           <string>模拟反馈无应答场景</string>
+          </property>
+          <property name="text">
+           <string>反馈无应答</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QCheckBox" name="ReERR">
+          <property name="toolTip">
+           <string>模拟反馈错误</string>
+          </property>
+          <property name="text">
+           <string>反馈错误</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QCheckBox" name="noreturn">
+          <property name="toolTip">
+           <string>模拟无反馈场景</string>
+          </property>
+          <property name="text">
+           <string>无反馈</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="0">
+         <widget class="QCheckBox" name="noShake">
+          <property name="toolTip">
+           <string>模拟无反馈场景</string>
+          </property>
+          <property name="text">
+           <string>无需应答</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="0">
+         <widget class="QCheckBox" name="isReplyTimeout">
+          <property name="toolTip">
+           <string>模拟无反馈场景</string>
+          </property>
+          <property name="text">
+           <string>应答超时</string>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="0">
+         <widget class="QCheckBox" name="isReturnTimeout">
+          <property name="toolTip">
+           <string>模拟无反馈场景</string>
+          </property>
+          <property name="text">
+           <string>反馈超时</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
+         <widget class="QCheckBox" name="isReReplyTimeout">
+          <property name="toolTip">
+           <string>模拟无反馈场景</string>
+          </property>
+          <property name="text">
+           <string>反馈应答超时</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBoxLog">
+      <property name="title">
+       <string>通信日志</string>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0">
+        <widget class="QTextEdit" name="textEdit">
+         <property name="toolTip">
+          <string>显示发送和接收的日志信息</string>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="pushButtonClearLog">
+         <property name="toolTip">
+          <string>清空日志内容</string>
+         </property>
+         <property name="text">
+          <string>清空日志</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>

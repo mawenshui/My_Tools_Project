@@ -1,0 +1,782 @@
+﻿<?xml version="1.0" ?>
+<outdataConfig>
+    <!--task: name:任务名称 startIndex:此指令的判断输出的第一个索引 id:主题号 comid：指令命令字 outTime:超时时间   -->
+        <task name="全车上电">
+            <outTime>15</outTime>
+            <startIndex>10</startIndex>
+            <id>0xC0</id>
+            <comid>0x111</comid>
+        </task>
+        <task name="全车断电">
+            <outTime>12</outTime>
+            <startIndex>30</startIndex>
+            <id>0xC0</id>
+            <comid>0x110</comid>
+        </task>
+        <task name="指通上电">
+            <outTime>2</outTime>
+            <startIndex>50</startIndex>
+            <id>0xC0</id>
+            <comid>0x121</comid>
+        </task>
+        <task name="指通断电">
+            <outTime>2</outTime>
+            <startIndex>70</startIndex>
+            <id>0xC0</id>
+            <comid>0x120</comid>
+        </task>
+        <task name="测发控上电">
+            <outTime>2</outTime>
+            <startIndex>90</startIndex>
+            <id>0xC0</id>
+            <comid>0x131</comid>
+        </task>
+        <task name="测发控断电">
+            <outTime>2</outTime>
+            <startIndex>110</startIndex>
+            <id>0xC0</id>
+            <comid>0x130</comid>
+        </task>
+        <task name="车控上电">
+            <outTime>12</outTime>
+            <startIndex>130</startIndex>
+            <id>0xC0</id>
+            <comid>0x141</comid>
+        </task>
+        <task name="车控断电">
+            <outTime>7</outTime>
+            <startIndex>150</startIndex>
+            <id>0xC0</id>
+            <comid>0x140</comid>
+        </task>
+        <task name="直流电源2上电">
+            <!--del-->
+            <outTime>8</outTime>
+            <startIndex>170</startIndex>
+            <id>0xC0</id>
+            <comid>0x151</comid>
+        </task>
+        <task name="直流电源2断电">
+            <!--del-->
+            <outTime>8</outTime>
+            <startIndex>190</startIndex>
+            <id>0xC0</id>
+            <comid>0x150</comid>
+        </task>
+        <task name="组合升车">
+            <outTime>18</outTime>
+            <startIndex>210</startIndex>
+            <id>0xC0</id>
+            <comid>0x211</comid>
+        </task>
+        <task name="组合降车">
+            <outTime>18</outTime>
+            <startIndex>230</startIndex>
+            <id>0xC0</id>
+            <comid>0x210</comid>
+        </task>
+        <task name="组合起竖">
+            <outTime>39</outTime>
+            <startIndex>250</startIndex>
+            <id>0xC0</id>
+            <comid>0x221</comid>
+        </task>
+        <task name="组合回平">
+            <outTime>70</outTime>
+            <startIndex>270</startIndex>
+            <id>0xC0</id>
+            <comid>0x220</comid>
+        </task>
+        <task name="一键展车">
+            <outTime>52</outTime>
+            <startIndex>290</startIndex>
+            <id>0xC0</id>
+            <comid>0x231</comid>
+        </task>
+        <task name="一键撤收">
+            <outTime>80</outTime>
+            <startIndex>310</startIndex>
+            <id>0xC0</id>
+            <comid>0x230</comid>
+        </task>
+        <task name="升车上电">
+            <outTime>12</outTime>
+            <startIndex>330</startIndex>
+            <id>0xC0</id>
+            <comid>0xC011</comid>
+        </task>
+        <task name="升车断电">
+            <outTime>5</outTime>
+            <startIndex>350</startIndex>
+            <id>0xC0</id>
+            <comid>0xC010</comid>
+        </task>
+        <task name="开盖上电">
+            <outTime>12</outTime>
+            <startIndex>370</startIndex>
+            <id>0xC0</id>
+            <comid>0xC021</comid>
+        </task>
+        <task name="开盖断电">
+            <outTime>5</outTime>
+            <startIndex>390</startIndex>
+            <id>0xC0</id>
+            <comid>0xC020</comid>
+        </task>
+        <task name="起竖上电">
+            <outTime>12</outTime>
+            <startIndex>410</startIndex>
+            <id>0xC0</id>command_theme
+            <comid>0xC031</comid>
+        </task>
+        <task name="起竖断电">
+            <outTime>5</outTime>
+            <startIndex>430</startIndex>
+            <id>0xC0</id>
+            <comid>0xC030</comid>
+        </task>
+        <task name="发射装置调温上电">
+            <outTime>9</outTime>
+            <startIndex>450</startIndex>
+            <id>0xC0</id>
+            <comid>0xC041</comid>
+        </task>
+        <task name="发射装置调温断电">
+            <outTime>5</outTime>
+            <startIndex>470</startIndex>
+            <id>0xC0</id>
+            <comid>0xC040</comid>
+        </task>
+        <task name="瞄准口盖上电">
+            <outTime>3.0</outTime>
+            <startIndex>490</startIndex>
+            <id>0xC0</id>
+            <comid>0xC051</comid>
+        </task>
+        <task name="瞄准口盖断电">
+            <outTime>3.0</outTime>
+            <startIndex>510</startIndex>
+            <id>0xC0</id>
+            <comid>0xC050</comid>
+        </task>
+        <task name="轴向风机上电">
+            <outTime>3.0</outTime>
+            <startIndex>530</startIndex>
+            <id>0xC0</id>
+            <comid>0xC061</comid>
+        </task>
+        <task name="轴向风机断电">
+            <outTime>3.0</outTime>
+            <startIndex>550</startIndex>
+            <id>0xC0</id>
+            <comid>0xC060</comid>
+        </task>
+        <task name="托架锁上电">
+            <outTime>3.0</outTime>
+            <startIndex>570</startIndex>
+            <id>0xC0</id>
+            <comid>0xC071</comid>
+        </task>
+        <task name="托架锁断电">
+            <outTime>3.0</outTime>
+            <startIndex>590</startIndex>
+            <id>0xC0</id>
+            <comid>0xC070</comid>
+        </task>
+        <task name="电磁锁上电">
+            <outTime>3.0</outTime>
+            <startIndex>610</startIndex>
+            <id>0xC0</id>
+            <comid>0xC081</comid>
+        </task>
+        <task name="电磁锁断电">
+            <outTime>3.0</outTime>
+            <startIndex>630</startIndex>
+            <id>0xC0</id>
+            <comid>0xC080</comid>
+        </task>
+        <task name="单步升车">
+            <outTime>18</outTime>
+            <startIndex>650</startIndex>
+            <id>0xC0</id>
+            <comid>0xD011</comid>
+        </task>
+        <task name="单步降车">
+            <outTime>18</outTime>
+            <startIndex>670</startIndex>
+            <id>0xC0</id>
+            <comid>0xD010</comid>
+        </task>
+        <task name="单步起竖">
+            <outTime>30</outTime>
+            <startIndex>690</startIndex>
+            <id>0xC0</id>
+            <comid>0xD021</comid>
+        </task>
+        <task name="单步回平">
+            <outTime>60</outTime>
+            <startIndex>710</startIndex>
+            <id>0xC0</id>
+            <comid>0xD020</comid>
+        </task>
+        <task name="发射装置调温开机">
+            <outTime>3</outTime>
+            <startIndex>730</startIndex>
+            <id>0xC0</id>
+            <comid>0xD031</comid>
+        </task>
+        <task name="发射装置调温关机">
+            <outTime>180</outTime>
+            <startIndex>750</startIndex>
+            <id>0xC0</id>
+            <comid>0xD030</comid>
+        </task>
+        <task name="打开瞄准口盖">
+            <outTime>8</outTime>
+            <startIndex>770</startIndex>
+            <id>0xC0</id>
+            <comid>0xD041</comid>
+        </task>
+        <task name="关闭瞄准口盖">
+            <outTime>8</outTime>
+            <startIndex>790</startIndex>
+            <id>0xC0</id>
+            <comid>0xD040</comid>
+        </task>
+        <task name="轴向解锁">
+            <outTime>10</outTime>
+            <startIndex>810</startIndex>
+            <id>0xC0</id>
+            <comid>0xD051</comid>
+        </task>
+        <task name="轴向锁紧">
+            <outTime>10</outTime>
+            <startIndex>830</startIndex>
+            <id>0xC0</id>
+            <comid>0xD050</comid>
+        </task>
+        <task name="打开风阀">
+            <outTime>10</outTime>
+            <startIndex>850</startIndex>
+            <id>0xC0</id>
+            <comid>0xD061</comid>
+        </task>
+        <task name="关闭风阀">
+            <outTime>10</outTime>
+            <startIndex>870</startIndex>
+            <id>0xC0</id>
+            <comid>0xD060</comid>
+        </task>
+        <task name="托架锁解锁">
+            <outTime>24</outTime>
+            <startIndex>890</startIndex>
+            <id>0xC0</id>
+            <comid>0xD071</comid>
+        </task>
+        <task name="托架锁锁紧">
+            <outTime>24</outTime>
+            <startIndex>910</startIndex>
+            <id>0xC0</id>
+            <comid>0xD070</comid>
+        </task>
+        <task name="电磁锁解锁">
+            <outTime>2</outTime>
+            <startIndex>930</startIndex>
+            <id>0xC0</id>
+            <comid>0xD081</comid>
+        </task>
+        <task name="电磁锁锁紧">
+            <outTime>2</outTime>
+            <startIndex>950</startIndex>
+            <id>0xC0</id>
+            <comid>0xD080</comid>
+        </task>
+        <task name="起竖准备">
+            <outTime>6</outTime>
+            <startIndex>970</startIndex>
+            <id>0xC0</id>
+            <comid>0xD91</comid>
+        </task>
+        <task name="单步开盖">
+            <outTime>8</outTime>
+            <startIndex>990</startIndex>
+            <id>0xC0</id>
+            <comid>0xD0A1</comid>
+        </task>
+        <task name="单步关盖">
+            <outTime>8</outTime>
+            <startIndex>1010</startIndex>
+            <id>0xC0</id>
+            <comid>0xD0A0</comid>
+        </task>
+        <task name="B电调压">
+            <outTime>1.5</outTime>
+            <startIndex>1030</startIndex>
+            <id>0xC2</id>
+            <comid>0x1</comid>
+        </task>
+        <task name="D电调压">
+            <outTime>1.5</outTime>
+            <startIndex>1050</startIndex>
+            <id>0xC2</id>
+            <comid>0x2</comid>
+        </task>
+        <task name="低压配电组合1输出1上电">
+            <outTime>2</outTime>
+            <startIndex>1070</startIndex>
+            <id>0xCA</id>
+            <comid>0x1011</comid>
+        </task>
+        <task name="低压配电组合1输出1断电">
+            <outTime>2</outTime>
+            <startIndex>1090</startIndex>
+            <id>0xCA</id>
+            <comid>0x1010</comid>
+        </task>
+        <task name="低压配电组合1输出2上电">
+            <outTime>2</outTime>
+            <startIndex>1110</startIndex>
+            <id>0xCA</id>
+            <comid>0x1021</comid>
+        </task>
+        <task name="低压配电组合1输出2断电">
+            <outTime>2</outTime>
+            <startIndex>1130</startIndex>
+            <id>0xCA</id>
+            <comid>0x1020</comid>
+        </task>
+        <task name="低压配电组合1输出3上电">
+            <outTime>2</outTime>
+            <startIndex>1150</startIndex>
+            <id>0xCA</id>
+            <comid>0x1031</comid>
+        </task>
+        <task name="低压配电组合1输出3断电">
+            <outTime>2</outTime>
+            <startIndex>1170</startIndex>
+            <id>0xCA</id>
+            <comid>0x1030</comid>
+        </task>
+        <task name="低压配电组合1输出4上电">
+            <outTime>2</outTime>
+            <startIndex>1190</startIndex>
+            <id>0xCA</id>
+            <comid>0x1041</comid>
+        </task>
+        <task name="低压配电组合1输出4断电">
+            <outTime>2</outTime>
+            <startIndex>1210</startIndex>
+            <id>0xCA</id>
+            <comid>0x1040</comid>
+        </task>
+        <task name="低压配电组合1输出5上电">
+            <outTime>2</outTime>
+            <startIndex>1230</startIndex>
+            <id>0xCA</id>
+            <comid>0x1051</comid>
+        </task>
+        <task name="低压配电组合1输出5断电">
+            <outTime>2</outTime>
+            <startIndex>1250</startIndex>
+            <id>0xCA</id>
+            <comid>0x1050</comid>
+        </task>
+        <task name="低压配电组合1输出6上电">
+            <outTime>2</outTime>
+            <startIndex>1270</startIndex>
+            <id>0xCA</id>
+            <comid>0x1061</comid>
+        </task>
+        <task name="低压配电组合1输出6断电">
+            <outTime>2</outTime>
+            <startIndex>1290</startIndex>
+            <id>0xCA</id>
+            <comid>0x1060</comid>
+        </task>
+        <task name="低压配电组合2输出1上电">
+            <outTime>2</outTime>
+            <startIndex>1310</startIndex>
+            <id>0xCA</id>
+            <comid>0x2011</comid>
+        </task>
+        <task name="低压配电组合2输出1断电">
+            <outTime>2</outTime>
+            <startIndex>1330</startIndex>
+            <id>0xCA</id>
+            <comid>0x2010</comid>
+        </task>
+        <task name="低压配电组合2输出2上电">
+            <outTime>2</outTime>
+            <startIndex>1350</startIndex>
+            <id>0xCA</id>
+            <comid>0x2021</comid>
+        </task>
+        <task name="低压配电组合2输出2断电">
+            <outTime>2</outTime>
+            <startIndex>1370</startIndex>
+            <id>0xCA</id>
+            <comid>0x2020</comid>
+        </task>
+        <task name="低压配电组合2输出3上电">
+            <!--del-->
+            <outTime>2</outTime>
+            <startIndex>1390</startIndex>
+            <id>0xCA</id>
+            <comid>0x2031</comid>
+        </task>
+        <task name="低压配电组合2输出3断电">
+            <!--del-->
+            <outTime>2</outTime>
+            <startIndex>1410</startIndex>
+            <id>0xCA</id>
+            <comid>0x2030</comid>
+        </task>
+        <task name="低压配电组合2输出4上电">
+            <outTime>2</outTime>
+            <startIndex>1430</startIndex>
+            <id>0xCA</id>
+            <comid>0x2041</comid>
+        </task>
+        <task name="低压配电组合2输出4断电">
+            <outTime>2</outTime>
+            <startIndex>1450</startIndex>
+            <id>0xCA</id>
+            <comid>0x2040</comid>
+        </task>
+        <task name="低压配电组合2输出5上电">
+            <outTime>2</outTime>
+            <startIndex>1470</startIndex>
+            <id>0xCA</id>
+            <comid>0x2051</comid>
+        </task>
+        <task name="低压配电组合2输出5断电">
+            <outTime>2</outTime>
+            <startIndex>1490</startIndex>
+            <id>0xCA</id>
+            <comid>0x2050</comid>
+        </task>
+        <task name="低压配电组合2输出6上电">
+            <outTime>2</outTime>
+            <startIndex>1510</startIndex>
+            <id>0xCA</id>
+            <comid>0x2061</comid>
+        </task>
+        <task name="低压配电组合2输出6断电">
+            <outTime>2</outTime>
+            <startIndex>1530</startIndex>
+            <id>0xCA</id>
+            <comid>0x2060</comid>
+        </task>
+        <task name="低压配电组合4输出1上电">
+            <outTime>2</outTime>
+            <startIndex>1550</startIndex>
+            <id>0xCA</id>
+            <comid>0x3011</comid>
+        </task>
+        <task name="低压配电组合4输出1断电">
+            <outTime>2</outTime>
+            <startIndex>1570</startIndex>
+            <id>0xCA</id>
+            <comid>0x4010</comid>
+        </task>
+        <task name="低压配电组合4输出2上电">
+            <outTime>2</outTime>
+            <startIndex>1590</startIndex>
+            <id>0xCA</id>
+            <comid>0x4021</comid>
+        </task>
+        <task name="低压配电组合4输出2断电">
+            <outTime>2</outTime>
+            <startIndex>1610</startIndex>
+            <id>0xCA</id>
+            <comid>0x4020</comid>
+        </task>
+        <task name="低压配电组合4输出3上电">
+            <outTime>2</outTime>
+            <startIndex>1630</startIndex>
+            <id>0xCA</id>
+            <comid>0x4031</comid>
+        </task>
+        <task name="低压配电组合4输出3断电">
+            <outTime>2</outTime>
+            <startIndex>1650</startIndex>
+            <id>0xCA</id>
+            <comid>0x4030</comid>
+        </task>
+        <task name="地面直流电源一光电保护上电">
+            <outTime>2</outTime>
+            <startIndex>1670</startIndex>
+            <id>0xCA</id>
+            <comid>0xA011</comid>
+        </task>
+        <task name="地面直流电源一光电保护断电">
+            <outTime>2</outTime>
+            <startIndex>1690</startIndex>
+            <id>0xCA</id>
+            <comid>0xA010</comid>
+        </task>
+        <task name="地面直流电源一60V输出上电">
+            <outTime>2</outTime>
+            <startIndex>1710</startIndex>
+            <id>0xCA</id>
+            <comid>0xA021</comid>
+        </task>
+        <task name="地面直流电源一60V输出断电">
+            <outTime>2</outTime>
+            <startIndex>1730</startIndex>
+            <id>0xCA</id>
+            <comid>0xA020</comid>
+        </task>
+        <task name="地面直流电源二B主上电">
+            <outTime>0.3</outTime>
+            <startIndex>1750</startIndex>
+            <id>0xCA</id>
+            <comid>0xB011</comid>
+        </task>
+        <task name="地面直流电源二B主断电">
+            <outTime>0.3</outTime>
+            <startIndex>1770</startIndex>
+            <id>0xCA</id>
+            <comid>0xB010</comid>
+        </task>
+        <task name="地面直流电源二D主上电">
+            <outTime>1.5</outTime>
+            <startIndex>1790</startIndex>
+            <id>0xCA</id>
+            <comid>0xB021</comid>
+        </task>
+        <task name="地面直流电源二D主断电">
+            <outTime>1.5</outTime>
+            <startIndex>1810</startIndex>
+            <id>0xCA</id>
+            <comid>0xB020</comid>
+        </task>
+        <task name="地面直流电源二B辅上电">
+            <outTime>0.3</outTime>
+            <startIndex>1830</startIndex>
+            <id>0xCA</id>
+            <comid>0xB031</comid>
+        </task>
+        <task name="地面直流电源二B辅断电">
+            <outTime>0.3</outTime>
+            <startIndex>1850</startIndex>
+            <id>0xCA</id>
+            <comid>0xB030</comid>
+        </task>
+        <task name="地面直流电源二D辅上电">
+            <outTime>0.3</outTime>
+            <startIndex>1870</startIndex>
+            <id>0xCA</id>
+            <comid>0xB041</comid>
+        </task>
+        <task name="地面直流电源二D辅断电">
+            <outTime>0.3</outTime>
+            <startIndex>1890</startIndex>
+            <id>0xCA</id>
+            <comid>0xB040</comid>
+        </task>
+        <task name="车控急停">
+            <outTime>10</outTime>
+            <startIndex>1910</startIndex>
+            <id>0xCC</id>
+            <comid>0xFFFF</comid>
+        </task>
+        <task name="位置信息点位装订">
+            <outTime>5</outTime>
+            <startIndex>1930</startIndex>
+            <id>2801</id>
+        </task>
+        <task name="初始对准指令">
+            <outTime>302</outTime>
+            <startIndex>1950</startIndex>
+            <id>2802</id>
+        </task>
+        <task name="导航模式设置">
+            <outTime>5</outTime>
+            <startIndex>1970</startIndex>
+            <id>2803</id>
+        </task>
+        <task name="里程计标定">
+            <outTime>5</outTime>
+            <startIndex>1990</startIndex>
+            <id>2805</id>
+        </task>
+        <task name="里程计参数回读">
+            <outTime>5</outTime>
+            <startIndex>2010</startIndex>
+            <id>2806</id>
+        </task>
+        <task name="定瞄通信接口检查">
+            <outTime>5</outTime>
+            <startIndex>2030</startIndex>
+            <id>2809</id>
+        </task>
+        <task name="阶段指令请求">
+            <outTime>10</outTime>
+            <startIndex>2050</startIndex>
+            <id>3420</id>
+        </task>
+        <task name="点位信息请求">
+            <outTime>10</outTime>
+            <startIndex>2070</startIndex>
+            <id>3405</id>
+        </task>
+        <task name="发射方式请求">
+            <outTime>10</outTime>
+            <startIndex>2090</startIndex>
+            <id>3406</id>
+        </task>
+        <task name="地面电源紧急断电">
+            <outTime>12</outTime>
+            <startIndex>2110</startIndex>
+            <id>3408</id>
+        </task>
+        <task name="BD加断电控制">
+            <outTime>12</outTime>
+            <startIndex>2130</startIndex>
+            <id>3409</id>
+        </task>
+        <task name="BD调压指令">
+            <outTime>12</outTime>
+            <startIndex>2150</startIndex>
+            <id>3410</id>
+        </task>
+        <task name="测控激活转电查询">
+            <outTime>12</outTime>
+            <startIndex>2170</startIndex>
+            <id>3411</id>
+        </task>
+        <!--task name="测发控地面电源加断电控制">
+            < 未使用 >
+            <outTime>12</outTime>
+            <startIndex>2190</startIndex>
+            <id>3412</id>
+        </task-->
+        <task name="起竖指令">
+            <outTime>120</outTime>
+            <startIndex>2210</startIndex>
+            <id>3425</id>
+        </task>
+        <task name="供电状态查询">
+            <outTime>12</outTime>
+            <startIndex>2230</startIndex>
+            <id>3424</id>
+        </task>
+        <task name="测发控通信接口检查">
+            <outTime>3</outTime>
+            <startIndex>2250</startIndex>
+            <id>3418</id>
+        </task>
+        <task name="测发控信息查询">
+            <outTime>12</outTime>
+            <startIndex>2270</startIndex>
+            <id>3302</id>
+        </task>
+        <task name="发射单元信息查询">
+            <outTime>12</outTime>
+            <startIndex>2290</startIndex>
+            <id>3361</id>
+        </task>
+        <task name="指挥控制命令">
+            <outTime>12</outTime>
+            <startIndex>2310</startIndex>
+            <id>3362</id>
+        </task>
+        <task name="点火命令">
+            <outTime>12</outTime>
+            <startIndex>2330</startIndex>
+            <id>3363</id>
+        </task>
+        <task name="终止发射命令">
+            <outTime>12</outTime>
+            <startIndex>2350</startIndex>
+            <id>3364</id>
+        </task>
+        <!--task name="文件传输请求">
+            <outTime>12</outTime>
+            <startIndex>2370</startIndex>
+            <id>3419</id>
+        </task-->
+        <task name="指控通信接口检查">
+            <outTime>12</outTime>
+            <startIndex>2390</startIndex>
+            <id>3601</id>
+        </task>
+        <task name="指控信息查询指令">
+            <!--未使用-->
+            <outTime>12</outTime>
+            <startIndex>2410</startIndex>
+            <id>3602</id>
+        </task>
+        <task name="车辆调平指令">
+            <outTime>12</outTime>
+            <startIndex>2430</startIndex>
+            <id>3604</id>
+        </task>
+        <task name="导弹起竖回平指令">
+            <outTime>12</outTime>
+            <startIndex>2450</startIndex>
+            <id>3605</id>
+        </task>
+        <task name="弹头仓开关盖指令">
+            <outTime>12</outTime>
+            <startIndex>2470</startIndex>
+            <id>3606</id>
+        </task>
+        <task name="天线伺服指令">
+            <!--未使用-->
+            <outTime>12</outTime>
+            <startIndex>2490</startIndex>
+            <id>3607</id>
+        </task>
+        <task name="应急处理指令">
+            <outTime>12</outTime>
+            <startIndex>2510</startIndex>
+            <id>3608</id>
+        </task>
+        <task name="撤收指令">
+            <outTime>12</outTime>
+            <startIndex>2530</startIndex>
+            <id>3609</id>
+        </task>
+        <task name="测控诸元装订指令">
+            <outTime>50</outTime>
+            <startIndex>2550</startIndex>
+            <id>3702</id>
+        </task>
+        <task name="天线倒伏1指令">
+            <outTime>30</outTime>
+            <startIndex>2570</startIndex>
+            <id>3711</id>
+        </task>
+        <task name="天线倒伏2指令">
+            <outTime>30</outTime>
+            <startIndex>2590</startIndex>
+            <id>13711</id>
+        </task>
+        <task name="天线倒伏1通信接口检查">
+            <outTime>30</outTime>
+            <startIndex>2610</startIndex>
+            <id>3701</id>
+        </task>
+        <task name="天线倒伏2通信接口检查">
+            <outTime>30</outTime>
+            <startIndex>2630</startIndex>
+            <id>13701</id>
+        </task>
+        <task name="通信接口检查">
+            <outTime>5</outTime>
+            <startIndex>2650</startIndex>
+            <id>2851</id>
+        </task>
+        <task name="惯组参数回读">
+            <outTime>5</outTime>
+            <startIndex>2670</startIndex>
+            <id>2859</id>
+        </task>
+        <task name="里程计标定回读">
+            <outTime>5</outTime>
+            <startIndex>2690</startIndex>
+            <id>2862</id>
+        </task>
+</outdataConfig>

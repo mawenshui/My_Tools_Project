@@ -1,0 +1,37 @@
+<RCC>
+    <qresource prefix="/styles">
+        <file>styles/drak_theme.qss</file>
+    </qresource>
+    <qresource prefix="/config">
+        <file>config/config.json</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file>icons/app.png</file>
+        <file>icons/arrow-down.png</file>
+        <file>icons/arrow-down-bold.png</file>
+        <file>icons/select.png</file>
+        <file>icons/select-bold.png</file>
+        <file>icons/add.png</file>
+        <file>icons/arrow-left-bold.png</file>
+        <file>icons/arrow-right.png</file>
+        <file>icons/arrow-right-bold.png</file>
+        <file>icons/arrow-up-bold.png</file>
+        <file>icons/check-item.png</file>
+        <file>icons/close.png</file>
+        <file>icons/close-bold.png</file>
+        <file>icons/complete.png</file>
+        <file>icons/direction-down.png</file>
+        <file>icons/direction-left.png</file>
+        <file>icons/direction-right.png</file>
+        <file>icons/direction-up.png</file>
+        <file>icons/download.png</file>
+        <file>icons/error.png</file>
+        <file>icons/file.png</file>
+        <file>icons/home.png</file>
+        <file>icons/minus.png</file>
+        <file>icons/minus-bold.png</file>
+        <file>icons/refresh.png</file>
+        <file>icons/success.png</file>
+        <file>icons/arrow-up.png</file>
+    </qresource>
+</RCC>

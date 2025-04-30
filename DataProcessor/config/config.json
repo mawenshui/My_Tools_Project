@@ -1,0 +1,15 @@
+{
+    "addresses": [
+        "239.255.1.21:9221",
+        "239.255.1.9:9221"
+    ],
+    "dataDir": "D:/__python_script/sendData2",
+    "excludeTopics": [
+    ],
+    "includeTopics": [
+    ],
+    "order": "倒序",
+    "sendInterval": "100",
+    "uniqueMode": false,
+    "version": 1
+}

@@ -1,0 +1,20 @@
+{
+    "[以太网\r] 192.168.4.101": {
+        "gateway": "",
+        "interface": "以太网\r (专用)",
+        "ip": "192.168.4.101",
+        "method": "static",
+        "primary_dns": "",
+        "secondary_dns": "",
+        "subnet": "255.255.255.0"
+    },
+    "[以太网\r] 自动获取IP": {
+        "gateway": "",
+        "interface": "以太网\r (专用)",
+        "ip": "",
+        "method": "dhcp",
+        "primary_dns": "",
+        "secondary_dns": "",
+        "subnet": ""
+    }
+}
