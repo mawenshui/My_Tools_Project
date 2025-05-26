@@ -12,10 +12,13 @@
 #include <QCheckBox>
 #include <QPointer>
 #include <QSettings>
+#include <QComboBox>
+#include <QPushButton>
 
 #include "Logger.h"
 #include "configmanager.h"
 #include "floatwindow.h"
+#include "networkinterfacemanager.h"
 
 //常量定义
 const QString MAIN_WINDOW_TITLE = "IP配置管理器(by:mws)";  //主窗口标题
@@ -84,13 +87,21 @@ private slots:
     //快速菜单相关槽函数
     void updateQuickMenu();  //更新快速菜单
 
+    void on_networkInterfaceCombo_currentTextChanged(const QString &arg1);
+
 private:
-    Ui::MainWindow *ui;              //UI界面指针
-    ConfigManager *m_configManager;  //配置管理器
-    QMenu *m_quickMenu;              //快速菜单
-    FloatWindow *m_floatWindow;      //浮动窗口
-    QSystemTrayIcon *m_trayIcon;     //系统托盘图标
+    Ui::MainWindow* ui;              //UI界面指针
+    ConfigManager* m_configManager;  //配置管理器
+    QMenu* m_quickMenu;              //快速菜单
+    FloatWindow* m_floatWindow;      //浮动窗口
+    QSystemTrayIcon* m_trayIcon;     //系统托盘图标
     QSharedMemory m_singleInstanceLock;  //共享内存锁(用于单实例检查)
+
+    //网卡管理控件
+    QComboBox* m_networkInterfaceCombo;
+    QPushButton* m_enableInterfaceBtn;
+    QPushButton* m_disableInterfaceBtn;
+    QPushButton* m_refreshInterfacesBtn;
 
     //状态变量
     bool m_floatVisible;       //浮动窗口是否可见
@@ -126,8 +137,16 @@ private:
     void saveFloatWindowPosition();
     void loadFloatWindowPosition();
     void initSettings(const QString &posConfigPath);
-    QSettings *m_settings = nullptr; // 改为指针以便灵活控制
+
+    //网卡管理槽函数
+    void refreshNetworkInterfaces();
+    void onEnableInterface();
+    void onDisableInterface();
+    void updateInterfaceControls();
+
+    QSettings* m_settings = nullptr; // 改为指针以便灵活控制
     QString m_posConfigPath;
+
 };
 
 #endif //MAINWINDOW_H

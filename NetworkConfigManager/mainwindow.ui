@@ -24,9 +24,34 @@
       <item>
        <widget class="QGroupBox" name="groupBox_Interface">
         <property name="title">
-         <string>网卡设置</string>
+         <string>网卡管理</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_2"/>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <widget class="QComboBox" name="networkInterfaceCombo"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="enableInterfaceBtn">
+           <property name="text">
+            <string>启用网卡</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="disableInterfaceBtn">
+           <property name="text">
+            <string>禁用网卡</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QPushButton" name="refreshInterfacesBtn">
+           <property name="text">
+            <string>刷新列表</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>

@@ -288,6 +288,10 @@ void MainWindow::setupConnections()
     connect(ui->deleteButton, &QPushButton::clicked, this, &MainWindow::onDeleteConfig);
     connect(ui->applyButton, &QPushButton::clicked, this, &MainWindow::onApplyConfig);
     connect(ui->refreshButton, &QPushButton::clicked, this, &MainWindow::updateInterfaces);
+    //网卡管理信号槽
+    connect(ui->enableInterfaceBtn, &QPushButton::clicked, this, &MainWindow::onEnableInterface);
+    connect(ui->disableInterfaceBtn, &QPushButton::clicked, this, &MainWindow::onDisableInterface);
+    connect(ui->refreshInterfacesBtn, &QPushButton::clicked, this, &MainWindow::refreshNetworkInterfaces);
     //配置管理器的信号
     connect(m_configManager, &ConfigManager::configApplied, this, [this](bool success, const QString & message)
     {
@@ -1412,6 +1416,104 @@ void MainWindow::onTrayIconActivated(QSystemTrayIcon::ActivationReason reason)
     }
 }
 
+void MainWindow::refreshNetworkInterfaces()
+{
+    Logger::debug("刷新网卡列表");
+    NetworkInterfaceManager manager;
+    QStringList interfaces = manager.getNetworkInterfaces();
+    QString current = ui->networkInterfaceCombo->currentText();
+    ui->networkInterfaceCombo->clear();
+    foreach(const QString &interface, interfaces)
+    {
+        QString adminStatus = manager.getInterfaceAdminStatus(interface);
+        QString connStatus = manager.getInterfaceConnStatus(interface);
+        ui->networkInterfaceCombo->addItem(QString("%1 [%2|%3]").arg(interface).arg(adminStatus).arg(connStatus), interface);
+    }
+    // 恢复之前选中的网卡
+    int index = ui->networkInterfaceCombo->findData(current);
+    if(index >= 0)
+    {
+        ui->networkInterfaceCombo->setCurrentIndex(index);
+    }
+    updateInterfaceControls();
+    ui->statusBar->showMessage(tr("网卡列表已刷新，共 %1 个网卡").arg(interfaces.size()), 2000);
+}
+
+void MainWindow::onEnableInterface()
+{
+    QString interface = ui->networkInterfaceCombo->currentData().toString();
+    if(interface.isEmpty())
+    {
+        QMessageBox::warning(this, tr("警告"), tr("请选择要启用的网卡"));
+        return;
+    }
+    NetworkInterfaceManager manager;
+    QString status = manager.getInterfaceAdminStatus(interface);
+    if(status.contains("已启用"))
+    {
+        QMessageBox::information(this, tr("提示"), tr("网卡 %1 已经是启用状态").arg(interface));
+        return; // 已经是启用状态
+    }
+    if(manager.enableInterface(interface))
+    {
+        ui->statusBar->showMessage(tr("网卡 %1 已启用").arg(interface), 2000);
+        refreshNetworkInterfaces(); // 刷新列表显示新状态
+    }
+    else
+    {
+        QMessageBox::critical(this, tr("错误"), tr("启用网卡 %1 失败").arg(interface));
+    }
+}
+
+void MainWindow::onDisableInterface()
+{
+    QString interface = ui->networkInterfaceCombo->currentData().toString();
+    if(interface.isEmpty())
+    {
+        QMessageBox::warning(this, tr("警告"), tr("请选择要禁用的网卡"));
+        return;
+    }
+    NetworkInterfaceManager manager;
+    QString status = manager.getInterfaceAdminStatus(interface);
+    if(status.contains("已禁用"))
+    {
+        QMessageBox::information(this, tr("提示"), tr("网卡 %1 已经是禁用状态").arg(interface));
+        return; // 已经是禁用状态
+    }
+    if(manager.disableInterface(interface))
+    {
+        ui->statusBar->showMessage(tr("网卡 %1 已禁用").arg(interface), 2000);
+        refreshNetworkInterfaces(); // 刷新列表显示新状态
+    }
+    else
+    {
+        QMessageBox::critical(this, tr("错误"), tr("禁用网卡 %1 失败").arg(interface));
+    }
+}
+
+void MainWindow::updateInterfaceControls()
+{
+    if(ui->networkInterfaceCombo->count() == 0)
+    {
+        ui->enableInterfaceBtn->setEnabled(false);
+        ui->disableInterfaceBtn->setEnabled(false);
+        Logger::debug("无可用网卡，禁用操作按钮");
+        return;
+    }
+    QString interface = ui->networkInterfaceCombo->currentData().toString();
+    NetworkInterfaceManager manager;
+    QString status = manager.getInterfaceStatus(interface);
+    bool canEnable = (status.contains("已禁用"));
+    bool canDisable = (status.contains("已启用"));
+    ui->enableInterfaceBtn->setEnabled(canEnable);
+    ui->disableInterfaceBtn->setEnabled(canDisable);
+    Logger::debug(tr("更新网卡控制状态: %1, 可启用: %2, 可禁用: %3")
+                  .arg(interface).arg(canEnable).arg(canDisable));
+    // 更新按钮提示文本
+    ui->enableInterfaceBtn->setToolTip(canEnable ? tr("启用网卡 %1").arg(interface) : "");
+    ui->disableInterfaceBtn->setToolTip(canDisable ? tr("禁用网卡 %1").arg(interface) : "");
+}
+
 /**
  * @brief 处理窗口关闭事件
  * @param event 关闭事件
@@ -1425,4 +1527,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
     hide();
     Logger::debug("主窗口已隐藏，程序在后台运行");
     event->ignore();
+}
+
+void MainWindow::on_networkInterfaceCombo_currentTextChanged(const QString &arg1)
+{
+    Q_UNUSED(arg1)
+    updateInterfaceControls();
 }

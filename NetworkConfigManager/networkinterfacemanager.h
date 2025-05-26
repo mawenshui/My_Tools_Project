@@ -23,6 +23,12 @@ public:
     // 获取接口状态
     static QString getInterfaceStatus(const QString &interfaceName);
     
+    // 获取接口管理状态(已启用/已禁用)
+    static QString getInterfaceAdminStatus(const QString &interfaceName);
+    
+    // 获取接口连接状态(已连接/已断开连接) 
+    static QString getInterfaceConnStatus(const QString &interfaceName);
+    
 private:
     // 执行netsh命令
     static QString executeNetshCommand(const QString &command);

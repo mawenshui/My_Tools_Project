@@ -29,13 +29,15 @@ SOURCES += \
     configmanager.cpp \
     floatwindow.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    networkinterfacemanager.cpp
 
 HEADERS += \
     configmanager.h \
     floatwindow.h \
     logger.h \
-    mainwindow.h
+    mainwindow.h \
+    networkinterfacemanager.h
 
 FORMS += \
     mainwindow.ui
