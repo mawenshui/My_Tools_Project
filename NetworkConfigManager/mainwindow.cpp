@@ -40,7 +40,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     //初始化日志系统
     QDir logsDir(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/logs/"));
-    if (!logsDir.exists() && !logsDir.mkpath("."))
+    if(!logsDir.exists() && !logsDir.mkpath("."))
     {
         Logger::error(tr("无法创建日志文件夹: %1").arg(logsDir.path()));
         QMessageBox::warning(this, "错误", tr("无法创建日志文件夹: ") + logsDir.path());
@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     //1. 检查单实例运行
     Logger::debug("开始检查单实例运行");
-    if (!checkSingleInstance())
+    if(!checkSingleInstance())
     {
         Logger::critical("单实例检查失败，程序将退出");
         return;
@@ -76,7 +76,7 @@ MainWindow::MainWindow(QWidget *parent) :
     Logger::debug("建立信号槽连接");
     setupConnections();
     loadFloatWindowPosition();
-    if (m_floatVisible)
+    if(m_floatVisible)
     {
         Logger::debug("显示悬浮窗");
         m_floatWindow->setBackgroundPixmap(QPixmap(":/images/images/float_icon.png"));
@@ -93,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
 void MainWindow::loadAndApplyStyleSheet(const QString &styleSheetPath)
 {
     QFile file(styleSheetPath);
-    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    if(file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QString styleSheet = file.readAll();
         this->setStyleSheet(styleSheet);
@@ -115,7 +115,7 @@ MainWindow::~MainWindow()
 {
     Logger::info("开始销毁主窗口");
     //安全删除菜单
-    if (!m_quickMenu)
+    if(!m_quickMenu)
     {
         Logger::debug("删除快速菜单");
         m_quickMenu->deleteLater();
@@ -136,7 +136,7 @@ bool MainWindow::checkSingleInstance()
 {
     Logger::debug("检查程序是否已运行");
     //尝试附加到现有共享内存
-    if (m_singleInstanceLock.attach())
+    if(m_singleInstanceLock.attach())
     {
         Logger::warning("检测到程序已经在运行中");
         QMessageBox::critical(nullptr, "错误", "程序已经在运行中");
@@ -144,7 +144,7 @@ bool MainWindow::checkSingleInstance()
         return false;
     }
     //创建新的共享内存块
-    if (!m_singleInstanceLock.create(1))
+    if(!m_singleInstanceLock.create(1))
     {
         Logger::error("无法创建单实例锁");
         QMessageBox::critical(nullptr, "错误", "无法创建单实例锁");
@@ -156,11 +156,11 @@ bool MainWindow::checkSingleInstance()
 
 void MainWindow::saveFloatWindowPosition()
 {
-    if (!m_settings)
+    if(!m_settings)
     {
         return;
     }
-    if (m_floatWindow && m_floatWindow->isVisible())
+    if(m_floatWindow && m_floatWindow->isVisible())
     {
         m_settings->beginGroup("FloatWindow");
         m_settings->setValue("pos", m_floatWindow->pos());
@@ -171,17 +171,17 @@ void MainWindow::saveFloatWindowPosition()
 
 void MainWindow::loadFloatWindowPosition()
 {
-    if (!m_settings)
+    if(!m_settings)
     {
         return;
     }
     m_settings->beginGroup("FloatWindow");
-    if (m_settings->contains("pos"))
+    if(m_settings->contains("pos"))
     {
         QPoint pos = m_settings->value("pos").toPoint();
         //边界检查
         QRect screenGeo = QApplication::primaryScreen()->availableGeometry();
-        if (!screenGeo.contains(pos))
+        if(!screenGeo.contains(pos))
         {
             pos.setX(qBound(screenGeo.left(), pos.x(), screenGeo.right() - 100));
             pos.setY(qBound(screenGeo.top(), pos.y(), screenGeo.bottom() - 50));
@@ -195,7 +195,7 @@ void MainWindow::initSettings(const QString &posConfigPath)
 {
     //确定最终配置文件路径
     QString configFileName;
-    if (posConfigPath.isEmpty())
+    if(posConfigPath.isEmpty())
     {
         configFileName = "config.ini";
     }
@@ -210,9 +210,9 @@ void MainWindow::initSettings(const QString &posConfigPath)
     m_posConfigPath = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/" + configFileName);
     //确保配置目录存在
     QFileInfo fileInfo(m_posConfigPath);
-    if (!fileInfo.dir().exists())
+    if(!fileInfo.dir().exists())
     {
-        if (!QDir().mkpath(fileInfo.absolutePath()))
+        if(!QDir().mkpath(fileInfo.absolutePath()))
         {
             Logger::warning("无法创建配置目录:" + fileInfo.absolutePath());
             //回退到临时目录
@@ -225,10 +225,10 @@ void MainWindow::initSettings(const QString &posConfigPath)
     //初始化QSettings（如果文件不存在会自动创建）
     m_settings = new QSettings(m_posConfigPath, QSettings::IniFormat, this);
     //立即创建空文件（如果不存在）
-    if (!QFile::exists(m_posConfigPath))
+    if(!QFile::exists(m_posConfigPath))
     {
         QFile file(m_posConfigPath);
-        if (file.open(QIODevice::WriteOnly))
+        if(file.open(QIODevice::WriteOnly))
         {
             file.close();
             Logger::info("已创建新的配置文件:" + m_posConfigPath);
@@ -239,7 +239,7 @@ void MainWindow::initSettings(const QString &posConfigPath)
         }
     }
     //验证文件可写性
-    if (!QFileInfo(m_posConfigPath).isWritable())
+    if(!QFileInfo(m_posConfigPath).isWritable())
     {
         Logger::critical("配置文件不可写:" + m_posConfigPath);
     }
@@ -291,7 +291,7 @@ void MainWindow::setupConnections()
     //配置管理器的信号
     connect(m_configManager, &ConfigManager::configApplied, this, [this](bool success, const QString & message)
     {
-        if (success)
+        if(success)
         {
             Logger::info(tr("%1").arg(message));
             ui->statusBar->showMessage(tr("%1").arg(message), 2000);
@@ -315,7 +315,7 @@ void MainWindow::setupConnections()
         ui->addButton->setEnabled(isAdmin);
         ui->updateButton->setEnabled(isAdmin);
         ui->deleteButton->setEnabled(isAdmin);
-        if (isAdmin)
+        if(isAdmin)
         {
             Logger::info("已获取管理员权限");
             ui->statusBar->showMessage("已获取管理员权限", 2000);
@@ -349,7 +349,7 @@ void MainWindow::initializeApplication()
 {
     Logger::info("开始初始化应用程序");
     //加载配置
-    if (!m_configManager->loadConfigs())
+    if(!m_configManager->loadConfigs())
     {
         Logger::warning("加载配置文件失败，将使用空配置");
         QMessageBox::warning(this, "警告", "加载配置文件失败，将使用空配置");
@@ -370,7 +370,7 @@ void MainWindow::initializeApplication()
     QPoint floatWindowPos = windowSettings.value("floatWindowPos", QPoint(100, 100)).toPoint();
     m_floatWindow->move(floatWindowPos);
     m_floatVisible = windowSettings.value("floatWindowVisible", true).toBool();
-    if (m_floatVisible)
+    if(m_floatVisible)
     {
         Logger::debug("显示浮动窗口");
         m_floatWindow->show();
@@ -421,10 +421,10 @@ void MainWindow::showAdminWarning()
                                     "需要管理员权限才能修改网络配置。\n"
                                     "是否立即获取权限？(否则部分功能将受限)",
                                     QMessageBox::Yes | QMessageBox::No);
-    if (ret == QMessageBox::Yes)
+    if(ret == QMessageBox::Yes)
     {
         Logger::info("用户选择获取管理员权限");
-        if (!m_configManager->requestAdminPrivileges())
+        if(!m_configManager->requestAdminPrivileges())
         {
             Logger::error("获取管理员权限失败");
             QMessageBox::warning(this, "警告", "获取管理员权限失败，部分功能将受限");
@@ -461,7 +461,7 @@ void MainWindow::disableAdminFunctions()
  */
 void MainWindow::onConfigSelected(QListWidgetItem *item)
 {
-    if (!item)
+    if(!item)
     {
         Logger::debug("未选择有效配置项");
         return;
@@ -470,7 +470,7 @@ void MainWindow::onConfigSelected(QListWidgetItem *item)
     m_currentConfig = name;
     Logger::debug(QString("选择配置: %1").arg(name));
     QVariantMap config = m_configManager->configs().value(name);
-    if (config.isEmpty())
+    if(config.isEmpty())
     {
         Logger::warning(tr("无效配置: %1").arg(name));
         ui->statusBar->showMessage("无效配置: " + name, 2000);
@@ -478,11 +478,11 @@ void MainWindow::onConfigSelected(QListWidgetItem *item)
     }
     //更新界面显示
     int index = ui->interfaceCombo->findText(config["interface"].toString());
-    if (index >= 0)
+    if(index >= 0)
     {
         ui->interfaceCombo->setCurrentIndex(index);
     }
-    if (config["method"].toString() == "dhcp")
+    if(config["method"].toString() == "dhcp")
     {
         ui->dhcpRadio->setChecked(true);
         Logger::debug("配置使用DHCP模式");
@@ -509,7 +509,7 @@ void MainWindow::onConfigSelected(QListWidgetItem *item)
  */
 void MainWindow::onInterfaceChanged(int index)
 {
-    if (index >= 0)
+    if(index >= 0)
     {
         m_currentInterface = ui->interfaceCombo->itemText(index);
         Logger::debug(tr("选择网络接口: %1").arg(m_currentInterface));
@@ -531,7 +531,7 @@ void MainWindow::updateInterfaces()
     Logger::debug("更新网络接口列表");
     ui->interfaceCombo->clear();
     QStringList interfaces = m_configManager->getNetworkInterfaces();
-    if (interfaces.isEmpty())
+    if(interfaces.isEmpty())
     {
         Logger::warning("未找到可用的网络接口");
     }
@@ -540,7 +540,7 @@ void MainWindow::updateInterfaces()
         Logger::info(tr("找到 %1 个网络接口").arg(interfaces.size()));
     }
     ui->interfaceCombo->addItems(interfaces);
-    if (!interfaces.isEmpty())
+    if(!interfaces.isEmpty())
     {
         updateConfigList();
     }
@@ -577,18 +577,18 @@ void MainWindow::onAddConfig()
     bool ok;
     QString name = QInputDialog::getText(this, "添加配置", "请输入配置名称:",
                                          QLineEdit::Normal, "", &ok);
-    if (!ok || name.isEmpty())
+    if(!ok || name.isEmpty())
     {
         Logger::debug("用户取消添加配置或输入为空");
         return;
     }
-    if (m_configManager->configs().contains(name))
+    if(m_configManager->configs().contains(name))
     {
         Logger::warning(tr("配置名称已存在: %1").arg(name));
         QMessageBox::critical(this, "错误", "该配置名称已存在！");
         return;
     }
-    if (ui->interfaceCombo->currentIndex() < 0)
+    if(ui->interfaceCombo->currentIndex() < 0)
     {
         Logger::warning("未选择网络接口");
         QMessageBox::critical(this, "错误", "请先选择网络接口！");
@@ -597,14 +597,14 @@ void MainWindow::onAddConfig()
     QString currentInterface = ui->interfaceCombo->currentText();
     QString displayName = QString("[%1] %2").arg(currentInterface.split(' ').first()).arg(name);
     QVariantMap config = getCurrentFormConfig();
-    if (!validateIpConfig(config))
+    if(!validateIpConfig(config))
     {
         Logger::warning("IP配置验证失败");
         return;
     }
-    if (m_configManager->addConfig(displayName, config))
+    if(m_configManager->addConfig(displayName, config))
     {
-        if (m_configManager->saveConfigs())
+        if(m_configManager->saveConfigs())
         {
             Logger::info(tr("配置添加成功: %1").arg(displayName));
             updateConfigList(); //更新所有配置列表
@@ -632,13 +632,13 @@ void MainWindow::onAddConfig()
 void MainWindow::onUpdateConfig()
 {
     Logger::info("开始更新配置");
-    if (m_currentConfig.isEmpty())
+    if(m_currentConfig.isEmpty())
     {
         Logger::warning("未选择要更新的配置");
         QMessageBox::critical(this, "错误", "请先选择一个配置！");
         return;
     }
-    if (ui->interfaceCombo->currentIndex() < 0)
+    if(ui->interfaceCombo->currentIndex() < 0)
     {
         Logger::warning("未选择网络接口");
         QMessageBox::critical(this, "错误", "请先选择网络接口！");
@@ -648,7 +648,7 @@ void MainWindow::onUpdateConfig()
     QString oldName = m_currentConfig;
     //更新配置名称以包含接口前缀
     QString newName;
-    if (oldName.contains("] "))
+    if(oldName.contains("] "))
     {
         newName = QString("[%1] %2").arg(currentInterface.split(' ').first())
                   .arg(oldName.split("] ").last());
@@ -658,14 +658,14 @@ void MainWindow::onUpdateConfig()
         newName = QString("[%1] %2").arg(currentInterface.split(' ').first()).arg(oldName);
     }
     QVariantMap config = getCurrentFormConfig();
-    if (!validateIpConfig(config))
+    if(!validateIpConfig(config))
     {
         Logger::warning("IP配置验证失败");
         return;
     }
-    if (m_configManager->updateConfig(oldName, newName, config))
+    if(m_configManager->updateConfig(oldName, newName, config))
     {
-        if (m_configManager->saveConfigs())
+        if(m_configManager->saveConfigs())
         {
             Logger::info(tr("配置更新成功: %1 -> %2").arg(oldName).arg(newName));
             updateConfigList(); //更新所有配置列表
@@ -693,21 +693,21 @@ void MainWindow::onUpdateConfig()
 void MainWindow::onDeleteConfig()
 {
     Logger::info("开始删除配置");
-    if (m_currentConfig.isEmpty())
+    if(m_currentConfig.isEmpty())
     {
         Logger::warning("未选择要删除的配置");
         QMessageBox::critical(this, "错误", "请先选择一个配置！");
         return;
     }
-    if (QMessageBox::question(this, "确认",
-                              tr("确定要删除配置 '%1' 吗？").arg(m_currentConfig))
+    if(QMessageBox::question(this, "确认",
+                             tr("确定要删除配置 '%1' 吗？").arg(m_currentConfig))
             == QMessageBox::Yes)
     {
         Logger::debug(tr("用户确认删除配置: %1").arg(m_currentConfig));
         QString currentInterface = m_configManager->configs().value(m_currentConfig)["interface"].toString();
-        if (m_configManager->removeConfig(m_currentConfig))
+        if(m_configManager->removeConfig(m_currentConfig))
         {
-            if (m_configManager->saveConfigs())
+            if(m_configManager->saveConfigs())
             {
                 Logger::info(tr("配置删除成功: %1").arg(m_currentConfig));
                 m_currentConfig.clear();
@@ -741,26 +741,26 @@ void MainWindow::onDeleteConfig()
 void MainWindow::onApplyConfig()
 {
     Logger::info("开始应用配置");
-    if (m_currentConfig.isEmpty())
+    if(m_currentConfig.isEmpty())
     {
         Logger::warning("未选择要应用的配置");
         QMessageBox::critical(this, "错误", "请先选择一个配置！");
         return;
     }
     QVariantMap config = m_configManager->configs().value(m_currentConfig);
-    if (config.isEmpty())
+    if(config.isEmpty())
     {
         Logger::error("无效的配置");
         QMessageBox::critical(this, "错误", "无效的配置！");
         return;
     }
-    if (compareConfigs(getCurrentNetworkConfig(config["interface"].toString()), config))
+    if(compareConfigs(getCurrentNetworkConfig(config["interface"].toString()), config))
     {
         Logger::info("配置未变更，跳过应用");
         return;
     }
     Logger::debug(tr("应用配置: %1").arg(m_currentConfig));
-    if (!m_configManager->applyConfig(config))
+    if(!m_configManager->applyConfig(config))
     {
         Logger::error("应用配置失败");
         QMessageBox::critical(this, "错误", "应用配置失败！");
@@ -800,18 +800,18 @@ QVariantMap MainWindow::getCurrentFormConfig() const
  */
 bool MainWindow::validateIpConfig(const QVariantMap &config)
 {
-    if (config["method"].toString() == "static")
+    if(config["method"].toString() == "static")
     {
         Logger::debug("验证静态IP配置");
         //验证IP地址
-        if (config["ip"].toString().isEmpty())
+        if(config["ip"].toString().isEmpty())
         {
             Logger::warning("IP地址不能为空");
             QMessageBox::critical(this, "错误", "IP地址不能为空");
             return false;
         }
         //验证子网掩码
-        if (config["subnet"].toString().isEmpty())
+        if(config["subnet"].toString().isEmpty())
         {
             Logger::warning("子网掩码不能为空");
             QMessageBox::critical(this, "错误", "子网掩码不能为空");
@@ -819,33 +819,33 @@ bool MainWindow::validateIpConfig(const QVariantMap &config)
         }
         //验证IP和子网掩码格式
         QRegExp ipRegex("^(\\d{1,3}\\.){3}\\d{1,3}$");
-        if (!ipRegex.exactMatch(config["ip"].toString()))
+        if(!ipRegex.exactMatch(config["ip"].toString()))
         {
             Logger::warning(tr("IP地址格式不正确: %1").arg(config["ip"].toString()));
             QMessageBox::critical(this, "错误", "IP地址格式不正确");
             return false;
         }
-        if (!ipRegex.exactMatch(config["subnet"].toString()))
+        if(!ipRegex.exactMatch(config["subnet"].toString()))
         {
             Logger::warning(tr("子网掩码格式不正确: %1").arg(config["subnet"].toString()));
             QMessageBox::critical(this, "错误", "子网掩码格式不正确");
             return false;
         }
         //如果有网关，验证网关格式
-        if (!config["gateway"].toString().isEmpty() && !ipRegex.exactMatch(config["gateway"].toString()))
+        if(!config["gateway"].toString().isEmpty() && !ipRegex.exactMatch(config["gateway"].toString()))
         {
             Logger::warning(tr("默认网关格式不正确: %1").arg(config["gateway"].toString()));
             QMessageBox::critical(this, "错误", "默认网关格式不正确");
             return false;
         }
         //验证DNS格式
-        if (!config["primary_dns"].toString().isEmpty() && !ipRegex.exactMatch(config["primary_dns"].toString()))
+        if(!config["primary_dns"].toString().isEmpty() && !ipRegex.exactMatch(config["primary_dns"].toString()))
         {
             Logger::warning(tr("首选DNS格式不正确: %1").arg(config["primary_dns"].toString()));
             QMessageBox::critical(this, "错误", "首选DNS格式不正确");
             return false;
         }
-        if (!config["secondary_dns"].toString().isEmpty() && !ipRegex.exactMatch(config["secondary_dns"].toString()))
+        if(!config["secondary_dns"].toString().isEmpty() && !ipRegex.exactMatch(config["secondary_dns"].toString()))
         {
             Logger::warning(tr("备用DNS格式不正确: %1").arg(config["secondary_dns"].toString()));
             QMessageBox::critical(this, "错误", "备用DNS格式不正确");
@@ -871,7 +871,7 @@ void MainWindow::updateConfigList()
     ui->configList->clear();
     QMap<QString, QVariantMap> configs = m_configManager->configs();
     //遍历所有配置并添加到列表中
-    for (auto it = configs.begin(); it != configs.end(); ++it)
+    for(auto it = configs.begin(); it != configs.end(); ++it)
     {
         ui->configList->addItem(it.key());
     }
@@ -907,7 +907,7 @@ void MainWindow::setupTrayIcon()
     m_trayIcon->setIcon(QIcon(":/images/images/icon.png"));
     m_trayIcon->setToolTip(MAIN_WINDOW_TITLE);
     //先确保创建菜单对象
-    if (!m_quickMenu)
+    if(!m_quickMenu)
     {
         Logger::debug("创建快速应用配置菜单");
         m_quickMenu = new QMenu("快速应用配置", this);
@@ -950,7 +950,7 @@ void MainWindow::toggleFloatWindow(bool visible)
     Logger::info(tr("设置悬浮窗可见性: %1").arg(visible ? "显示" : "隐藏"));
     m_floatVisible = visible;
     QSettings().setValue("floatWindowVisible", m_floatVisible);
-    if (m_floatVisible)
+    if(m_floatVisible)
     {
         m_floatWindow->show();
     }
@@ -970,7 +970,7 @@ void MainWindow::toggleAutostart(bool enabled)
 {
     Logger::info(tr("设置开机自启动: %1").arg(enabled ? "启用" : "禁用"));
     QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
-    if (enabled)
+    if(enabled)
     {
         //获取应用程序路径并添加最小化启动参数
         QString appPath = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
@@ -991,7 +991,7 @@ void MainWindow::toggleAutostart(bool enabled)
  */
 void MainWindow::updateQuickMenu()
 {
-    if (!m_quickMenu)
+    if(!m_quickMenu)
     {
         Logger::warning("快速菜单未初始化");
         return;
@@ -1000,7 +1000,7 @@ void MainWindow::updateQuickMenu()
     m_quickMenu->clear();
     //获取所有网络接口
     QStringList interfaces = m_configManager->getNetworkInterfaces();
-    if (interfaces.isEmpty())
+    if(interfaces.isEmpty())
     {
         Logger::debug("无可用网络接口");
         QAction *noInterfaceAction = m_quickMenu->addAction("无可用网络接口");
@@ -1010,7 +1010,7 @@ void MainWindow::updateQuickMenu()
     //获取所有保存的配置
     QMap<QString, QVariantMap> configs = m_configManager->configs();
     //为每个接口创建子菜单
-    for (const QString &currentInterface : interfaces)
+    for(const QString &currentInterface : interfaces)
     {
         QString cleanInterface = currentInterface.split(" (").first().trimmed();
         //获取当前接口的配置
@@ -1019,7 +1019,7 @@ void MainWindow::updateQuickMenu()
         QMenu *interfaceMenu = m_quickMenu->addMenu(cleanInterface);
         //添加"当前配置"项
         QString configTitle;
-        if (currentConfig["method"].toString() == "dhcp")
+        if(currentConfig["method"].toString() == "dhcp")
         {
             configTitle = "DHCP自动获取";
         }
@@ -1034,10 +1034,10 @@ void MainWindow::updateQuickMenu()
         interfaceMenu->addSeparator();
         //添加该接口的所有保存的配置
         bool hasConfigs = false;
-        for (auto it = configs.begin(); it != configs.end(); ++it)
+        for(auto it = configs.begin(); it != configs.end(); ++it)
         {
             QString configInterface = m_configManager->cleanInterfaceName(it.value()["interface"].toString());
-            if (configInterface == cleanInterface)
+            if(configInterface == cleanInterface)
             {
                 QAction *action = interfaceMenu->addAction(it.key());
                 action->setCheckable(true);
@@ -1045,7 +1045,7 @@ void MainWindow::updateQuickMenu()
                 connect(action, &QAction::triggered, [this, config = it.value()]()
                 {
                     Logger::info(tr("从快速菜单应用配置: %1").arg(config["interface"].toString()));
-                    if (m_configManager->applyConfig(config))
+                    if(m_configManager->applyConfig(config))
                     {
                         ui->statusBar->showMessage(tr("从快速菜单应用配置: %1").arg(config["method"].toString() == "dhcp" ? config["interface"].toString() + "[自动获取IP]" : config["interface"].toString() + tr("[%1]").arg(config["ip"].toString())), 2000);
                         //更新菜单状态
@@ -1055,14 +1055,14 @@ void MainWindow::updateQuickMenu()
                 hasConfigs = true;
             }
         }
-        if (!hasConfigs)
+        if(!hasConfigs)
         {
             QAction *noConfigAction = interfaceMenu->addAction("无保存的配置");
             noConfigAction->setEnabled(false);
         }
     }
     //如果配置较多，添加"更多配置"选项
-    if (configs.size() > 8)
+    if(configs.size() > 8)
     {
         m_quickMenu->addSeparator();
         QAction *moreAction = m_quickMenu->addAction("更多配置...");
@@ -1081,10 +1081,10 @@ void MainWindow::updateQuickMenu()
 bool MainWindow::isDhcpEnabled(const QString &output)
 {
     QStringList patterns = {"DHCP enabled:\\s*(yes|是|ja|oui)", "DHCP activé"};
-    for (const auto &pattern : patterns)
+    for(const auto &pattern : patterns)
     {
         QRegularExpression re(pattern, QRegularExpression::CaseInsensitiveOption);
-        if (re.match(output).hasMatch())
+        if(re.match(output).hasMatch())
         {
             return true;
         }
@@ -1104,7 +1104,7 @@ QVariantMap MainWindow::getCurrentNetworkConfig(const QString &InterfaceName)
     Logger::debug("获取当前网卡的网络配置");
     QVariantMap currentConfig;
     QString normalizedInterface = InterfaceName.split('\r').first().trimmed();
-    if (normalizedInterface.contains("("))
+    if(normalizedInterface.contains("("))
     {
         normalizedInterface = normalizedInterface.split("(").first().trimmed();
     }
@@ -1128,14 +1128,14 @@ QVariantMap MainWindow::getCurrentNetworkConfig(const QString &InterfaceName)
     QRegularExpression gatewayRegex(R"(Default [Gg]ateway\s*:\s*([0-9.]+))");
     //匹配IP地址
     QRegularExpressionMatch ipMatch = ipRegex.match(ipOutput);
-    if (ipMatch.hasMatch())
+    if(ipMatch.hasMatch())
     {
         currentConfig["ip"] = ipMatch.captured(1).trimmed();
         Logger::debug(tr("获取IP地址: %1").arg(currentConfig["ip"].toString()));
     }
     //匹配子网掩码
     QRegularExpressionMatch subnetMatch = subnetRegex.match(ipOutput);
-    if (subnetMatch.hasMatch())
+    if(subnetMatch.hasMatch())
     {
         currentConfig["subnet"] = subnetMatch.captured(1).trimmed();
         Logger::debug(tr("获取子网掩码: %1").arg(currentConfig["subnet"].toString()));
@@ -1145,7 +1145,7 @@ QVariantMap MainWindow::getCurrentNetworkConfig(const QString &InterfaceName)
         //备用匹配方式
         QRegularExpression altSubnetRegex(R"(Subnet Mask\s*:\s*([0-9.]+))");
         QRegularExpressionMatch altMatch = altSubnetRegex.match(ipOutput);
-        if (altMatch.hasMatch())
+        if(altMatch.hasMatch())
         {
             currentConfig["subnet"] = altMatch.captured(1).trimmed();
             Logger::debug(tr("获取子网掩码(备用方式): %1").arg(currentConfig["subnet"].toString()));
@@ -1153,35 +1153,35 @@ QVariantMap MainWindow::getCurrentNetworkConfig(const QString &InterfaceName)
     }
     //匹配默认网关
     QRegularExpressionMatch gatewayMatch = gatewayRegex.match(ipOutput);
-    if (gatewayMatch.hasMatch())
+    if(gatewayMatch.hasMatch())
     {
         currentConfig["gateway"] = gatewayMatch.captured(1).trimmed();
         Logger::debug(tr("获取默认网关: %1").arg(currentConfig["gateway"].toString()));
     }
     //如果通过netsh未获取到子网掩码，尝试使用QNetworkInterface
-    if (currentConfig["subnet"].toString().isEmpty())
+    if(currentConfig["subnet"].toString().isEmpty())
     {
         Logger::debug("尝试通过QNetworkInterface获取子网掩码");
         QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
-        for (const QNetworkInterface &currentInterface : interfaces)
+        for(const QNetworkInterface &currentInterface : interfaces)
         {
             QString ifaceName = currentInterface.name();
-            if (ifaceName.contains("("))
+            if(ifaceName.contains("("))
             {
                 ifaceName = ifaceName.split("(").first().trimmed();
             }
-            if (ifaceName == normalizedInterface)
+            if(ifaceName == normalizedInterface)
             {
-                for (const QNetworkAddressEntry &entry : currentInterface.addressEntries())
+                for(const QNetworkAddressEntry &entry : currentInterface.addressEntries())
                 {
-                    if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol && !entry.ip().isNull())
+                    if(entry.ip().protocol() == QAbstractSocket::IPv4Protocol && !entry.ip().isNull())
                     {
-                        if (currentConfig["ip"].toString().isEmpty())
+                        if(currentConfig["ip"].toString().isEmpty())
                         {
                             currentConfig["ip"] = entry.ip().toString();
                             Logger::debug(tr("通过QNetworkInterface获取IP地址: %1").arg(currentConfig["ip"].toString()));
                         }
-                        if (currentConfig["subnet"].toString().isEmpty())
+                        if(currentConfig["subnet"].toString().isEmpty())
                         {
                             currentConfig["subnet"] = entry.netmask().toString();
                             Logger::debug(tr("通过QNetworkInterface获取子网掩码: %1").arg(currentConfig["subnet"].toString()));
@@ -1194,7 +1194,7 @@ QVariantMap MainWindow::getCurrentNetworkConfig(const QString &InterfaceName)
         }
     }
     //确定IP获取方式
-    if (isDhcp)
+    if(isDhcp)
     {
         currentConfig["method"] = "dhcp";
         Logger::debug("确定为DHCP模式(通过DHCP状态检测)");
@@ -1220,7 +1220,7 @@ QVariantList MainWindow::getAllNetworkConfigs()
     QVariantList allConfigs;
     //获取所有网络接口
     QStringList interfaces = m_configManager->getNetworkInterfaces();
-    for (const QString &iface : interfaces)
+    for(const QString &iface : interfaces)
     {
         QVariantMap currentConfig;
         QString ifaceName = iface.split(" (").first().trimmed(); //提取接口名称
@@ -1244,21 +1244,21 @@ QVariantList MainWindow::getAllNetworkConfigs()
         QRegularExpression gatewayRegex(R"(Default [Gg]ateway\s*:\s*([0-9.]+))");
         //匹配IP地址
         QRegularExpressionMatch ipMatch = ipRegex.match(ipOutput);
-        if (ipMatch.hasMatch())
+        if(ipMatch.hasMatch())
         {
             currentConfig["ip"] = ipMatch.captured(1).trimmed();
             Logger::debug(tr("获取IP地址: %1").arg(currentConfig["ip"].toString()));
         }
         //匹配子网掩码
         QRegularExpressionMatch subnetMatch = subnetRegex.match(ipOutput);
-        if (subnetMatch.hasMatch())
+        if(subnetMatch.hasMatch())
         {
             currentConfig["subnet"] = subnetMatch.captured(1).trimmed();
             Logger::debug(tr("获取子网掩码: %1").arg(currentConfig["subnet"].toString()));
         }
         //匹配默认网关
         QRegularExpressionMatch gatewayMatch = gatewayRegex.match(ipOutput);
-        if (gatewayMatch.hasMatch())
+        if(gatewayMatch.hasMatch())
         {
             currentConfig["gateway"] = gatewayMatch.captured(1).trimmed();
             Logger::debug(tr("获取默认网关: %1").arg(currentConfig["gateway"].toString()));
@@ -1286,13 +1286,13 @@ bool MainWindow::compareConfigs(const QVariantMap &current, const QVariantMap &s
     //清理接口名称进行比较
     QString currentInterface = ConfigManager::cleanInterfaceName(current["interface"].toString());
     QString savedInterface = ConfigManager::cleanInterfaceName(saved["interface"].toString());
-    if (currentInterface != savedInterface)
+    if(currentInterface != savedInterface)
     {
         Logger::debug(tr("接口不匹配: %1 != %2").arg(currentInterface).arg(savedInterface));
         return false;
     }
     //如果是DHCP配置，只需比较接口和方法
-    if (saved["method"].toString() == "dhcp")
+    if(saved["method"].toString() == "dhcp")
     {
         Logger::debug("比较DHCP配置");
         QString saved_interface = m_configManager->cleanInterfaceName(saved["interface"].toString());
@@ -1319,7 +1319,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
     QStringList interfaces = m_configManager->getNetworkInterfaces();
     QMenu menu;
     //为每个接口创建子菜单
-    for (const QString &currentInterface : interfaces)
+    for(const QString &currentInterface : interfaces)
     {
         QString cleanInterface = currentInterface.split(" (").first().trimmed();
         //获取当前接口的配置
@@ -1328,7 +1328,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
         QMenu *interfaceMenu = menu.addMenu(cleanInterface);
         //添加"当前配置"项
         QString configTitle;
-        if (currentConfig["method"].toString() == "dhcp")
+        if(currentConfig["method"].toString() == "dhcp")
         {
             configTitle = "DHCP自动获取";
         }
@@ -1344,10 +1344,10 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
         //添加该接口的所有保存的配置
         bool hasConfigs = false;
         QMap<QString, QVariantMap> configs = m_configManager->configs();
-        for (auto it = configs.begin(); it != configs.end(); ++it)
+        for(auto it = configs.begin(); it != configs.end(); ++it)
         {
             QString configInterface = m_configManager->cleanInterfaceName(it.value()["interface"].toString());
-            if (configInterface == cleanInterface)
+            if(configInterface == cleanInterface)
             {
                 QAction *action = interfaceMenu->addAction(it.key());
                 action->setCheckable(true);
@@ -1355,7 +1355,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
                 connect(action, &QAction::triggered, [this, config = it.value()]()
                 {
                     Logger::info(tr("从悬浮窗菜单应用配置: %1").arg(config["interface"].toString()));
-                    if (m_configManager->applyConfig(config))
+                    if(m_configManager->applyConfig(config))
                     {
                         ui->statusBar->showMessage(tr("从悬浮窗菜单应用配置: %1").arg(config["method"].toString() == "dhcp" ? config["interface"].toString() + "[自动获取IP]" : config["interface"].toString() + tr("[%1]").arg(config["ip"].toString())), 2000);
                     }
@@ -1363,7 +1363,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
                 hasConfigs = true;
             }
         }
-        if (!hasConfigs)
+        if(!hasConfigs)
         {
             QAction *noConfigAction = interfaceMenu->addAction("无保存的配置");
             noConfigAction->setEnabled(false);
@@ -1378,7 +1378,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
     {
         Logger::info(tr("设置悬浮窗置顶: %1").arg(checked ? "是" : "否"));
         Qt::WindowFlags flags = m_floatWindow->windowFlags();
-        if (checked)
+        if(checked)
         {
             flags |= Qt::WindowStaysOnTopHint;
         }
@@ -1404,7 +1404,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
  */
 void MainWindow::onTrayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
-    if (reason == QSystemTrayIcon::DoubleClick)
+    if(reason == QSystemTrayIcon::DoubleClick)
     {
         Logger::debug("双击托盘图标，显示主窗口");
         showNormal();
