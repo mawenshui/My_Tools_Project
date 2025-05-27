@@ -14,6 +14,8 @@
 #include <QSettings>
 #include <QComboBox>
 #include <QPushButton>
+#include <QLabel>
+#include <QPropertyAnimation>
 
 #include "Logger.h"
 #include "configmanager.h"
@@ -108,6 +110,8 @@ private:
     bool m_autostart;          //是否开机自启
     QString m_currentConfig;    //当前选中的配置名称
     QString m_currentInterface; //当前选中的网络接口
+    bool m_lastConfigSuccess;  //上次配置是否成功
+    QLabel* m_statusIndicator; //状态指示灯
 
     //UI初始化相关方法
     void setupUi();            //初始化UI组件
@@ -145,6 +149,9 @@ private:
     void onDisableInterface();
     void onDisableInterface(const QString &interfaceName);
     void updateInterfaceControls();
+
+    void showConfigResult(bool success, const QString &message);
+
 
     QSettings* m_settings = nullptr; // 改为指针以便灵活控制
     QString m_posConfigPath;

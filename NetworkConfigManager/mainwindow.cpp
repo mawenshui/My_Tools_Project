@@ -37,19 +37,19 @@ MainWindow::MainWindow(QWidget *parent) :
     m_floatVisible(true),                     //默认显示悬浮窗
     m_autostart(false)                        //默认不启用开机自启动
 {
-    //初始化日志系统
-    QDir logsDir(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/logs/"));
-    if(!logsDir.exists() && !logsDir.mkpath("."))
-    {
-        Logger::error(tr("无法创建日志文件夹: %1").arg(logsDir.path()));
-        QMessageBox::warning(this, "错误", tr("无法创建日志文件夹: ") + logsDir.path());
-        Logger::instance()->init();
-    }
-    else
-    {
-        Logger::info(tr("日志目录初始化成功: %1").arg(logsDir.path()));
-    }
-    Logger::instance()->init(logsDir.path(), "MainWindow");
+//    //初始化日志系统
+//    QDir logsDir(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/logs/"));
+//    if(!logsDir.exists() && !logsDir.mkpath("."))
+//    {
+//        Logger::error(tr("无法创建日志文件夹: %1").arg(logsDir.path()));
+//        QMessageBox::warning(this, "错误", tr("无法创建日志文件夹: ") + logsDir.path());
+//        Logger::instance()->init();
+//    }
+//    else
+//    {
+//        Logger::info(tr("日志目录初始化成功: %1").arg(logsDir.path()));
+//    }
+//    Logger::instance()->init(logsDir.path(), "MainWindow");
     ui->setupUi(this);
     //1. 检查单实例运行
     Logger::debug("开始检查单实例运行");
@@ -85,6 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     loadAndApplyStyleSheet(":/styles/styles/drak_theme.qss");
     Logger::info("主窗口初始化完成");
+    show(); // 确保主窗口显示
 }
 
 /**
@@ -263,9 +264,57 @@ void MainWindow::setupUi()
     //恢复窗口状态
     Logger::debug("恢复窗口状态");
     restoreWindowState();
+    // 初始化状态指示灯
+    m_statusIndicator = new QLabel(this);
+    m_statusIndicator->setFixedSize(16, 16);
+    m_statusIndicator->setToolTip("配置状态");
+    QPixmap indicatorPixmap(":/images/images/indicator_gray.png");
+    m_statusIndicator->setPixmap(indicatorPixmap.scaled(16, 16, Qt::KeepAspectRatio));
+    ui->statusBar->addPermanentWidget(m_statusIndicator);
     //初始化状态栏
     ui->statusBar->showMessage("就绪", 2000);
     Logger::info("UI初始化完成");
+}
+
+void MainWindow::showConfigResult(bool success, const QString& message)
+{
+    // 更新状态指示灯
+    QString iconPath = success ? ":/images/images/indicator_green.png"
+                       : ":/images/images/indicator_red.png";
+    QPixmap indicatorPixmap(iconPath);
+    m_statusIndicator->setPixmap(indicatorPixmap.scaled(16, 16, Qt::KeepAspectRatio));
+    // 显示动画效果
+    QPropertyAnimation* animation = new QPropertyAnimation(this, "windowOpacity");
+    animation->setDuration(500);
+    animation->setKeyValueAt(0, 1.0);
+    animation->setKeyValueAt(0.5, 0.7);
+    animation->setKeyValueAt(1, 1.0);
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
+    // 更新状态栏消息
+    ui->statusBar->showMessage(message, 5000);
+    // 更新托盘图标状态
+    if(m_trayIcon)
+    {
+        QIcon trayIcon(success ? ":/images/images/icon_green.png"
+                       : ":/images/images/icon_red.png");
+        m_trayIcon->setIcon(trayIcon);
+        // 显示气泡通知
+        m_trayIcon->showMessage("网络配置",
+                                message,
+                                success ? QSystemTrayIcon::Information
+                                : QSystemTrayIcon::Warning,
+                                3000);
+    }
+    // 5秒后恢复默认状态
+    QTimer::singleShot(5000, this, [this]()
+    {
+        QPixmap indicatorPixmap(":/images/images/indicator_gray.png");
+        m_statusIndicator->setPixmap(indicatorPixmap.scaled(16, 16, Qt::KeepAspectRatio));
+        if(m_trayIcon)
+        {
+            m_trayIcon->setIcon(QIcon(":/images/images/icon.png"));
+        }
+    });
 }
 
 /**
@@ -747,33 +796,54 @@ void MainWindow::onDeleteConfig()
 void MainWindow::onApplyConfig()
 {
     Logger::info("开始应用配置");
-    if(m_currentConfig.isEmpty())
+    try
     {
-        Logger::warning("未选择要应用的配置");
-        QMessageBox::critical(this, "错误", "请先选择一个配置！");
-        return;
+        if(m_currentConfig.isEmpty())
+        {
+            Logger::warning("未选择要应用的配置");
+            showConfigResult(false, "请先选择一个配置");
+            return;
+        }
+        QVariantMap config = m_configManager->configs().value(m_currentConfig);
+        if(config.isEmpty())
+        {
+            Logger::error("无效的配置");
+            showConfigResult(false, "无效的配置");
+            return;
+        }
+        QString interfaceName = config["interface"].toString();
+        if(compareConfigs(getCurrentNetworkConfig(interfaceName), config))
+        {
+            Logger::info("配置未变更，跳过应用");
+            showConfigResult(true, "配置未变更");
+            return;
+        }
+        Logger::debug(tr("应用配置: %1").arg(m_currentConfig));
+        // 应用配置
+        if(!m_configManager->applyConfig(config))
+        {
+            Logger::error("应用配置失败");
+            showConfigResult(false, "应用配置失败");
+            return;
+        }
+        Logger::info("配置应用成功");
+        showConfigResult(true, "配置应用成功");
+        // 延迟确保网络配置更新后再刷新菜单
+        QTimer::singleShot(500, this, [this]()
+        {
+            updateQuickMenu();
+            m_floatWindow->update();
+        });
     }
-    QVariantMap config = m_configManager->configs().value(m_currentConfig);
-    if(config.isEmpty())
+    catch(const std::exception& e)
     {
-        Logger::error("无效的配置");
-        QMessageBox::critical(this, "错误", "无效的配置！");
-        return;
+        Logger::critical(QString("配置应用异常: %1").arg(e.what()));
+        showConfigResult(false, QString("配置应用过程中发生异常: %1").arg(e.what()));
     }
-    if(compareConfigs(getCurrentNetworkConfig(config["interface"].toString()), config))
+    catch(...)
     {
-        Logger::info("配置未变更，跳过应用");
-        return;
-    }
-    Logger::debug(tr("应用配置: %1").arg(m_currentConfig));
-    if(!m_configManager->applyConfig(config))
-    {
-        Logger::error("应用配置失败");
-        QMessageBox::critical(this, "错误", "应用配置失败！");
-    }
-    else
-    {
-        Logger::info("配置应用请求已发送");
+        Logger::critical("未知的配置应用异常");
+        showConfigResult(false, "配置应用过程中发生未知异常");
     }
 }
 
@@ -1081,7 +1151,7 @@ void MainWindow::updateQuickMenu()
                     {
                         ui->statusBar->showMessage(tr("从快速菜单应用配置: %1").arg(config["method"].toString() == "dhcp" ? config["interface"].toString() + "[自动获取IP]" : config["interface"].toString() + tr("[%1]").arg(config["ip"].toString())), 2000);
                         //更新菜单状态
-                        QTimer::singleShot(10, this, &MainWindow::updateQuickMenu);
+                        QTimer::singleShot(500, this, &MainWindow::updateQuickMenu);
                     }
                 });
                 hasConfigs = true;
@@ -1316,6 +1386,11 @@ QVariantList MainWindow::getAllNetworkConfigs()
  */
 bool MainWindow::compareConfigs(const QVariantMap &current, const QVariantMap &saved)
 {
+    if(current.isEmpty() || saved.isEmpty())
+    {
+        Logger::debug("配置为空，不匹配");
+        return false;
+    }
     //清理接口名称进行比较
     QString currentInterface = ConfigManager::cleanInterfaceName(current["interface"].toString());
     QString savedInterface = ConfigManager::cleanInterfaceName(saved["interface"].toString());
@@ -1324,19 +1399,38 @@ bool MainWindow::compareConfigs(const QVariantMap &current, const QVariantMap &s
         Logger::debug(tr("接口不匹配: %1 != %2").arg(currentInterface).arg(savedInterface));
         return false;
     }
+    //比较IP获取方法
+    QString currentMethod = current["method"].toString();
+    QString savedMethod = saved["method"].toString();
+    if(currentMethod != savedMethod)
+    {
+        Logger::debug(tr("方法不匹配: %1 != %2").arg(currentMethod).arg(savedMethod));
+        return false;
+    }
     //如果是DHCP配置，只需比较接口和方法
-    if(saved["method"].toString() == "dhcp")
+    if(savedMethod == "dhcp")
     {
         Logger::debug("比较DHCP配置");
-        QString saved_interface = m_configManager->cleanInterfaceName(saved["interface"].toString());
-        return current["method"].toString() == "dhcp" &&
-               current["interface"].toString() == saved_interface;
+        return currentMethod == "dhcp";
     }
-    //静态IP配置需要比较所有字段
+    //静态IP配置需要比较所有关键字段
     Logger::debug("比较静态IP配置");
-    return current["ip"].toString() == saved["ip"].toString() &&
-           current["subnet"].toString() == saved["subnet"].toString() &&
-           current["gateway"].toString() == saved["gateway"].toString();
+    try
+    {
+        bool ipMatch = current["ip"].toString() == saved["ip"].toString();
+        bool subnetMatch = current["subnet"].toString() == saved["subnet"].toString();
+        bool gatewayMatch = current["gateway"].toString() == saved["gateway"].toString();
+        Logger::debug(tr("比较结果 - IP: %1, 子网: %2, 网关: %3")
+                      .arg(ipMatch ? "匹配" : "不匹配")
+                      .arg(subnetMatch ? "匹配" : "不匹配")
+                      .arg(gatewayMatch ? "匹配" : "不匹配"));
+        return ipMatch && subnetMatch && gatewayMatch;
+    }
+    catch(...)
+    {
+        Logger::error("配置比较异常");
+        return false;
+    }
 }
 
 /**
@@ -1389,9 +1483,22 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
                 connect(action, &QAction::triggered, [this, config = it.value()]()
                 {
                     Logger::info(tr("从悬浮窗菜单应用配置: %1").arg(config["interface"].toString()));
+                    // 先检查是否与当前配置相同
+                    QVariantMap currentConfig = getCurrentNetworkConfig(config["interface"].toString());
+                    if(compareConfigs(currentConfig, config))
+                    {
+                        Logger::info("配置与当前相同，无需重复应用");
+                        return;
+                    }
                     if(m_configManager->applyConfig(config))
                     {
                         ui->statusBar->showMessage(tr("从悬浮窗菜单应用配置: %1").arg(config["method"].toString() == "dhcp" ? config["interface"].toString() + "[自动获取IP]" : config["interface"].toString() + tr("[%1]").arg(config["ip"].toString())), 2000);
+                        // 延迟500ms确保网络配置更新后再刷新菜单
+                        QTimer::singleShot(500, this, [this]()
+                        {
+                            updateQuickMenu();
+                            m_floatWindow->update();
+                        });
                     }
                 });
                 hasConfigs = true;

@@ -7,6 +7,9 @@
 #include <QDateTime>
 #include <QMutex>
 #include <QDir>
+#include <QCoreApplication>
+#include <QThread>
+#include <QElapsedTimer>
 
 /**
  * @brief 日志记录器类，提供线程安全的日志记录功能
@@ -37,15 +40,9 @@ public:
      *
      * 使用双重检查锁定模式实现线程安全的单例
      */
-    static Logger *instance()
+    static Logger* instance()
     {
-        static QMutex mutex;          //静态互斥锁
-        QMutexLocker locker(&mutex);  //加锁
-        static Logger* instance = nullptr;
-        if (!instance)
-        {
-            instance = new Logger();
-        }
+        static Logger* instance = new Logger();
         return instance;
     }
 
@@ -59,29 +56,56 @@ public:
      */
     bool init(const QString& logDir = "", const QString& logFilePrefix = "app")
     {
-        QMutexLocker locker(&m_mutex);  //加锁保证线程安全
-        //确定日志目录路径
-        QString dirPath = logDir.isEmpty() ? QDir::currentPath() + "/logs" : logDir;
-        QDir dir(dirPath);
-        //如果目录不存在则创建
-        if (!dir.exists())
+        QMutexLocker locker(&m_mutex);
+        // 如果已经初始化成功，直接返回
+        if(m_logFile.isOpen())
         {
-            if (!dir.mkpath(dirPath))
+            return true;
+        }
+        // 尝试多个可能的日志目录
+        QStringList possibleDirs;
+        if(!logDir.isEmpty())
+        {
+            possibleDirs << logDir;
+        }
+        possibleDirs << QDir::currentPath() + "/logs"
+                     << QDir::tempPath() + "/" + QCoreApplication::applicationName() + "/logs";
+        QString logFilePath;
+        for(const auto& dirPath : possibleDirs)
+        {
+            QDir dir(dirPath);
+            if(!dir.exists() && !dir.mkpath(dirPath))
             {
-                return false;  //创建目录失败
+                continue;
+            }
+            QString dateStr = QDateTime::currentDateTime().toString("yyyyMMdd");
+            logFilePath = dirPath + "/" + logFilePrefix + "_" + dateStr + ".log";
+            m_logFile.setFileName(logFilePath);
+            QElapsedTimer timer;
+            timer.start();
+            // 尝试打开文件，最多等待500ms
+            while(!m_logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
+            {
+                if(timer.elapsed() > 500)
+                {
+                    break;
+                }
+                QThread::msleep(10);
+            }
+            if(m_logFile.isOpen())
+            {
+                m_logStream.setDevice(&m_logFile);
+                return true;
             }
         }
-        //创建带日期的日志文件名
-        QString dateStr = QDateTime::currentDateTime().toString("yyyyMMdd");
-        QString logFilePath = dirPath + "/" + logFilePrefix + "_" + dateStr + ".log";
-        //打开日志文件(追加写入模式)
-        m_logFile.setFileName(logFilePath);
-        if (!m_logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
+        // 所有目录尝试失败，使用控制台输出
+        if(!m_consoleFile.isOpen())
         {
-            return false;  //打开文件失败
+            m_consoleFile.open(stdout, QIODevice::WriteOnly);
+            qWarning("Failed to initialize log file, falling back to console logging");
+            m_logStream.setDevice(&m_consoleFile);
         }
-        m_logStream.setDevice(&m_logFile);
-        return true;
+        return false;
     }
 
     /**
@@ -89,17 +113,89 @@ public:
      * @param level 日志级别
      * @param message 日志消息
      */
+    /**
+     * @brief 设置日志文件最大大小(MB)
+     * @param maxSizeMB 最大大小(MB)
+     */
+    static void setMaxSizeMB(qint64 maxSizeMB)
+    {
+        QMutexLocker locker(&instance()->m_mutex);
+        instance()->m_maxSizeBytes = maxSizeMB * 1024 * 1024;
+    }
+
+    /**
+     * @brief 设置保留的旧日志文件数量
+     * @param count 备份数量
+     */
+    static void setBackupCount(int count)
+    {
+        QMutexLocker locker(&instance()->m_mutex);
+        instance()->m_backupCount = qMax(1, count);
+    }
+
+    /**
+     * @brief 执行日志轮转
+     */
+    void rotateLog()
+    {
+        if(m_logFile.isOpen())
+        {
+            m_logStream.flush();
+            m_logFile.close();
+        }
+        QString currentPath = m_logFile.fileName();
+        QFileInfo fileInfo(currentPath);
+        // 删除最旧的备份
+        QString oldestBackup = QString("%1.%2").arg(currentPath).arg(m_backupCount);
+        if(QFile::exists(oldestBackup))
+        {
+            QFile::remove(oldestBackup);
+        }
+        // 重命名现有备份
+        for(int i = m_backupCount - 1; i >= 1; --i)
+        {
+            QString oldName = QString("%1.%2").arg(currentPath).arg(i);
+            QString newName = QString("%1.%2").arg(currentPath).arg(i + 1);
+            if(QFile::exists(oldName))
+            {
+                QFile::rename(oldName, newName);
+            }
+        }
+        // 重命名当前日志为第一个备份
+        QString firstBackup = QString("%1.1").arg(currentPath);
+        if(QFile::exists(currentPath))
+        {
+            QFile::rename(currentPath, firstBackup);
+        }
+        // 重新打开日志文件
+        if(!m_logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text))
+        {
+            return;
+        }
+        m_logStream.setDevice(&m_logFile);
+    }
+
     void log(LogLevel level, const QString& message)
     {
         QMutexLocker locker(&m_mutex);  //加锁保证线程安全
         //检查日志文件是否打开
-        if (!m_logFile.isOpen())
+        if(!m_logFile.isOpen())
         {
             return;
         }
+        // 检查日志文件大小
+        if(m_logFile.size() >= m_maxSizeBytes)
+        {
+            rotateLog();
+        }
+        // 检查日志文件大小
+        if(m_logFile.size() >= m_maxSizeBytes)
+        {
+            rotateLog();
+        }
         //将日志级别转换为字符串
         QString levelStr;
-        switch (level)
+        switch(level)
         {
             case DEBUG:
                 levelStr = "DEBUG";
@@ -183,7 +279,7 @@ public:
     void shutdown()
     {
         QMutexLocker locker(&m_mutex);  //加锁保证线程安全
-        if (m_logFile.isOpen())
+        if(m_logFile.isOpen())
         {
             m_logStream.flush();  //确保所有内容写入文件
             m_logFile.close();
@@ -208,13 +304,16 @@ private:
     }
 
     //禁止拷贝和赋值
-    Logger(const Logger &) = delete;
-    Logger &operator=(const Logger &) = delete;
+    Logger(const Logger&) = delete;
+    Logger& operator=(const Logger&) = delete;
 
     //成员变量 --------------------------------------------------------
     QFile m_logFile;        //日志文件对象
+    QFile m_consoleFile;    //控制台文件对象
     QTextStream m_logStream; //日志文本流
     QMutex m_mutex;         //互斥锁，保证线程安全
+    qint64 m_maxSizeBytes = 5 * 1024 * 1024; // 默认5MB
+    int m_backupCount = 3;  // 默认保留3个备份
 };
 
 #endif //LOGGER_H
