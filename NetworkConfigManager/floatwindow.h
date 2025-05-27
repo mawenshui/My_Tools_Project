@@ -33,6 +33,12 @@ public:
     void setBackgroundPixmap(const QPixmap &pixmap);
 
     /**
+     * @brief 获取背景图标
+     * @return pixmap 背景图标
+     */
+    QPixmap getBackgroundPixmap();
+
+    /**
      * @brief 清除背景图标
      *
      * 清除后恢复自绘制的背景

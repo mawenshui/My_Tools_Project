@@ -49,6 +49,11 @@ bool FloatWindow::hasBackgroundPixmap() const
     return m_hasBackgroundPixmap;
 }
 
+QPixmap FloatWindow::getBackgroundPixmap()
+{
+    return m_backgroundPixmap;
+}
+
 /**
  * @brief 设置背景颜色
  * @param color 新的背景颜色
@@ -57,7 +62,7 @@ bool FloatWindow::hasBackgroundPixmap() const
  */
 void FloatWindow::setBackgroundColor(const QColor &color)
 {
-    if (m_backgroundColor != color)
+    if(m_backgroundColor != color)
     {
         m_backgroundColor = color;
         update();  //触发重绘
@@ -72,7 +77,7 @@ void FloatWindow::setBackgroundColor(const QColor &color)
  */
 void FloatWindow::setText(const QString &text)
 {
-    if (m_displayText != text)
+    if(m_displayText != text)
     {
         m_displayText = text;
         update();  //触发重绘
@@ -87,7 +92,7 @@ void FloatWindow::setText(const QString &text)
  */
 void FloatWindow::setTextColor(const QColor &color)
 {
-    if (m_textColor != color)
+    if(m_textColor != color)
     {
         m_textColor = color;
         update();  //触发重绘
@@ -160,7 +165,7 @@ void FloatWindow::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);  //启用抗锯齿
     //如果有背景图标，则绘制背景图标
-    if (m_hasBackgroundPixmap)
+    if(m_hasBackgroundPixmap)
     {
         //计算居中位置
         QRect pixmapRect;
@@ -172,7 +177,7 @@ void FloatWindow::paintEvent(QPaintEvent *event)
     {
         //否则绘制默认背景(圆形)
         QColor bgColor = m_backgroundColor;
-        if (m_hovered)
+        if(m_hovered)
         {
             bgColor = bgColor.lighter(110); //悬停时颜色变亮10%
         }
@@ -197,7 +202,7 @@ void FloatWindow::paintEvent(QPaintEvent *event)
  */
 void FloatWindow::mousePressEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton && m_draggable)
+    if(event->button() == Qt::LeftButton && m_draggable)
     {
         m_dragPosition = event->globalPos() - frameGeometry().topLeft();
         m_dragging = true;
@@ -217,7 +222,7 @@ void FloatWindow::mousePressEvent(QMouseEvent *event)
  */
 void FloatWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    if (m_dragging && (event->buttons() & Qt::LeftButton))
+    if(m_dragging && (event->buttons() & Qt::LeftButton))
     {
         move(event->globalPos() - m_dragPosition);
         event->accept();
@@ -236,7 +241,7 @@ void FloatWindow::mouseMoveEvent(QMouseEvent *event)
  */
 void FloatWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton && m_dragging)
+    if(event->button() == Qt::LeftButton && m_dragging)
     {
         m_dragging = false;
         event->accept();
@@ -255,7 +260,7 @@ void FloatWindow::mouseReleaseEvent(QMouseEvent *event)
  */
 void FloatWindow::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    if (event->button() == Qt::LeftButton)
+    if(event->button() == Qt::LeftButton)
     {
         emit doubleClicked();
         event->accept();
@@ -312,7 +317,7 @@ void FloatWindow::leaveEvent(QEvent *event)
  */
 void FloatWindow::updateHoverState(bool hovered)
 {
-    if (m_hovered != hovered)
+    if(m_hovered != hovered)
     {
         m_hovered = hovered;
         update();  //触发重绘以更新视觉效果

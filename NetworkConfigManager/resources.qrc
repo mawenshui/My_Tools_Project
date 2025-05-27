@@ -3,6 +3,10 @@
         <file>images/icon.ico</file>
         <file>images/icon.png</file>
         <file>images/float_icon.png</file>
+        <file>images/icon_green.png</file>
+        <file>images/icon_red.png</file>
+        <file>images/indicator_green.png</file>
+        <file>images/indicator_red.png</file>
     </qresource>
     <qresource prefix="/styles">
         <file>styles/drak_theme.qss</file>

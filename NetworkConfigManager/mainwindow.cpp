@@ -37,19 +37,6 @@ MainWindow::MainWindow(QWidget *parent) :
     m_floatVisible(true),                     //默认显示悬浮窗
     m_autostart(false)                        //默认不启用开机自启动
 {
-//    //初始化日志系统
-//    QDir logsDir(QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/logs/"));
-//    if(!logsDir.exists() && !logsDir.mkpath("."))
-//    {
-//        Logger::error(tr("无法创建日志文件夹: %1").arg(logsDir.path()));
-//        QMessageBox::warning(this, "错误", tr("无法创建日志文件夹: ") + logsDir.path());
-//        Logger::instance()->init();
-//    }
-//    else
-//    {
-//        Logger::info(tr("日志目录初始化成功: %1").arg(logsDir.path()));
-//    }
-//    Logger::instance()->init(logsDir.path(), "MainWindow");
     ui->setupUi(this);
     //1. 检查单实例运行
     Logger::debug("开始检查单实例运行");
@@ -278,10 +265,14 @@ void MainWindow::setupUi()
 
 void MainWindow::showConfigResult(bool success, const QString& message)
 {
+    // 保存原始悬浮窗样式
+    QPixmap originalPixmap = m_floatWindow->getBackgroundPixmap();
+    // 设置结果背景
+    QString bgImage = success ? ":/images/images/indicator_green.png" : ":/images/images/indicator_red.png";
+    m_floatWindow->clearBackgroundPixmap();
+    m_floatWindow->setBackgroundPixmap(QPixmap(bgImage));
     // 更新状态指示灯
-    QString iconPath = success ? ":/images/images/indicator_green.png"
-                       : ":/images/images/indicator_red.png";
-    QPixmap indicatorPixmap(iconPath);
+    QPixmap indicatorPixmap(bgImage);
     m_statusIndicator->setPixmap(indicatorPixmap.scaled(16, 16, Qt::KeepAspectRatio));
     // 显示动画效果
     QPropertyAnimation* animation = new QPropertyAnimation(this, "windowOpacity");
@@ -291,7 +282,7 @@ void MainWindow::showConfigResult(bool success, const QString& message)
     animation->setKeyValueAt(1, 1.0);
     animation->start(QAbstractAnimation::DeleteWhenStopped);
     // 更新状态栏消息
-    ui->statusBar->showMessage(message, 5000);
+    ui->statusBar->showMessage(message, 3000);
     // 更新托盘图标状态
     if(m_trayIcon)
     {
@@ -299,15 +290,18 @@ void MainWindow::showConfigResult(bool success, const QString& message)
                        : ":/images/images/icon_red.png");
         m_trayIcon->setIcon(trayIcon);
         // 显示气泡通知
-        m_trayIcon->showMessage("网络配置",
-                                message,
-                                success ? QSystemTrayIcon::Information
-                                : QSystemTrayIcon::Warning,
-                                3000);
+        if(m_trayIcon->isVisible() && m_trayIcon->supportsMessages())
+        {
+            m_trayIcon->showMessage(tr("网络配置"), message,
+                                    success ? QSystemTrayIcon::Information : QSystemTrayIcon::Warning,
+                                    3000);
+        }
     }
-    // 5秒后恢复默认状态
-    QTimer::singleShot(5000, this, [this]()
+    // 3秒后恢复默认状态
+    QTimer::singleShot(3000, this, [this, originalPixmap]()
     {
+        m_floatWindow->clearBackgroundPixmap();
+        m_floatWindow->setBackgroundPixmap(originalPixmap);
         QPixmap indicatorPixmap(":/images/images/indicator_gray.png");
         m_statusIndicator->setPixmap(indicatorPixmap.scaled(16, 16, Qt::KeepAspectRatio));
         if(m_trayIcon)
@@ -812,6 +806,14 @@ void MainWindow::onApplyConfig()
             return;
         }
         QString interfaceName = config["interface"].toString();
+        // 检查网卡状态
+        QString adminStatus = NetworkInterfaceManager::getInterfaceAdminStatus(interfaceName);
+        if(adminStatus == "已禁用")
+        {
+            Logger::warning(tr("网卡 %1 已被禁用，无法应用配置").arg(interfaceName));
+            showConfigResult(false, tr("网卡 %1 已被禁用").arg(interfaceName));
+            return;
+        }
         if(compareConfigs(getCurrentNetworkConfig(interfaceName), config))
         {
             Logger::info("配置未变更，跳过应用");
@@ -1488,6 +1490,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
                     if(compareConfigs(currentConfig, config))
                     {
                         Logger::info("配置与当前相同，无需重复应用");
+                        showConfigResult(true, "配置与当前相同，无需重复应用");
                         return;
                     }
                     if(m_configManager->applyConfig(config))
@@ -1499,6 +1502,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
                             updateQuickMenu();
                             m_floatWindow->update();
                         });
+                        showConfigResult(true, tr("从悬浮窗菜单应用配置: %1").arg(config["method"].toString() == "dhcp" ? config["interface"].toString() + "[自动获取IP]" : config["interface"].toString() + tr("[%1]").arg(config["ip"].toString())));
                     }
                 });
                 hasConfigs = true;
@@ -1600,7 +1604,7 @@ void MainWindow::onEnableInterface(const QString &interfaceName)
     QString interface = interfaceName.isEmpty() ? ui->networkInterfaceCombo->currentData().toString() : interfaceName;
     if(interface.isEmpty())
     {
-        QMessageBox::warning(this, tr("警告"), tr("请选择要启用的网卡"));
+        showConfigResult(false, tr("请选择要启用的网卡"));
         return;
     }
     NetworkInterfaceManager manager;
