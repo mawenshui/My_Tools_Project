@@ -70,12 +70,12 @@ MainWindow::MainWindow(QWidget *parent) :
     initializeApplication();
     //4. 初始化系统托盘和悬浮窗
     Logger::info("初始化系统托盘和悬浮窗");
+    //初始化系统托盘
     setupTrayIcon();
     //5. 最后建立连接
     Logger::debug("建立信号槽连接");
     setupConnections();
-    //初始化系统托盘
-    setupTrayIcon();
+    //初始化悬浮窗位置
     loadFloatWindowPosition();
     if(m_floatVisible)
     {
@@ -364,6 +364,8 @@ void MainWindow::initializeApplication()
     //更新网络接口
     Logger::debug("更新网络接口列表");
     updateInterfaces();
+    //更新所有网络接口及状态
+    refreshNetworkInterfaces();
     //检查开机启动
     QSettings settings("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", QSettings::NativeFormat);
     m_autostart = settings.contains(APP_NAME);
