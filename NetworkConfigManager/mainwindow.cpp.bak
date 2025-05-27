@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "floatwindow.h"
 
 #include <QMessageBox>
 #include <QInputDialog>
@@ -74,8 +75,6 @@ MainWindow::MainWindow(QWidget *parent) :
     //5. 最后建立连接
     Logger::debug("建立信号槽连接");
     setupConnections();
-    //初始化系统托盘
-    setupTrayIcon();
     loadFloatWindowPosition();
     if(m_floatVisible)
     {
@@ -290,8 +289,8 @@ void MainWindow::setupConnections()
     connect(ui->applyButton, &QPushButton::clicked, this, &MainWindow::onApplyConfig);
     connect(ui->refreshButton, &QPushButton::clicked, this, &MainWindow::updateInterfaces);
     //网卡管理信号槽
-    connect(ui->enableInterfaceBtn, &QPushButton::clicked, this, static_cast<void (MainWindow::*)()>(&MainWindow::onEnableInterface));
-    connect(ui->disableInterfaceBtn, &QPushButton::clicked, this, static_cast<void (MainWindow::*)()>(&MainWindow::onDisableInterface));
+    connect(ui->enableInterfaceBtn, &QPushButton::clicked, this, &MainWindow::onEnableInterface);
+    connect(ui->disableInterfaceBtn, &QPushButton::clicked, this, &MainWindow::onDisableInterface);
     connect(ui->refreshInterfacesBtn, &QPushButton::clicked, this, &MainWindow::refreshNetworkInterfaces);
     //配置管理器的信号
     connect(m_configManager, &ConfigManager::configApplied, this, [this](bool success, const QString & message)
@@ -340,6 +339,8 @@ void MainWindow::setupConnections()
     });
     //在MainWindow构造函数中
     connect(qApp, &QApplication::aboutToQuit, this, &MainWindow::saveFloatWindowPosition);
+    //初始化系统托盘
+    setupTrayIcon();
     Logger::info("信号槽连接建立完成");
 }
 
@@ -533,8 +534,7 @@ void MainWindow::updateInterfaces()
 {
     Logger::debug("更新网络接口列表");
     ui->interfaceCombo->clear();
-    NetworkInterfaceManager manager;
-    QStringList interfaces = manager.getNetworkInterfaces();
+    QStringList interfaces = m_configManager->getNetworkInterfaces();
     if(interfaces.isEmpty())
     {
         Logger::warning("未找到可用的网络接口");
@@ -930,27 +930,22 @@ void MainWindow::setupTrayIcon()
     updateQuickMenu();
     //添加网卡管理子菜单
     QMenu *interfaceMenu = trayMenu->addMenu("网卡管理");
-    //获取所有网络接口
-    NetworkInterfaceManager manager;
-    QStringList interfaces = manager.getNetworkInterfaces();
+    QStringList interfaces = m_configManager->getNetworkInterfaces();
     for(const QString &interface : interfaces)
     {
         QString cleanInterface = interface.split(" (").first().trimmed();
         QMenu *ifaceMenu = interfaceMenu->addMenu(cleanInterface);
-        QString adminStatus = manager.getInterfaceAdminStatus(cleanInterface);
         QAction *enableAction = ifaceMenu->addAction("启用网卡");
-        enableAction->setCheckable(true);
-        enableAction->setChecked(adminStatus == "已启用");
         connect(enableAction, &QAction::triggered, this, [this, cleanInterface]()
         {
-            onEnableInterface(cleanInterface);
+            ui->networkInterfaceCombo->setCurrentText(cleanInterface);
+            onEnableInterface();
         });
         QAction *disableAction = ifaceMenu->addAction("禁用网卡");
-        disableAction->setCheckable(true);
-        disableAction->setChecked(adminStatus == "已禁用");
         connect(disableAction, &QAction::triggered, this, [this, cleanInterface]()
         {
-            onDisableInterface(cleanInterface);
+            ui->networkInterfaceCombo->setCurrentText(cleanInterface);
+            onDisableInterface();
         });
     }
     //添加"开机自启动"动作
@@ -1028,8 +1023,7 @@ void MainWindow::updateQuickMenu()
     Logger::debug("更新快速应用菜单");
     m_quickMenu->clear();
     //获取所有网络接口
-    NetworkInterfaceManager manager;
-    QStringList interfaces = manager.getNetworkInterfaces();
+    QStringList interfaces = m_configManager->getNetworkInterfaces();
     if(interfaces.isEmpty())
     {
         Logger::debug("无可用网络接口");
@@ -1249,8 +1243,7 @@ QVariantList MainWindow::getAllNetworkConfigs()
     Logger::debug("获取所有网络配置");
     QVariantList allConfigs;
     //获取所有网络接口
-    NetworkInterfaceManager manager;
-    QStringList interfaces = manager.getNetworkInterfaces();
+    QStringList interfaces = m_configManager->getNetworkInterfaces();
     for(const QString &iface : interfaces)
     {
         QVariantMap currentConfig;
@@ -1347,8 +1340,7 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
 {
     Logger::debug("显示悬浮窗上下文菜单");
     //获取所有网络接口
-    NetworkInterfaceManager manager;
-    QStringList interfaces = manager.getNetworkInterfaces();
+    QStringList interfaces = m_configManager->getNetworkInterfaces();
     QMenu menu;
     //为每个接口创建子菜单
     for(const QString &currentInterface : interfaces)
@@ -1402,22 +1394,17 @@ void MainWindow::showFloatWindowMenu(const QPoint &pos)
         }
         // 添加网卡管理动作
         interfaceMenu->addSeparator();
-        QString adminStatus = manager.getInterfaceAdminStatus(cleanInterface);
         QAction *enableAction = interfaceMenu->addAction("启用网卡");
-        enableAction->setCheckable(true);
-        enableAction->setChecked(adminStatus == "已启用");
         connect(enableAction, &QAction::triggered, this, [this, cleanInterface]()
         {
             ui->networkInterfaceCombo->setCurrentText(cleanInterface);
-            onEnableInterface(cleanInterface);
+            onEnableInterface();
         });
         QAction *disableAction = interfaceMenu->addAction("禁用网卡");
-        disableAction->setCheckable(true);
-        disableAction->setChecked(adminStatus == "已禁用");
         connect(disableAction, &QAction::triggered, this, [this, cleanInterface]()
         {
             ui->networkInterfaceCombo->setCurrentText(cleanInterface);
-            onDisableInterface(cleanInterface);
+            onDisableInterface();
         });
     }
     menu.addSeparator();
@@ -1486,9 +1473,9 @@ void MainWindow::refreshNetworkInterfaces()
     ui->statusBar->showMessage(tr("网卡列表已刷新，共 %1 个网卡").arg(interfaces.size()), 2000);
 }
 
-void MainWindow::onEnableInterface(const QString &interfaceName)
+void MainWindow::onEnableInterface()
 {
-    QString interface = interfaceName.isEmpty() ? ui->networkInterfaceCombo->currentData().toString() : interfaceName;
+    QString interface = ui->networkInterfaceCombo->currentData().toString();
     if(interface.isEmpty())
     {
         QMessageBox::warning(this, tr("警告"), tr("请选择要启用的网卡"));
@@ -1512,14 +1499,9 @@ void MainWindow::onEnableInterface(const QString &interfaceName)
     }
 }
 
-void MainWindow::onEnableInterface()
+void MainWindow::onDisableInterface()
 {
-    onEnableInterface("");
-}
-
-void MainWindow::onDisableInterface(const QString &interfaceName)
-{
-    QString interface = interfaceName.isEmpty() ? ui->networkInterfaceCombo->currentData().toString() : interfaceName;
+    QString interface = ui->networkInterfaceCombo->currentData().toString();
     if(interface.isEmpty())
     {
         QMessageBox::warning(this, tr("警告"), tr("请选择要禁用的网卡"));
@@ -1541,11 +1523,6 @@ void MainWindow::onDisableInterface(const QString &interfaceName)
     {
         QMessageBox::critical(this, tr("错误"), tr("禁用网卡 %1 失败").arg(interface));
     }
-}
-
-void MainWindow::onDisableInterface()
-{
-    onDisableInterface("");
 }
 
 void MainWindow::updateInterfaceControls()

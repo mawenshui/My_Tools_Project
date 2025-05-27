@@ -141,7 +141,9 @@ private:
     //网卡管理槽函数
     void refreshNetworkInterfaces();
     void onEnableInterface();
+    void onEnableInterface(const QString &interfaceName);
     void onDisableInterface();
+    void onDisableInterface(const QString &interfaceName);
     void updateInterfaceControls();
 
     QSettings* m_settings = nullptr; // 改为指针以便灵活控制
