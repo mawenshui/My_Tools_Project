@@ -1,8 +1,0 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-    <file alias="icons/folder.png">resources/icons/folder.png</file>
-    <file alias="icons/start.png">resources/icons/start.png</file>
-    <file alias="icons/pause.png">resources/icons/pause.png</file>
-    <file alias="icons/cancel.png">resources/icons/cancel.png</file>
-</qresource>
-</RCC>
