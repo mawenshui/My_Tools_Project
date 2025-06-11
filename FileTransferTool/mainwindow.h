@@ -27,6 +27,15 @@
 #include <QGridLayout>
 #include <QFormLayout>
 #include <QSplitter>
+#include <QMenu>
+#include <QAction>
+#include <QInputDialog>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QClipboard>
+#include <QMimeData>
+#include <QStandardPaths>
+#include <QProcess>
 #include "filetransferworker.h"
 
 QT_BEGIN_NAMESPACE
@@ -166,5 +175,131 @@ private:
      * @param fileType 文件类型名称
      */
     void updateFileTypeExtensionsDisplay(const QString &fileType);
+    
+    // 文件管理功能
+    /**
+     * @brief 复制选中的文件/文件夹
+     */
+    void copySelectedItems();
+    
+    /**
+     * @brief 剪切选中的文件/文件夹
+     */
+    void cutSelectedItems();
+    
+    /**
+     * @brief 粘贴文件/文件夹
+     */
+    void pasteItems();
+    
+    /**
+     * @brief 删除选中的文件/文件夹
+     */
+    void deleteSelectedItems();
+    
+    /**
+     * @brief 重命名选中的文件/文件夹
+     */
+    void renameSelectedItem();
+    
+    /**
+     * @brief 查找文件/文件夹
+     */
+    void findFiles();
+    
+    /**
+     * @brief 查看文件/文件夹属性
+     */
+    void showProperties();
+    
+    /**
+     * @brief 刷新文件列表
+     */
+    void refreshFileList();
+    
+    /**
+     * @brief 双击文件列表项处理
+     * @param item 被双击的项
+     */
+    void onFileListDoubleClicked(QListWidgetItem *item);
+    
+    /**
+     * @brief 文件列表右键菜单
+     * @param pos 右键位置
+     */
+    void showFileListContextMenu(const QPoint &pos);
+    
+    /**
+     * @brief 更新文件管理按钮状态
+     */
+    void updateFileManagementButtons();
+    
+private:
+    // 文件管理相关成员变量
+    QStringList m_clipboardPaths;  // 剪贴板路径列表
+    bool m_isCutOperation;          // 是否为剪切操作
+    QString m_currentDirectory;     // 当前浏览目录
+    
+    // 文件管理UI组件
+    QListWidget *m_fileListWidget;      // 文件浏览列表
+    QPushButton *m_copyBtn;             // 复制按钮
+    QPushButton *m_cutBtn;              // 剪切按钮
+    QPushButton *m_pasteBtn;            // 粘贴按钮
+    QPushButton *m_deleteBtn;           // 删除按钮
+    QPushButton *m_renameBtn;           // 重命名按钮
+    QPushButton *m_findBtn;             // 查找按钮
+    QPushButton *m_propertiesBtn;       // 属性按钮
+    QPushButton *m_refreshBtn;          // 刷新按钮
+    QPushButton *m_upDirBtn;            // 上级目录按钮
+    QLineEdit *m_currentPathEdit;       // 当前路径显示
+    QComboBox *m_driveComboBox;         // 盘符选择下拉框
+    
+    /**
+     * @brief 初始化文件管理UI
+     */
+    void initFileManagementUI();
+    
+    /**
+     * @brief 加载目录内容
+     * @param dirPath 目录路径
+     */
+    void loadDirectoryContent(const QString &dirPath);
+    
+    /**
+     * @brief 执行文件复制操作
+     * @param sourcePaths 源路径列表
+     * @param targetDir 目标目录
+     * @param isCut 是否为剪切操作
+     * @return 是否成功
+     */
+    bool performFileCopy(const QStringList &sourcePaths, const QString &targetDir, bool isCut = false);
+    
+    /**
+     * @brief 获取选中的文件路径列表
+     * @return 文件路径列表
+     */
+    QStringList getSelectedFilePaths();
+    
+    /**
+     * @brief 格式化文件大小显示
+     * @param bytes 字节数
+     * @return 格式化后的大小字符串
+     */
+    QString formatFileSize(qint64 bytes);
+    
+    /**
+     * @brief 获取文件图标类型
+     * @param filePath 文件路径
+     * @return 图标类型字符串
+     */
+    QString getFileIconType(const QString &filePath);
+    
+    /**
+     * @brief 递归复制目录
+     * @param sourceDir 源目录
+     * @param targetDir 目标目录
+     * @return 是否成功
+     */
+    bool copyDirectoryRecursively(const QString &sourceDir, const QString &targetDir);
 };
 #endif // MAINWINDOW_H

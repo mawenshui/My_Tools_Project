@@ -315,8 +315,6 @@ debug/moc_mainwindow.cpp: mainwindow.h \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QStandardPaths \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QProcess \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/qprocess.h \
-		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QFileSystemWatcher \
-		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/qfilesystemwatcher.h \
 		filetransferworker.h \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QObject \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QStringList \
@@ -637,8 +635,6 @@ debug/main.o: main.cpp mainwindow.h \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QStandardPaths \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QProcess \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/qprocess.h \
-		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QFileSystemWatcher \
-		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/qfilesystemwatcher.h \
 		filetransferworker.h \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QObject \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QStringList \
@@ -854,8 +850,6 @@ debug/mainwindow.o: mainwindow.cpp mainwindow.h \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QStandardPaths \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QProcess \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/qprocess.h \
-		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QFileSystemWatcher \
-		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/qfilesystemwatcher.h \
 		filetransferworker.h \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QObject \
 		../../../__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/include/QtCore/QStringList \

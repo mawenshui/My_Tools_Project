@@ -11,9 +11,12 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , m_workerThread(nullptr)
     , m_worker(nullptr)
+    , m_isCutOperation(false)
+    , m_currentDirectory(QDir::currentPath())
 {
     ui->setupUi(this);
     initUI();
+    initFileManagementUI();
 }
 
 MainWindow::~MainWindow()
@@ -550,6 +553,653 @@ void MainWindow::updateFileTypeExtensionsDisplay(const QString &fileType)
             m_fileTypeExtensionsLabel->setText("未知文件类型");
             m_fileTypeExtensionsLabel->setStyleSheet("QLabel { color: #999; font-size: 11px; padding: 5px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 3px; }");
         }
+    }
+}
+
+// 文件管理功能实现
+void MainWindow::initFileManagementUI()
+{
+    // 创建文件管理选项卡
+    QWidget *fileManagementTab = new QWidget();
+    QVBoxLayout *fileManagementLayout = new QVBoxLayout(fileManagementTab);
+    
+    // 当前路径显示和导航
+    QHBoxLayout *pathLayout = new QHBoxLayout();
+    QLabel *pathLabel = new QLabel("当前路径:", this);
+    
+    // 添加盘符选择下拉框
+    QLabel *driveLabel = new QLabel("盘符:", this);
+    m_driveComboBox = new QComboBox(this);
+    
+    // 获取所有可用的盘符
+    QFileInfoList drives = QDir::drives();
+    for (const QFileInfo &drive : drives) {
+        QString drivePath = drive.absolutePath();
+        m_driveComboBox->addItem(drivePath, drivePath);
+    }
+    
+    // 设置当前盘符为当前目录所在的盘符
+    QString currentDrive = QDir(m_currentDirectory).rootPath();
+    int driveIndex = m_driveComboBox->findData(currentDrive);
+    if (driveIndex >= 0) {
+        m_driveComboBox->setCurrentIndex(driveIndex);
+    }
+    
+    m_currentPathEdit = new QLineEdit(this);
+    m_currentPathEdit->setText(m_currentDirectory);
+    m_currentPathEdit->setReadOnly(true);
+    m_upDirBtn = new QPushButton("上级目录", this);
+    m_refreshBtn = new QPushButton("刷新", this);
+    
+    pathLayout->addWidget(driveLabel);
+    pathLayout->addWidget(m_driveComboBox);
+    pathLayout->addWidget(pathLabel);
+    pathLayout->addWidget(m_currentPathEdit);
+    pathLayout->addWidget(m_upDirBtn);
+    pathLayout->addWidget(m_refreshBtn);
+    
+    fileManagementLayout->addLayout(pathLayout);
+    
+    // 文件列表
+    m_fileListWidget = new QListWidget(this);
+    m_fileListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    m_fileListWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    fileManagementLayout->addWidget(m_fileListWidget);
+    
+    // 文件操作按钮
+    QHBoxLayout *fileOpsLayout = new QHBoxLayout();
+    m_copyBtn = new QPushButton("复制", this);
+    m_cutBtn = new QPushButton("剪切", this);
+    m_pasteBtn = new QPushButton("粘贴", this);
+    m_deleteBtn = new QPushButton("删除", this);
+    m_renameBtn = new QPushButton("重命名", this);
+    m_findBtn = new QPushButton("查找", this);
+    m_propertiesBtn = new QPushButton("属性", this);
+    
+    // 设置按钮样式
+    QString buttonStyle = "QPushButton { padding: 6px 12px; margin: 2px; }";
+    m_copyBtn->setStyleSheet(buttonStyle);
+    m_cutBtn->setStyleSheet(buttonStyle);
+    m_pasteBtn->setStyleSheet(buttonStyle + "QPushButton:disabled { color: #999; }");
+    m_deleteBtn->setStyleSheet(buttonStyle + "QPushButton { background-color: #f44336; color: white; } QPushButton:hover { background-color: #d32f2f; }");
+    m_renameBtn->setStyleSheet(buttonStyle);
+    m_findBtn->setStyleSheet(buttonStyle);
+    m_propertiesBtn->setStyleSheet(buttonStyle);
+    
+    fileOpsLayout->addWidget(m_copyBtn);
+    fileOpsLayout->addWidget(m_cutBtn);
+    fileOpsLayout->addWidget(m_pasteBtn);
+    fileOpsLayout->addWidget(m_deleteBtn);
+    fileOpsLayout->addWidget(m_renameBtn);
+    fileOpsLayout->addWidget(m_findBtn);
+    fileOpsLayout->addWidget(m_propertiesBtn);
+    fileOpsLayout->addStretch();
+    
+    fileManagementLayout->addLayout(fileOpsLayout);
+    
+    // 将文件管理选项卡添加到筛选选项卡组件中
+    m_filterTabWidget->addTab(fileManagementTab, "文件管理");
+    
+    // 连接信号槽
+    connect(m_driveComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), [this](int index) {
+        if (index >= 0) {
+            QString selectedDrive = m_driveComboBox->itemData(index).toString();
+            m_currentDirectory = selectedDrive;
+            loadDirectoryContent(m_currentDirectory);
+        }
+    });
+    
+    connect(m_upDirBtn, &QPushButton::clicked, [this]() {
+        QDir dir(m_currentDirectory);
+        if (dir.cdUp()) {
+            m_currentDirectory = dir.absolutePath();
+            loadDirectoryContent(m_currentDirectory);
+            
+            // 更新盘符选择框
+            QString currentDrive = QDir(m_currentDirectory).rootPath();
+            int driveIndex = m_driveComboBox->findData(currentDrive);
+            if (driveIndex >= 0 && driveIndex != m_driveComboBox->currentIndex()) {
+                m_driveComboBox->setCurrentIndex(driveIndex);
+            }
+        }
+    });
+    
+    connect(m_refreshBtn, &QPushButton::clicked, this, &MainWindow::refreshFileList);
+    connect(m_fileListWidget, &QListWidget::itemDoubleClicked, this, &MainWindow::onFileListDoubleClicked);
+    connect(m_fileListWidget, &QListWidget::customContextMenuRequested, this, &MainWindow::showFileListContextMenu);
+    connect(m_fileListWidget, &QListWidget::itemSelectionChanged, this, &MainWindow::updateFileManagementButtons);
+    
+    connect(m_copyBtn, &QPushButton::clicked, this, &MainWindow::copySelectedItems);
+    connect(m_cutBtn, &QPushButton::clicked, this, &MainWindow::cutSelectedItems);
+    connect(m_pasteBtn, &QPushButton::clicked, this, &MainWindow::pasteItems);
+    connect(m_deleteBtn, &QPushButton::clicked, this, &MainWindow::deleteSelectedItems);
+    connect(m_renameBtn, &QPushButton::clicked, this, &MainWindow::renameSelectedItem);
+    connect(m_findBtn, &QPushButton::clicked, this, &MainWindow::findFiles);
+    connect(m_propertiesBtn, &QPushButton::clicked, this, &MainWindow::showProperties);
+    
+    // 初始化文件列表
+    loadDirectoryContent(m_currentDirectory);
+    updateFileManagementButtons();
+}
+
+void MainWindow::loadDirectoryContent(const QString &dirPath)
+{
+    m_fileListWidget->clear();
+    m_currentDirectory = dirPath;
+    m_currentPathEdit->setText(dirPath);
+    
+    // 更新盘符选择框
+    QString currentDrive = QDir(dirPath).rootPath();
+    int driveIndex = m_driveComboBox->findData(currentDrive);
+    if (driveIndex >= 0 && driveIndex != m_driveComboBox->currentIndex()) {
+        // 临时断开信号连接，避免递归调用
+        m_driveComboBox->blockSignals(true);
+        m_driveComboBox->setCurrentIndex(driveIndex);
+        m_driveComboBox->blockSignals(false);
+    }
+    
+    QDir dir(dirPath);
+    if (!dir.exists()) {
+        return;
+    }
+    
+    // 添加文件夹
+    QStringList dirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QString &dirName : dirs) {
+        QListWidgetItem *item = new QListWidgetItem(m_fileListWidget);
+        QString fullPath = dir.absoluteFilePath(dirName);
+        item->setText(QString("📁 %1").arg(dirName));
+        item->setData(Qt::UserRole, fullPath);
+        item->setData(Qt::UserRole + 1, "directory");
+        item->setToolTip(fullPath);
+    }
+    
+    // 添加文件
+    QStringList files = dir.entryList(QDir::Files, QDir::Name);
+    for (const QString &fileName : files) {
+        QListWidgetItem *item = new QListWidgetItem(m_fileListWidget);
+        QString fullPath = dir.absoluteFilePath(fileName);
+        QFileInfo fileInfo(fullPath);
+        
+        QString icon = getFileIconType(fullPath);
+        QString sizeStr = formatFileSize(fileInfo.size());
+        QString displayText = QString("%1 %2 (%3)").arg(icon).arg(fileName).arg(sizeStr);
+        
+        item->setText(displayText);
+        item->setData(Qt::UserRole, fullPath);
+        item->setData(Qt::UserRole + 1, "file");
+        item->setToolTip(QString("%1\n大小: %2\n修改时间: %3")
+                        .arg(fullPath)
+                        .arg(sizeStr)
+                        .arg(fileInfo.lastModified().toString("yyyy-MM-dd hh:mm:ss")));
+    }
+}
+
+void MainWindow::copySelectedItems()
+{
+    m_clipboardPaths = getSelectedFilePaths();
+    m_isCutOperation = false;
+    updateFileManagementButtons();
+    
+    if (!m_clipboardPaths.isEmpty()) {
+        m_statusLabel->setText(QString("已复制 %1 个项目到剪贴板").arg(m_clipboardPaths.size()));
+    }
+}
+
+void MainWindow::cutSelectedItems()
+{
+    m_clipboardPaths = getSelectedFilePaths();
+    m_isCutOperation = true;
+    updateFileManagementButtons();
+    
+    if (!m_clipboardPaths.isEmpty()) {
+        m_statusLabel->setText(QString("已剪切 %1 个项目到剪贴板").arg(m_clipboardPaths.size()));
+    }
+}
+
+void MainWindow::pasteItems()
+{
+    if (m_clipboardPaths.isEmpty()) {
+        QMessageBox::information(this, "提示", "剪贴板为空！");
+        return;
+    }
+    
+    bool success = performFileCopy(m_clipboardPaths, m_currentDirectory, m_isCutOperation);
+    
+    if (success) {
+        if (m_isCutOperation) {
+            m_clipboardPaths.clear();
+            m_isCutOperation = false;
+        }
+        refreshFileList();
+        m_statusLabel->setText("粘贴操作完成");
+    } else {
+        QMessageBox::critical(this, "错误", "粘贴操作失败！");
+    }
+    
+    updateFileManagementButtons();
+}
+
+void MainWindow::deleteSelectedItems()
+{
+    QStringList selectedPaths = getSelectedFilePaths();
+    if (selectedPaths.isEmpty()) {
+        QMessageBox::information(this, "提示", "请选择要删除的文件或文件夹！");
+        return;
+    }
+    
+    int ret = QMessageBox::question(this, "确认删除", 
+                                   QString("确定要删除选中的 %1 个项目吗？\n\n注意：此操作不可撤销！")
+                                   .arg(selectedPaths.size()),
+                                   QMessageBox::Yes | QMessageBox::No,
+                                   QMessageBox::No);
+    
+    if (ret != QMessageBox::Yes) {
+        return;
+    }
+    
+    int successCount = 0;
+    int failCount = 0;
+    
+    for (const QString &path : selectedPaths) {
+        QFileInfo fileInfo(path);
+        bool success = false;
+        
+        if (fileInfo.isDir()) {
+            QDir dir(path);
+            success = dir.removeRecursively();
+        } else {
+            QFile file(path);
+            success = file.remove();
+        }
+        
+        if (success) {
+            successCount++;
+        } else {
+            failCount++;
+        }
+    }
+    
+    refreshFileList();
+    
+    if (failCount == 0) {
+        m_statusLabel->setText(QString("成功删除 %1 个项目").arg(successCount));
+    } else {
+        QMessageBox::warning(this, "删除结果", 
+                           QString("删除完成：成功 %1 个，失败 %2 个")
+                           .arg(successCount).arg(failCount));
+    }
+}
+
+void MainWindow::renameSelectedItem()
+{
+    QStringList selectedPaths = getSelectedFilePaths();
+    if (selectedPaths.isEmpty()) {
+        QMessageBox::information(this, "提示", "请选择要重命名的文件或文件夹！");
+        return;
+    }
+    
+    if (selectedPaths.size() > 1) {
+        QMessageBox::information(this, "提示", "一次只能重命名一个项目！");
+        return;
+    }
+    
+    QString oldPath = selectedPaths.first();
+    QFileInfo fileInfo(oldPath);
+    QString oldName = fileInfo.fileName();
+    
+    bool ok;
+    QString newName = QInputDialog::getText(this, "重命名", 
+                                          QString("请输入新名称："),
+                                          QLineEdit::Normal, oldName, &ok);
+    
+    if (!ok || newName.isEmpty() || newName == oldName) {
+        return;
+    }
+    
+    QString newPath = fileInfo.dir().absoluteFilePath(newName);
+    
+    if (QFileInfo::exists(newPath)) {
+        QMessageBox::warning(this, "错误", "目标名称已存在！");
+        return;
+    }
+    
+    QDir dir;
+    bool success = dir.rename(oldPath, newPath);
+    
+    if (success) {
+        refreshFileList();
+        m_statusLabel->setText(QString("重命名成功：%1 -> %2").arg(oldName).arg(newName));
+    } else {
+        QMessageBox::critical(this, "错误", "重命名失败！");
+    }
+}
+
+void MainWindow::findFiles()
+{
+    bool ok;
+    QString searchPattern = QInputDialog::getText(this, "查找文件", 
+                                                "请输入搜索模式（支持通配符，如 *.txt）：",
+                                                QLineEdit::Normal, "", &ok);
+    
+    if (!ok || searchPattern.isEmpty()) {
+        return;
+    }
+    
+    m_fileListWidget->clear();
+    
+    QDir dir(m_currentDirectory);
+    QStringList nameFilters;
+    nameFilters << searchPattern;
+    
+    // 搜索文件
+    QFileInfoList files = dir.entryInfoList(nameFilters, QDir::Files, QDir::Name);
+    for (const QFileInfo &fileInfo : files) {
+        QListWidgetItem *item = new QListWidgetItem(m_fileListWidget);
+        QString icon = getFileIconType(fileInfo.absoluteFilePath());
+        QString sizeStr = formatFileSize(fileInfo.size());
+        QString displayText = QString("%1 %2 (%3)").arg(icon).arg(fileInfo.fileName()).arg(sizeStr);
+        
+        item->setText(displayText);
+        item->setData(Qt::UserRole, fileInfo.absoluteFilePath());
+        item->setData(Qt::UserRole + 1, "file");
+        item->setToolTip(QString("%1\n大小: %2\n修改时间: %3")
+                        .arg(fileInfo.absoluteFilePath())
+                        .arg(sizeStr)
+                        .arg(fileInfo.lastModified().toString("yyyy-MM-dd hh:mm:ss")));
+    }
+    
+    m_statusLabel->setText(QString("找到 %1 个匹配的文件").arg(files.size()));
+}
+
+void MainWindow::showProperties()
+{
+    QStringList selectedPaths = getSelectedFilePaths();
+    if (selectedPaths.isEmpty()) {
+        QMessageBox::information(this, "提示", "请选择要查看属性的文件或文件夹！");
+        return;
+    }
+    
+    QString path = selectedPaths.first();
+    QFileInfo fileInfo(path);
+    
+    QString properties;
+    properties += QString("名称: %1\n").arg(fileInfo.fileName());
+    properties += QString("路径: %1\n").arg(fileInfo.absolutePath());
+    properties += QString("类型: %1\n").arg(fileInfo.isDir() ? "文件夹" : "文件");
+    
+    if (fileInfo.isFile()) {
+        properties += QString("大小: %1 (%2 字节)\n")
+                     .arg(formatFileSize(fileInfo.size()))
+                     .arg(fileInfo.size());
+    }
+    
+    properties += QString("创建时间: %1\n").arg(fileInfo.birthTime().toString("yyyy-MM-dd hh:mm:ss"));
+    properties += QString("修改时间: %1\n").arg(fileInfo.lastModified().toString("yyyy-MM-dd hh:mm:ss"));
+    properties += QString("访问时间: %1\n").arg(fileInfo.lastRead().toString("yyyy-MM-dd hh:mm:ss"));
+    
+    // 权限信息
+    QFile::Permissions permissions = fileInfo.permissions();
+    QString permStr = "权限: ";
+    permStr += (permissions & QFile::ReadOwner) ? "r" : "-";
+    permStr += (permissions & QFile::WriteOwner) ? "w" : "-";
+    permStr += (permissions & QFile::ExeOwner) ? "x" : "-";
+    properties += permStr + "\n";
+    
+    properties += QString("只读: %1\n").arg(fileInfo.isReadable() && !fileInfo.isWritable() ? "是" : "否");
+    properties += QString("隐藏: %1\n").arg(fileInfo.isHidden() ? "是" : "否");
+    
+    QMessageBox::information(this, "文件属性", properties);
+}
+
+void MainWindow::refreshFileList()
+{
+    loadDirectoryContent(m_currentDirectory);
+    updateFileManagementButtons();
+    m_statusLabel->setText("文件列表已刷新");
+}
+
+void MainWindow::onFileListDoubleClicked(QListWidgetItem *item)
+{
+    if (!item) return;
+    
+    QString path = item->data(Qt::UserRole).toString();
+    QString type = item->data(Qt::UserRole + 1).toString();
+    
+    if (type == "directory") {
+        // 进入文件夹
+        loadDirectoryContent(path);
+    } else {
+        // 打开文件
+        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+    }
+}
+
+void MainWindow::showFileListContextMenu(const QPoint &pos)
+{
+    QListWidgetItem *item = m_fileListWidget->itemAt(pos);
+    
+    QMenu contextMenu(this);
+    
+    if (item) {
+        contextMenu.addAction("打开", [this, item]() {
+            onFileListDoubleClicked(item);
+        });
+        contextMenu.addSeparator();
+        contextMenu.addAction("复制", this, &MainWindow::copySelectedItems);
+        contextMenu.addAction("剪切", this, &MainWindow::cutSelectedItems);
+        
+        if (!m_clipboardPaths.isEmpty()) {
+            contextMenu.addAction("粘贴", this, &MainWindow::pasteItems);
+        }
+        
+        contextMenu.addSeparator();
+        contextMenu.addAction("删除", this, &MainWindow::deleteSelectedItems);
+        contextMenu.addAction("重命名", this, &MainWindow::renameSelectedItem);
+        contextMenu.addSeparator();
+        contextMenu.addAction("属性", this, &MainWindow::showProperties);
+    } else {
+        if (!m_clipboardPaths.isEmpty()) {
+            contextMenu.addAction("粘贴", this, &MainWindow::pasteItems);
+        }
+        contextMenu.addAction("刷新", this, &MainWindow::refreshFileList);
+    }
+    
+    contextMenu.exec(m_fileListWidget->mapToGlobal(pos));
+}
+
+void MainWindow::updateFileManagementButtons()
+{
+    QStringList selectedPaths = getSelectedFilePaths();
+    bool hasSelection = !selectedPaths.isEmpty();
+    bool hasClipboard = !m_clipboardPaths.isEmpty();
+    
+    m_copyBtn->setEnabled(hasSelection);
+    m_cutBtn->setEnabled(hasSelection);
+    m_pasteBtn->setEnabled(hasClipboard);
+    m_deleteBtn->setEnabled(hasSelection);
+    m_renameBtn->setEnabled(selectedPaths.size() == 1);
+    m_propertiesBtn->setEnabled(selectedPaths.size() == 1);
+}
+
+bool MainWindow::performFileCopy(const QStringList &sourcePaths, const QString &targetDir, bool isCut)
+{
+    if (sourcePaths.isEmpty() || targetDir.isEmpty()) {
+        return false;
+    }
+    
+    QDir target(targetDir);
+    if (!target.exists()) {
+        return false;
+    }
+    
+    bool allSuccess = true;
+    
+    for (const QString &sourcePath : sourcePaths) {
+        QFileInfo sourceInfo(sourcePath);
+        QString targetPath = target.absoluteFilePath(sourceInfo.fileName());
+        
+        // 检查目标是否已存在
+        if (QFileInfo::exists(targetPath)) {
+            int ret = QMessageBox::question(this, "文件已存在", 
+                                          QString("目标位置已存在文件 '%1'，是否覆盖？")
+                                          .arg(sourceInfo.fileName()),
+                                          QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                                          QMessageBox::No);
+            
+            if (ret == QMessageBox::Cancel) {
+                return false;
+            } else if (ret == QMessageBox::No) {
+                continue;
+            }
+            
+            // 删除目标文件/文件夹
+            if (QFileInfo(targetPath).isDir()) {
+                QDir(targetPath).removeRecursively();
+            } else {
+                QFile::remove(targetPath);
+            }
+        }
+        
+        bool success = false;
+        
+        if (sourceInfo.isDir()) {
+            // 复制文件夹
+            success = copyDirectoryRecursively(sourcePath, targetPath);
+        } else {
+            // 复制文件
+            success = QFile::copy(sourcePath, targetPath);
+        }
+        
+        if (success && isCut) {
+            // 剪切操作：删除源文件
+            if (sourceInfo.isDir()) {
+                QDir(sourcePath).removeRecursively();
+            } else {
+                QFile::remove(sourcePath);
+            }
+        }
+        
+        if (!success) {
+            allSuccess = false;
+        }
+    }
+    
+    return allSuccess;
+}
+
+bool MainWindow::copyDirectoryRecursively(const QString &sourceDir, const QString &targetDir)
+{
+    QDir source(sourceDir);
+    QDir target(targetDir);
+    
+    if (!target.exists()) {
+        if (!target.mkpath(".")) {
+            return false;
+        }
+    }
+    
+    // 复制文件
+    QStringList files = source.entryList(QDir::Files);
+    for (const QString &fileName : files) {
+        QString sourcePath = source.absoluteFilePath(fileName);
+        QString targetPath = target.absoluteFilePath(fileName);
+        
+        if (!QFile::copy(sourcePath, targetPath)) {
+            return false;
+        }
+    }
+    
+    // 递归复制子文件夹
+    QStringList dirs = source.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QString &dirName : dirs) {
+        QString sourcePath = source.absoluteFilePath(dirName);
+        QString targetPath = target.absoluteFilePath(dirName);
+        
+        if (!copyDirectoryRecursively(sourcePath, targetPath)) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+QStringList MainWindow::getSelectedFilePaths()
+{
+    QStringList paths;
+    QList<QListWidgetItem*> selectedItems = m_fileListWidget->selectedItems();
+    
+    for (QListWidgetItem *item : selectedItems) {
+        QString path = item->data(Qt::UserRole).toString();
+        if (!path.isEmpty()) {
+            paths.append(path);
+        }
+    }
+    
+    return paths;
+}
+
+QString MainWindow::formatFileSize(qint64 bytes)
+{
+    const qint64 KB = 1024;
+    const qint64 MB = KB * 1024;
+    const qint64 GB = MB * 1024;
+    
+    if (bytes >= GB) {
+        return QString("%1 GB").arg(QString::number(bytes / (double)GB, 'f', 2));
+    } else if (bytes >= MB) {
+        return QString("%1 MB").arg(QString::number(bytes / (double)MB, 'f', 2));
+    } else if (bytes >= KB) {
+        return QString("%1 KB").arg(QString::number(bytes / (double)KB, 'f', 2));
+    } else {
+        return QString("%1 B").arg(bytes);
+    }
+}
+
+QString MainWindow::getFileIconType(const QString &filePath)
+{
+    QFileInfo fileInfo(filePath);
+    QString suffix = fileInfo.suffix().toLower();
+    
+    // 图片文件
+    if (QStringList({"jpg", "jpeg", "png", "gif", "bmp", "tiff", "webp", "svg", "ico"}).contains(suffix)) {
+        return "🖼️";
+    }
+    // 文档文件
+    else if (QStringList({"txt", "doc", "docx", "pdf", "rtf", "odt"}).contains(suffix)) {
+        return "📄";
+    }
+    // 表格文件
+    else if (QStringList({"xls", "xlsx", "csv", "ods"}).contains(suffix)) {
+        return "📊";
+    }
+    // 演示文件
+    else if (QStringList({"ppt", "pptx", "odp"}).contains(suffix)) {
+        return "📽️";
+    }
+    // 视频文件
+    else if (QStringList({"mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "m4v", "3gp", "mpg", "mpeg"}).contains(suffix)) {
+        return "🎬";
+    }
+    // 音频文件
+    else if (QStringList({"mp3", "wav", "flac", "aac", "ogg", "wma", "m4a", "opus", "aiff"}).contains(suffix)) {
+        return "🎵";
+    }
+    // 压缩文件
+    else if (QStringList({"zip", "rar", "7z", "tar", "gz", "bz2", "xz"}).contains(suffix)) {
+        return "📦";
+    }
+    // 可执行文件
+    else if (QStringList({"exe", "msi", "bat", "cmd", "com", "scr"}).contains(suffix)) {
+        return "⚙️";
+    }
+    // 代码文件
+    else if (QStringList({"cpp", "h", "c", "py", "java", "js", "html", "css", "php", "rb", "go", "rs"}).contains(suffix)) {
+        return "💻";
+    }
+    // 默认文件图标
+    else {
+        return "📋";
     }
 }
 
