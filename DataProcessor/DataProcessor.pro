@@ -28,6 +28,7 @@ DESTDIR = $$PWD/bin
 SOURCES += \
     configmanager.cpp \
     customdatasender.cpp \
+    faultAlarmWidget/faultAlarmWidget.cpp \
     main.cpp \
     mainwindow.cpp \
     orderSend/ordersendwidget.cpp \
@@ -43,6 +44,7 @@ HEADERS += \
     alldefine.h \
     configmanager.h \
     customdatasender.h \
+    faultAlarmWidget/faultAlarmWidget.h \
     mainwindow.h \
     orderSend/ordersendwidget.h \
     orderSend/sendworker.h \
@@ -57,3 +59,6 @@ FORMS += \
 
 RESOURCES += \
     rec.qrc
+
+DISTFILES += \
+    faultAlarmWidget/FaultAlarmWidget_Specification.md

@@ -1,0 +1,19 @@
+{
+    "alarmType": 0,
+    "checkCode": "2",
+    "destDevice": 17,
+    "faultCode": 10,
+    "faultLevel": 1,
+    "interval": 1000,
+    "isolationFlag": 0,
+    "orgCode": "633772342",
+    "productDate": "20250617",
+    "serialCode": "SG7209",
+    "sourceDevice": 1,
+    "targetIp": "239.255.1.21",
+    "targetPort": 9221,
+    "topicNumber": 50,
+    "uniqueIdResult": "63377234220250617SG72092",
+    "warningThreshold": 0,
+    "warningValue": 0
+}

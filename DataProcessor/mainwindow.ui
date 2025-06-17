@@ -31,9 +31,6 @@
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <widget class="QTabWidget" name="tabWidget">
-              <property name="currentIndex">
-               <number>0</number>
-              </property>
               <widget class="QWidget" name="basicTab">
                <attribute name="title">
                 <string>基本设置</string>
@@ -395,6 +392,11 @@
           <string>指令数据发送</string>
          </attribute>
         </widget>
+        <widget class="faultAlarmWidget" name="tab_FaultAlarmWidget">
+         <attribute name="title">
+          <string>故障告警模拟</string>
+         </attribute>
+        </widget>
        </widget>
       </item>
      </layout>
@@ -412,6 +414,12 @@
    <class>OrderSendWidget</class>
    <extends>QWidget</extends>
    <header>orderSend/ordersendwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>faultAlarmWidget</class>
+   <extends>QWidget</extends>
+   <header>faultAlarmWidget/faultalarmwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
