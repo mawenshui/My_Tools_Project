@@ -53,4 +53,4 @@ enum class ConfigError
     DirectoryCreationFailed //目录创建失败
 };
 
-#endif // ALLDEFINE_H
+#endif //ALLDEFINE_H

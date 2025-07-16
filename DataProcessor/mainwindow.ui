@@ -392,7 +392,7 @@
           <string>指令数据发送</string>
          </attribute>
         </widget>
-        <widget class="faultAlarmWidget" name="tab_FaultAlarmWidget">
+        <widget class="FaultAlarmWidget" name="tab_FaultAlarmWidget">
          <attribute name="title">
           <string>故障告警模拟</string>
          </attribute>
@@ -417,9 +417,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>faultAlarmWidget</class>
+   <class>FaultAlarmWidget</class>
    <extends>QWidget</extends>
-   <header>faultAlarmWidget/faultalarmwidget.h</header>
+   <header>faultalarmwidget/faultalarmwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -33,7 +33,7 @@ OrderSendWidget::OrderSendWidget(QWidget *parent) :
     connect(m_sendWorker, &SendWorker::logMessage, this, &OrderSendWidget::handleLogMessage);
     connect(m_sendWorker, &SendWorker::finished, this, &OrderSendWidget::handleSendFinished);
     connect(this, &OrderSendWidget::startSendCommand, m_sendWorker, &SendWorker::sendCommand);
-    // 连接搜索框的信号
+    //连接搜索框的信号
     connect(ui->lineEdit_searchOrder, &QLineEdit::textChanged, this, &OrderSendWidget::filterComboBoxItems);
     m_sendThread->start();
 }
@@ -44,13 +44,13 @@ OrderSendWidget::OrderSendWidget(QWidget *parent) :
  */
 void OrderSendWidget::filterComboBoxItems(const QString &filterText)
 {
-    // 保存当前选中的项
+    //保存当前选中的项
     QString currentText = ui->comboBox->currentText();
-    // 清空comboBox但不触发信号
+    //清空comboBox但不触发信号
     ui->comboBox->blockSignals(true);
     ui->comboBox->clear();
-    // 如果搜索框为空，显示所有项
-    if (filterText.isEmpty())
+    //如果搜索框为空，显示所有项
+    if(filterText.isEmpty())
     {
         QMap<QString, int>::iterator itr = m_commandId.begin();
         while(itr != m_commandId.end())
@@ -61,12 +61,12 @@ void OrderSendWidget::filterComboBoxItems(const QString &filterText)
     }
     else
     {
-        // 否则只显示匹配的项
+        //否则只显示匹配的项
         QMap<QString, int>::iterator itr = m_commandId.begin();
         while(itr != m_commandId.end())
         {
             QString itemText = QString("【0x%1】%2").arg(QString::number(itr.value(), 16).toUpper()).arg(itr.key());
-            if (itemText.contains(filterText, Qt::CaseInsensitive))
+            if(itemText.contains(filterText, Qt::CaseInsensitive))
             {
                 ui->comboBox->addItem(itemText);
             }
@@ -74,13 +74,13 @@ void OrderSendWidget::filterComboBoxItems(const QString &filterText)
         }
     }
     ui->comboBox->blockSignals(false);
-    // 尝试恢复之前选中的项
+    //尝试恢复之前选中的项
     int index = ui->comboBox->findText(currentText);
-    if (index >= 0)
+    if(index >= 0)
     {
         ui->comboBox->setCurrentIndex(index);
     }
-    else if (ui->comboBox->count() > 0)
+    else if(ui->comboBox->count() > 0)
     {
         ui->comboBox->setCurrentIndex(0);
     }
@@ -91,7 +91,7 @@ void OrderSendWidget::handleSendFinished()
     ui->pushButtonstart->setEnabled(true);
     emit logMessage("DEBUG", "指令发送完成");
     emit logMessage("DEBUG", "**********************************************************");
-    if (m_loopRunning)
+    if(m_loopRunning)
     {
         //使用QTimer延迟2秒后发送下一个命令
         QTimer::singleShot(2000, this, &OrderSendWidget::sendNextLoopCommand);
@@ -117,19 +117,19 @@ void OrderSendWidget::handleLogMessage(QString level, QString message)
 QColor OrderSendWidget::colorForLevel(const QString &level) const
 {
     //根据日志级别返回颜色
-    if (level == "INFO")
+    if(level == "INFO")
     {
         return m_logColors.info;
     }
-    if (level == "WARN")
+    if(level == "WARN")
     {
         return m_logColors.warn;
     }
-    if (level == "ERROR")
+    if(level == "ERROR")
     {
         return m_logColors.error;
     }
-    if (level == "DEBUG")
+    if(level == "DEBUG")
     {
         return m_logColors.debug;
     }
@@ -155,13 +155,13 @@ void OrderSendWidget::getconfig()
     QString appDir = QCoreApplication::applicationDirPath();
     //处理可能的符号链接（如果是macOS的.app包）
     QFileInfo appInfo(appDir);
-    if (appInfo.isSymLink())
+    if(appInfo.isSymLink())
     {
         appDir = appInfo.symLinkTarget();
     }
     //获取上一级目录
     QDir parentDir(appDir);
-    if (!parentDir.cdUp())
+    if(!parentDir.cdUp())
     {
         qCWarning(OrderSendLog) << "无法访问应用程序目录的上一级目录:" << appDir;
         return;
@@ -178,11 +178,11 @@ void OrderSendWidget::getconfig()
     //获取根节点
     TiXmlElement* root = treeDoc->RootElement();
     //遍历一级子节点（task节点）
-    for (TiXmlElement *elem = root->FirstChildElement(); elem != NULL; elem = elem->NextSiblingElement())
+    for(TiXmlElement *elem = root->FirstChildElement(); elem != NULL; elem = elem->NextSiblingElement())
     {
-        const char *elemValue = elem->Value();
+        const char* elemValue = elem->Value();
         //处理task节点
-        if (strcmp(elemValue, "task") == 0)
+        if(strcmp(elemValue, "task") == 0)
         {
             QString name = elem->Attribute("name"); //获取任务名称
             //初始化任务参数
@@ -191,17 +191,17 @@ void OrderSendWidget::getconfig()
             int comid = -1;
             int index = -1;
             //遍历task的子节点
-            for (TiXmlElement *elem1 = elem->FirstChildElement(); elem1 != NULL; elem1 = elem1->NextSiblingElement())
+            for(TiXmlElement *elem1 = elem->FirstChildElement(); elem1 != NULL; elem1 = elem1->NextSiblingElement())
             {
                 elemValue = elem1->Value();
-                const char *attr_value = elem1->GetText();
+                const char* attr_value = elem1->GetText();
                 //处理不同配置项
-                if (strcmp(elemValue, "outTime") == 0)
+                if(strcmp(elemValue, "outTime") == 0)
                 {
                     //获取超时时间
                     time = QString(attr_value).toDouble();
                 }
-                else if (strcmp(elemValue, "id") == 0)
+                else if(strcmp(elemValue, "id") == 0)
                 {
                     //处理ID（支持十六进制和十进制格式）
                     QString temps;
@@ -221,7 +221,7 @@ void OrderSendWidget::getconfig()
                         id = temps.toLongLong();
                     }
                 }
-                else if (strcmp(elemValue, "comid") == 0)
+                else if(strcmp(elemValue, "comid") == 0)
                 {
                     //处理命令ID（支持十六进制和十进制格式）
                     QString temps;
@@ -241,7 +241,7 @@ void OrderSendWidget::getconfig()
                         comid = temps.toLongLong();
                     }
                 }
-                else if (strcmp(elemValue, "startIndex") == 0)
+                else if(strcmp(elemValue, "startIndex") == 0)
                 {
                     //获取起始索引
                     QString temps = attr_value;
@@ -262,7 +262,7 @@ void OrderSendWidget::getconfig()
  */
 void OrderSendWidget::comboset()
 {
-    // 清空comboBox但不触发信号
+    //清空comboBox但不触发信号
     ui->comboBox->blockSignals(true);
     ui->comboBox->clear();
     //遍历命令ID映射表，将任务名称添加到下拉框
@@ -296,13 +296,13 @@ void OrderSendWidget::on_pushButtonstart_clicked()
     quint16 port = static_cast<quint16>(ui->lineEditPort->text().toUInt());
     //验证IP地址格式
     QHostAddress addressCheck;
-    if (!addressCheck.setAddress(address))
+    if(!addressCheck.setAddress(address))
     {
         QMessageBox::warning(this, "错误", "无效的IP地址格式");
         return;
     }
     //验证端口范围
-    if (port < 1 || port > 65535)
+    if(port < 1 || port > 65535)
     {
         QMessageBox::warning(this, "错误", "端口号必须为1-65535");
         return;
@@ -349,7 +349,7 @@ void OrderSendWidget::on_pushButton_clicked()
 
 void OrderSendWidget::sendNextLoopCommand()
 {
-    if (!m_loopRunning)
+    if(!m_loopRunning)
     {
         //循环结束
         m_loopRunning = false;

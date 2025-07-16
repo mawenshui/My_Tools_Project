@@ -49,20 +49,20 @@
             <id>0xC0</id>
             <comid>0x140</comid>
         </task>
-        <task name="直流电源2上电">
-            <!--del-->
+        <!--task name="直流电源2上电">
+            <del>
             <outTime>8</outTime>
             <startIndex>170</startIndex>
             <id>0xC0</id>
             <comid>0x151</comid>
-        </task>
-        <task name="直流电源2断电">
-            <!--del-->
+        </task-->
+        <!--task name="直流电源2断电">
+            <del>
             <outTime>8</outTime>
             <startIndex>190</startIndex>
             <id>0xC0</id>
             <comid>0x150</comid>
-        </task>
+        </task-->
         <task name="组合升车">
             <outTime>18</outTime>
             <startIndex>210</startIndex>
@@ -126,7 +126,7 @@
         <task name="起竖上电">
             <outTime>12</outTime>
             <startIndex>410</startIndex>
-            <id>0xC0</id>command_theme
+            <id>0xC0</id>
             <comid>0xC031</comid>
         </task>
         <task name="起竖断电">
@@ -417,20 +417,20 @@
             <id>0xCA</id>
             <comid>0x2020</comid>
         </task>
-        <task name="低压配电组合2输出3上电">
-            <!--del-->
+        <!--task name="低压配电组合2输出3上电">
+            <del>
             <outTime>2</outTime>
             <startIndex>1390</startIndex>
             <id>0xCA</id>
             <comid>0x2031</comid>
-        </task>
-        <task name="低压配电组合2输出3断电">
-            <!--del-->
+        </task-->
+        <!--task name="低压配电组合2输出3断电">
+            <del>
             <outTime>2</outTime>
             <startIndex>1410</startIndex>
             <id>0xCA</id>
             <comid>0x2030</comid>
-        </task>
+        </task-->
         <task name="低压配电组合2输出4上电">
             <outTime>2</outTime>
             <startIndex>1430</startIndex>
@@ -702,12 +702,12 @@
             <startIndex>2390</startIndex>
             <id>3601</id>
         </task>
-        <task name="指控信息查询指令">
-            <!--未使用-->
+        <!--task name="指控信息查询指令">
+            <未使用>
             <outTime>12</outTime>
             <startIndex>2410</startIndex>
             <id>3602</id>
-        </task>
+        </task-->
         <task name="车辆调平指令">
             <outTime>12</outTime>
             <startIndex>2430</startIndex>
@@ -723,12 +723,12 @@
             <startIndex>2470</startIndex>
             <id>3606</id>
         </task>
-        <task name="天线伺服指令">
-            <!--未使用-->
+        <!--task name="天线伺服指令">
+            <未使用>
             <outTime>12</outTime>
             <startIndex>2490</startIndex>
             <id>3607</id>
-        </task>
+        </task-->
         <task name="应急处理指令">
             <outTime>12</outTime>
             <startIndex>2510</startIndex>

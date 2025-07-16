@@ -38,7 +38,7 @@ public:
     ~OrderSendWidget();                             ///<析构函数
 
 private slots:
-    // 按钮点击事件槽函数
+    //按钮点击事件槽函数
     void on_pushButtonstart_clicked();       ///<开始发送按钮点击事件
     void on_pushButtonClearLog_clicked();    ///<清空日志按钮点击事件
     void on_pushButton_clicked();            ///<循环发送按钮点击事件
@@ -52,22 +52,22 @@ private slots:
 signals:
     void logMessage(QString level, QString message);
     void startSendCommand(const QString &address, quint16 port,
-                          const QString &comname, const QMap<QString, int> &commandIdMap,
-                          const QMap<QString, int> &workIdMap, const QMap<QString, double> &timeMap,
+                          const QString &comname, const QMap<QString, int>& commandIdMap,
+                          const QMap<QString, int>& workIdMap, const QMap<QString, double>& timeMap,
                           bool comCrc, bool reCrc, bool comReply, bool havereturn,
                           bool ReReply, bool replycrc, bool returnErr, bool noShake,
                           bool isReplyTimeout, bool isReturnTimeout, bool isReReplyTimeout);
 
 private:
-    QThread *m_sendThread;
-    SendWorker *m_sendWorker;
+    QThread* m_sendThread;
+    SendWorker* m_sendWorker;
 
 private:
-    Ui::OrderSendWidget *ui;             ///<UI指针
+    Ui::OrderSendWidget* ui;             ///<UI指针
     void getconfig();               ///<从XML配置文件读取配置信息
     void comboset();                ///<初始化下拉框选项
 
-    // 配置数据存储容器
+    //配置数据存储容器
     QMap<QString, int> m_commandId; ///<存储任务名称对应的命令ID
     QMap<QString, int> m_workId;    ///<存储任务名称对应的工作ID
     QMap<QString, double> m_time;   ///<存储任务名称对应的时间间隔
@@ -83,4 +83,4 @@ private:
 
 };
 
-#endif // WIDGET_H
+#endif //WIDGET_H

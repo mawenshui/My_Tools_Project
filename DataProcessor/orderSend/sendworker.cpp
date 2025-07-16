@@ -6,7 +6,7 @@
 #define SHAKE_TIME 200 //应答超时时间
 #define RE_SHAKE_TIME 500 //反馈应答超时时间
 
-static QRegularExpression g_HexrRegex("【.*?】");  // 匹配十六进制ID
+static QRegularExpression g_HexrRegex("【.*?】");  //匹配十六进制ID
 
 SendWorker::SendWorker(QObject *parent) : QObject(parent)
 {
@@ -18,10 +18,10 @@ SendWorker::~SendWorker()
     m_sender->deleteLater();
 }
 
-void SendWorker::crcData(unsigned char *data, int len)
+void SendWorker::crcData(unsigned char* data, int len)
 {
     unsigned int sum = data[0];
-    for (int i = 1; i < len - 2; i++)
+    for(int i = 1; i < len - 2; i++)
     {
         sum += data[i];
     }
@@ -31,13 +31,13 @@ void SendWorker::crcData(unsigned char *data, int len)
 }
 
 void SendWorker::sendCommand(const QString &address, quint16 port,
-                             const QString &comname, const QMap<QString, int> &commandIdMap,
-                             const QMap<QString, int> &workIdMap, const QMap<QString, double> &timeMap,
+                             const QString &comname, const QMap<QString, int>& commandIdMap,
+                             const QMap<QString, int>& workIdMap, const QMap<QString, double>& timeMap,
                              bool comCrc, bool reCrc, bool comReply, bool havereturn,
                              bool ReReply, bool replycrc, bool returnErr, bool noShake,
                              bool isReplyTimeout, bool isReturnTimeout, bool isReReplyTimeout)
 {
-    if (!commandIdMap.contains(comname))
+    if(!commandIdMap.contains(comname))
     {
         emit logMessage("ERROR", QString("未找到指令: [0x%1]").arg(comname));
         emit finished();
@@ -50,6 +50,7 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
     unsigned char sendData[256] = {0};
     int dataLen = 0;
     sendData[0] = noShake ? 0x80 : 0x00;
+    sendData[5] = 0x11;
     //根据命令ID构建不同结构的数据包
     switch(commandId)
     {
@@ -82,6 +83,7 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
         case 2802:
             dataLen = 16;
             sendData[1] = dataLen - 13;
+            sendData[12] = 0x31;
             *((unsigned short*)(sendData + 3)) = commandId;
             break;
         case 2803:
@@ -159,14 +161,14 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
             emit finished();
             return;
     }
-    if (!comCrc)
+    if(!comCrc)
     {
         crcData(sendData, dataLen);
     }
     QString data = QByteArray::fromRawData(reinterpret_cast<char*>(sendData), dataLen).toHex(' ').toUpper();
     emit logMessage("INFO", QString("发送指令: [%1]").arg(data));
     qint64 sendlen = m_sender->writeDatagram(QByteArray::fromRawData(reinterpret_cast<char*>(sendData), dataLen), dataLen, QHostAddress(address), port);
-    if (sendlen == -1)
+    if(sendlen == -1)
     {
         emit logMessage("ERROR", QString("发送失败: [%1]").arg(m_sender->errorString()));
     }
@@ -177,6 +179,7 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
         memset(sendData, 0, sizeof(sendData));
         dataLen = 17;
         sendData[1] = dataLen - 13;
+        sendData[5] = 0x11;
         *((unsigned short*)(sendData + 3)) = 0x2c24; //应答命令ID
         int temp_commandId;
         if(commandId == 13701 || commandId == 3701)
@@ -212,6 +215,7 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
     if(!havereturn)
     {
         memset(sendData, 0, sizeof(sendData));
+        sendData[5] = 0x11;
         //根据命令ID构建不同的反馈数据结构
         switch(commandId)
         {
@@ -220,7 +224,7 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
             case 0xcC:
                 dataLen = 19;
                 sendData[1] = dataLen - 13;
-//                commandId++;
+//               commandId++;
                 if(commandId == 0xca)
                 {
                     *((unsigned short*)(sendData + 3)) = 0xcb;
@@ -283,6 +287,7 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
             case 2802:
                 dataLen = 16;
                 sendData[1] = dataLen - 13;
+                sendData[12] = 0x31;
                 commandId = 2842;
                 *((unsigned short*)(sendData + 3)) = commandId;
                 if(!returnErr)
@@ -571,8 +576,15 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
                 }
                 break;
             case 3701:
+                dataLen = 15;
+                sendData[6] = 0x55;
+                sendData[1] = dataLen - 13;
+                commandId = 3601;
+                *((unsigned short*)(sendData + 3)) = commandId;
+                break;
             case 13701:
                 dataLen = 15;
+                sendData[6] = 0x56;
                 sendData[1] = dataLen - 13;
                 commandId = 3601;
                 *((unsigned short*)(sendData + 3)) = commandId;
@@ -615,6 +627,7 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
         if(!ReReply && !noShake)
         {
             memset(sendData, 0, sizeof(sendData));
+            sendData[5] = 0x11;
             dataLen = 17;
             sendData[1] = dataLen - 13;
             *((unsigned short*)(sendData + 3)) = 0x2c24;

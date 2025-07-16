@@ -5,4 +5,6 @@ SUBDIRS += \
     FileTransferTool \
     FilesManager \
     FilesRename \
-    NetworkConfigManager
+    NetworkConfigManager \
+    CodeVisualization \
+    SSHClient

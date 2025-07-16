@@ -1,4 +1,4 @@
-// sendworker.h
+//sendworker.h
 #ifndef SENDWORKER_H
 #define SENDWORKER_H
 
@@ -17,8 +17,8 @@ public:
 
 public slots:
     void sendCommand(const QString &address, quint16 port,
-                     const QString &comname, const QMap<QString, int> &commandIdMap,
-                     const QMap<QString, int> &workIdMap, const QMap<QString, double> &timeMap,
+                     const QString &comname, const QMap<QString, int>& commandIdMap,
+                     const QMap<QString, int>& workIdMap, const QMap<QString, double>& timeMap,
                      bool comCrc, bool reCrc, bool comReply, bool havereturn,
                      bool ReReply, bool replycrc, bool returnErr, bool noShake,
                      bool isReplyTimeout, bool isReturnTimeout, bool isReReplyTimeout);
@@ -28,8 +28,8 @@ signals:
     void finished();
 
 private:
-    QUdpSocket *m_sender;
-    void crcData(unsigned char *data, int len);
+    QUdpSocket* m_sender;
+    void crcData(unsigned char* data, int len);
 };
 
-#endif // SENDWORKER_H
+#endif //SENDWORKER_H
