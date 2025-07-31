@@ -131,6 +131,23 @@ void MainWindow::startAnalysis(const QString &projectPath)
     
     m_statisticsWidget->setChartGenerationOptions(generationOptions);
     
+    // 从项目选择组件获取配置并应用到分析器
+    if (m_projectWidget) {
+        // 设置排除规则
+        QStringList excludePatterns = m_projectWidget->getExcludePatterns();
+        m_analyzer->setExcludePatterns(excludePatterns);
+        
+        // 设置文件类型过滤
+        ProjectSelectionWidget::FilterMode filterMode = m_projectWidget->getFilterMode();
+        bool excludeMode = (filterMode == ProjectSelectionWidget::ExcludeMode);
+        m_analyzer->setFileTypeFilterMode(excludeMode);
+        m_analyzer->setFileTypeFilters(m_projectWidget->getFileTypeFilters());
+        
+        // 设置其他分析选项
+        m_analyzer->setIncludeComments(m_projectWidget->getIncludeComments());
+        m_analyzer->setIncludeBlankLines(m_projectWidget->getIncludeBlankLines());
+    }
+    
     m_currentProjectPath = projectPath;
     m_analysisInProgress = true;
     // 更新UI状态

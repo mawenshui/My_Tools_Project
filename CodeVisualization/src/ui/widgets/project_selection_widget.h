@@ -13,6 +13,8 @@
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QTextEdit>
 #include <QtWidgets/QListWidget>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QButtonGroup>
 #include <QtCore/QStringList>
 #include "../../core/config/config_manager.h"
 
@@ -32,6 +34,13 @@ class ProjectSelectionWidget : public QWidget
     Q_OBJECT
 
 public:
+    /**
+     * @brief 文件过滤模式枚举
+     */
+    enum FilterMode {
+        ExcludeMode,    ///< 排除模式：不统计指定文件类型
+        IncludeMode     ///< 包含模式：只统计指定文件类型
+    };
     /**
      * @brief 构造函数
      * @param parent 父组件指针
@@ -92,6 +101,30 @@ public:
     void setIncludeBlankLines(bool include);
     
     /**
+     * @brief 获取当前过滤模式
+     * @return 过滤模式
+     */
+    FilterMode getFilterMode() const;
+    
+    /**
+     * @brief 设置过滤模式
+     * @param mode 过滤模式
+     */
+    void setFilterMode(FilterMode mode);
+    
+    /**
+     * @brief 获取文件类型过滤列表
+     * @return 文件类型列表
+     */
+    QStringList getFileTypeFilters() const;
+    
+    /**
+     * @brief 设置文件类型过滤列表
+     * @param types 文件类型列表
+     */
+    void setFileTypeFilters(const QStringList &types);
+    
+    /**
      * @brief 重置为默认配置
      */
     void resetToDefaults();
@@ -148,9 +181,29 @@ private slots:
     void addExcludePattern();
     
     /**
-     * @brief 移除排除规则
+     * @brief 移除规则按钮点击槽
      */
     void removeExcludePattern();
+    
+    /**
+     * @brief 过滤模式改变槽
+     */
+    void onFilterModeChanged();
+    
+    /**
+     * @brief 添加文件类型过滤
+     */
+    void addFileTypeFilter();
+    
+    /**
+     * @brief 移除文件类型过滤
+     */
+    void removeFileTypeFilter();
+    
+    /**
+     * @brief 重置文件类型过滤为预设
+     */
+    void resetFileTypeFilters();
     
     /**
      * @brief 重置排除规则为默认
@@ -187,9 +240,15 @@ private:
     
     /**
      * @brief 创建排除规则区域
-     * @return 排除规则组件
+     * @return 排除规则区域组件
      */
     QWidget* createExcludeRulesArea();
+    
+    /**
+     * @brief 创建文件类型过滤区域
+     * @return 文件类型过滤区域组件
+     */
+    QWidget* createFileTypeFilterArea();
     
     /**
      * @brief 创建操作按钮区域
@@ -252,6 +311,20 @@ private:
     QPushButton *m_removePatternButton;     ///< 移除规则按钮
     QPushButton *m_resetPatternsButton;     ///< 重置规则按钮
     
+    // 文件类型过滤相关组件
+    QGroupBox *m_filterGroup;               ///< 过滤模式组
+    QRadioButton *m_excludeModeRadio;       ///< 排除模式单选按钮
+    QRadioButton *m_includeModeRadio;       ///< 包含模式单选按钮
+    QButtonGroup *m_filterModeGroup;        ///< 过滤模式按钮组
+    QListWidget *m_fileTypeList;            ///< 文件类型列表
+    QLineEdit *m_fileTypeEdit;              ///< 文件类型输入框
+    QPushButton *m_addFileTypeButton;       ///< 添加文件类型按钮
+    QPushButton *m_removeFileTypeButton;    ///< 移除文件类型按钮
+    QPushButton *m_resetFileTypeButton;     ///< 重置文件类型按钮
+    QPushButton *m_presetCodeButton;        ///< 代码文件预设按钮
+    QPushButton *m_presetDocButton;         ///< 文档文件预设按钮
+    QPushButton *m_presetConfigButton;      ///< 配置文件预设按钮
+    
     // 操作按钮区域
     QPushButton *m_startAnalysisButton;     ///< 开始分析按钮
     QPushButton *m_resetConfigButton;       ///< 重置配置按钮
@@ -262,6 +335,10 @@ private:
     // 数据成员
     ConfigManager *m_configManager;         ///< 配置管理器
     QStringList m_defaultExcludePatterns;   ///< 默认排除规则
+    FilterMode m_currentFilterMode;         ///< 当前过滤模式
+    QStringList m_defaultCodeTypes;         ///< 默认代码文件类型
+    QStringList m_defaultDocTypes;          ///< 默认文档文件类型
+    QStringList m_defaultConfigTypes;       ///< 默认配置文件类型
 };
 
 #endif // PROJECT_SELECTION_WIDGET_H

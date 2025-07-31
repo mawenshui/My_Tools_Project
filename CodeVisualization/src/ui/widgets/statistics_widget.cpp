@@ -37,16 +37,46 @@ StatisticsWidget::StatisticsWidget(QWidget *parent)
     , m_toolBar(nullptr)
     , m_exportCSVButton(nullptr)
     , m_exportHTMLButton(nullptr)
+    , m_exportMarkdownButton(nullptr)
     , m_refreshButton(nullptr)
     , m_progressBar(nullptr)
     , m_progressLabel(nullptr)
     , m_currentDisplayMode(Overview)
+    , m_csvExporter(nullptr)
+    , m_markdownExporter(nullptr)
 {
+    // 初始化CSV导出器
+    m_csvExporter = new CSVExporter(this);
+    
+    // 连接CSV导出器信号
+    connect(m_csvExporter, &CSVExporter::progressUpdated,
+            this, &StatisticsWidget::onCSVExportProgress);
+    connect(m_csvExporter, &CSVExporter::exportCompleted,
+            this, &StatisticsWidget::onCSVExportCompleted);
+    
+    // 初始化Markdown导出器
+    m_markdownExporter = new MarkdownExporter(this);
+    
+    // 连接Markdown导出器信号
+    connect(m_markdownExporter, &MarkdownExporter::progressUpdated,
+            this, &StatisticsWidget::onMarkdownExportProgress);
+    connect(m_markdownExporter, &MarkdownExporter::exportCompleted,
+            this, &StatisticsWidget::onMarkdownExportCompleted);
+    
     initializeUI();
 }
 
 StatisticsWidget::~StatisticsWidget()
 {
+    if (m_csvExporter) {
+        delete m_csvExporter;
+        m_csvExporter = nullptr;
+    }
+    
+    if (m_markdownExporter) {
+        delete m_markdownExporter;
+        m_markdownExporter = nullptr;
+    }
 }
 
 void StatisticsWidget::initializeUI()
@@ -82,6 +112,7 @@ QWidget* StatisticsWidget::createToolBar()
     // 导出按钮
     m_exportCSVButton = new QPushButton(tr("导出CSV"), this);
     m_exportHTMLButton = new QPushButton(tr("导出HTML"), this);
+    m_exportMarkdownButton = new QPushButton(tr("导出Markdown"), this);
     m_refreshButton = new QPushButton(tr("刷新"), this);
     
     // 进度显示
@@ -92,6 +123,7 @@ QWidget* StatisticsWidget::createToolBar()
     
     toolLayout->addWidget(m_exportCSVButton);
     toolLayout->addWidget(m_exportHTMLButton);
+    toolLayout->addWidget(m_exportMarkdownButton);
     toolLayout->addWidget(m_refreshButton);
     toolLayout->addStretch();
     toolLayout->addWidget(m_progressLabel);
@@ -100,6 +132,7 @@ QWidget* StatisticsWidget::createToolBar()
     // 连接信号
     connect(m_exportCSVButton, &QPushButton::clicked, this, &StatisticsWidget::onExportCSVClicked);
     connect(m_exportHTMLButton, &QPushButton::clicked, this, &StatisticsWidget::onExportHTMLClicked);
+    connect(m_exportMarkdownButton, &QPushButton::clicked, this, &StatisticsWidget::onExportMarkdownClicked);
     connect(m_refreshButton, &QPushButton::clicked, this, &StatisticsWidget::onRefreshClicked);
     
     return m_toolBar;
@@ -663,21 +696,73 @@ void StatisticsWidget::onFileTreeItemSelectionChanged()
 
 void StatisticsWidget::onExportCSVClicked()
 {
-    QString fileName = QFileDialog::getSaveFileName(
-        this,
-        tr("导出为CSV"),
-        QString("code_statistics_%1.csv").arg(QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss")),
-        tr("CSV文件 (*.csv)")
-    );
+    // 使用新的CSV导出对话框
+    exportToCSV();
+}
+
+bool StatisticsWidget::exportToCSV()
+{
+    // 创建CSV导出对话框
+    CSVExportDialog dialog(this);
     
-    if (!fileName.isEmpty()) {
-        if (exportToCSV(fileName)) {
-            QMessageBox::information(this, tr("导出成功"),
-                                tr("数据已导出到 %1").arg(fileName));
-        } else {
-            QMessageBox::warning(this, tr("导出失败"),
-                            tr("导出数据到 %1 失败").arg(fileName));
+    if (dialog.exec() == QDialog::Accepted) {
+        // 获取用户选择
+        CSVExportDialog::ExportContents contents = dialog.getSelectedContents();
+        CSVExportDialog::ExportMode mode = dialog.getExportMode();
+        QString exportPath = dialog.getExportPath();
+        QString filePrefix = dialog.getFilePrefix();
+        QString encoding = dialog.getSelectedEncoding();
+        
+        // 设置分析结果和编码到导出器
+        m_csvExporter->setAnalysisResult(m_analysisResult);
+        m_csvExporter->setEncoding(encoding);
+        
+        // 转换内容标志
+        CSVExporter::ExportContents exporterContents = CSVExporter::ExportContents();
+        if (contents & CSVExportDialog::Overview) {
+            exporterContents |= CSVExporter::Overview;
         }
+        if (contents & CSVExportDialog::DetailedTable) {
+            exporterContents |= CSVExporter::DetailedTable;
+        }
+        if (contents & CSVExportDialog::FileList) {
+            exporterContents |= CSVExporter::FileList;
+        }
+        if (contents & CSVExportDialog::LanguageStats) {
+            exporterContents |= CSVExporter::LanguageStats;
+        }
+        
+        // 执行导出
+        bool success = false;
+        if (mode == CSVExportDialog::SingleFile) {
+            success = m_csvExporter->exportToSingleFile(exportPath, exporterContents);
+        } else {
+            success = m_csvExporter->exportToMultipleFiles(exportPath, filePrefix, exporterContents);
+        }
+        
+        return success;
+    }
+    
+    return false;
+}
+
+void StatisticsWidget::onCSVExportProgress(int current, int total, const QString &message)
+{
+    // 更新进度显示
+    updateProgress(current, total, message);
+}
+
+void StatisticsWidget::onCSVExportCompleted(bool success, const QString &message)
+{
+    // 隐藏进度条
+    m_progressBar->setVisible(false);
+    m_progressLabel->setVisible(false);
+    
+    // 显示结果消息
+    if (success) {
+        QMessageBox::information(this, tr("导出成功"), message);
+    } else {
+        QMessageBox::warning(this, tr("导出失败"), message);
     }
 }
 
@@ -1002,4 +1087,84 @@ void StatisticsWidget::setChartGenerationOptions(const ChartGenerationOptions &o
 ChartGenerationOptions StatisticsWidget::getChartGenerationOptions() const
 {
     return m_chartOptions;
+}
+
+void StatisticsWidget::onExportMarkdownClicked()
+{
+    // 使用新的Markdown导出对话框
+    exportToMarkdown();
+}
+
+bool StatisticsWidget::exportToMarkdown()
+{
+    // 创建Markdown导出对话框
+    MarkdownExportDialog dialog(this);
+    
+    if (dialog.exec() == QDialog::Accepted) {
+        // 获取用户选择
+        MarkdownExportDialog::ExportContents contents = dialog.getSelectedContents();
+        MarkdownExportDialog::ExportMode mode = dialog.getExportMode();
+        QString exportPath = dialog.getExportPath();
+        QString filePrefix = dialog.getFilePrefix();
+        
+        // 设置分析结果到导出器
+        m_markdownExporter->setAnalysisResult(m_analysisResult);
+        
+        // 转换导出内容类型
+        MarkdownExporter::ExportContents exporterContents = static_cast<MarkdownExporter::ExportContents>(0);
+        if (contents & MarkdownExportDialog::Overview)
+            exporterContents |= MarkdownExporter::Overview;
+        if (contents & MarkdownExportDialog::DetailedTable)
+            exporterContents |= MarkdownExporter::DetailedTable;
+        if (contents & MarkdownExportDialog::FileList)
+            exporterContents |= MarkdownExporter::FileList;
+        if (contents & MarkdownExportDialog::LanguageStats)
+            exporterContents |= MarkdownExporter::LanguageStats;
+        
+        // 执行导出
+        bool success = false;
+        if (mode == MarkdownExportDialog::SingleFile) {
+            success = m_markdownExporter->exportToSingleFile(exportPath, exporterContents);
+        } else {
+            success = m_markdownExporter->exportToMultipleFiles(exportPath, filePrefix, exporterContents);
+        }
+        
+        return success;
+    }
+    
+    return false;
+}
+
+bool StatisticsWidget::exportToMarkdown(const QString &filePath) const
+{
+    if (filePath.isEmpty()) {
+        return false;
+    }
+    
+    // 设置分析结果到导出器
+    m_markdownExporter->setAnalysisResult(m_analysisResult);
+    
+    // 导出所有内容到单个文件
+    MarkdownExporter::ExportContents allContents = 
+        MarkdownExporter::Overview | MarkdownExporter::DetailedTable | 
+        MarkdownExporter::FileList | MarkdownExporter::LanguageStats;
+    
+    return m_markdownExporter->exportToSingleFile(filePath, allContents);
+}
+
+void StatisticsWidget::onMarkdownExportProgress(int current, int total, const QString &message)
+{
+    updateProgress(current, total, message);
+}
+
+void StatisticsWidget::onMarkdownExportCompleted(bool success, const QString &message)
+{
+    m_progressBar->setVisible(false);
+    m_progressLabel->setText(tr("就绪"));
+    
+    if (success) {
+        QMessageBox::information(this, tr("导出成功"), message);
+    } else {
+        QMessageBox::warning(this, tr("导出失败"), message);
+    }
 }

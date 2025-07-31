@@ -50,6 +50,7 @@ CodeAnalyzer::CodeAnalyzer(QObject *parent)
     , m_includeComments(true)
     , m_includeBlankLines(true)
     , m_cancelled(false)
+    , m_fileTypeFilterExcludeMode(true)
     , m_currentFileIndex(0)
     , m_processTimer(new QTimer(this))
     , m_maxFileSize(10)
@@ -187,6 +188,29 @@ void CodeAnalyzer::setIncludeBlankLines(bool include)
     m_includeBlankLines = include;
 }
 
+void CodeAnalyzer::setFileTypeFilterMode(bool excludeMode)
+{
+    QMutexLocker locker(&m_mutex);
+    m_fileTypeFilterExcludeMode = excludeMode;
+}
+
+void CodeAnalyzer::setFileTypeFilters(const QStringList &fileTypes)
+{
+    QMutexLocker locker(&m_mutex);
+    m_fileTypeFilters = fileTypes;
+}
+
+bool CodeAnalyzer::getFileTypeFilterMode() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_fileTypeFilterExcludeMode;
+}
+
+const QStringList& CodeAnalyzer::getFileTypeFilters() const
+{
+    return m_fileTypeFilters;
+}
+
 QStringList CodeAnalyzer::getSupportedExtensions()
 {
     return s_supportedExtensions;
@@ -302,7 +326,10 @@ QStringList CodeAnalyzer::scanDirectory(const QString &dirPath)
             // 检查文件扩展名
             QString extension = entry.suffix().toLower();
             if (isSupportedExtension(extension)) {
-                fileList.append(entryPath);
+                // 检查文件类型过滤
+                if (matchesFileTypeFilter(entryPath)) {
+                    fileList.append(entryPath);
+                }
             }
         }
     }
@@ -328,6 +355,30 @@ bool CodeAnalyzer::shouldExcludeFile(const QString &filePath) const
 bool CodeAnalyzer::isSupportedExtension(const QString &extension) const
 {
     return s_supportedExtensions.contains(extension.toLower());
+}
+
+bool CodeAnalyzer::matchesFileTypeFilter(const QString &filePath) const
+{
+    // 如果没有设置过滤规则，则不进行过滤
+    if (m_fileTypeFilters.isEmpty()) {
+        return true;
+    }
+    
+    QFileInfo fileInfo(filePath);
+    QString fileName = fileInfo.fileName();
+    
+    bool matches = false;
+    for (const QString &pattern : m_fileTypeFilters) {
+        QRegularExpression regex(QRegularExpression::wildcardToRegularExpression(pattern));
+        if (regex.match(fileName).hasMatch()) {
+            matches = true;
+            break;
+        }
+    }
+    
+    // 排除模式：匹配则排除（返回false），不匹配则包含（返回true）
+    // 包含模式：匹配则包含（返回true），不匹配则排除（返回false）
+    return m_fileTypeFilterExcludeMode ? !matches : matches;
 }
 
 FileStatistics CodeAnalyzer::analyzeFile(const QString &filePath)

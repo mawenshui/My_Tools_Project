@@ -31,12 +31,16 @@ SOURCES += \
     src/core/analyzer/code_analyzer.cpp \
     src/core/models/analysis_result.cpp \
     src/core/models/file_statistics.cpp \
+    src/core/export/csv_exporter.cpp \
+    src/core/export/markdown_exporter.cpp \
     src/ui/widgets/project_selection_widget.cpp \
     src/ui/widgets/statistics_widget.cpp \
     src/ui/widgets/chart_widget.cpp \
     src/ui/widgets/advanced_config_dialog.cpp \
     src/ui/widgets/html_preview_dialog.cpp \
     src/ui/widgets/chart_selection_dialog.cpp \
+    src/ui/dialogs/csv_export_dialog.cpp \
+    src/ui/dialogs/markdown_export_dialog.cpp \
     src/ui/theme/theme_manager.cpp \
     src/core/config/config_manager.cpp
 
@@ -45,12 +49,16 @@ HEADERS += \
     src/core/analyzer/code_analyzer.h \
     src/core/models/analysis_result.h \
     src/core/models/file_statistics.h \
+    src/core/export/csv_exporter.h \
+    src/core/export/markdown_exporter.h \
     src/ui/widgets/project_selection_widget.h \
     src/ui/widgets/statistics_widget.h \
     src/ui/widgets/chart_widget.h \
     src/ui/widgets/advanced_config_dialog.h \
     src/ui/widgets/html_preview_dialog.h \
     src/ui/widgets/chart_selection_dialog.h \
+    src/ui/dialogs/csv_export_dialog.h \
+    src/ui/dialogs/markdown_export_dialog.h \
     src/ui/theme/theme_manager.h \
     src/core/config/config_manager.h
 

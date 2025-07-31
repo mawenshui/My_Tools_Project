@@ -23,11 +23,35 @@ ProjectSelectionWidget::ProjectSelectionWidget(QWidget *parent)
     , m_addPatternButton(nullptr)
     , m_removePatternButton(nullptr)
     , m_resetPatternsButton(nullptr)
+    , m_filterGroup(nullptr)
+    , m_excludeModeRadio(nullptr)
+    , m_includeModeRadio(nullptr)
+    , m_filterModeGroup(nullptr)
+    , m_fileTypeList(nullptr)
+    , m_fileTypeEdit(nullptr)
+    , m_addFileTypeButton(nullptr)
+    , m_removeFileTypeButton(nullptr)
+    , m_resetFileTypeButton(nullptr)
+    , m_presetCodeButton(nullptr)
+    , m_presetDocButton(nullptr)
+    , m_presetConfigButton(nullptr)
     , m_startAnalysisButton(nullptr)
     , m_resetConfigButton(nullptr)
     , m_statusLabel(nullptr)
     , m_configManager(ConfigManager::instance())
+    , m_currentFilterMode(ExcludeMode)
 {
+    // 初始化默认文件类型
+    m_defaultCodeTypes << "*.cpp" << "*.c" << "*.h" << "*.hpp" << "*.cc" << "*.cxx"
+                       << "*.java" << "*.py" << "*.js" << "*.ts" << "*.cs" << "*.php"
+                       << "*.go" << "*.rs" << "*.swift" << "*.kt" << "*.scala" << "*.rb";
+    
+    m_defaultDocTypes << "*.md" << "*.txt" << "*.doc" << "*.docx" << "*.pdf"
+                      << "*.html" << "*.htm" << "*.xml" << "*.rst" << "*.tex";
+    
+    m_defaultConfigTypes << "*.json" << "*.yaml" << "*.yml" << "*.ini" << "*.cfg"
+                         << "*.conf" << "*.properties" << "*.toml" << "*.env";
+    
     initializeUI();
     loadRecentProjects();
     loadDefaultExcludePatterns();
@@ -53,6 +77,7 @@ void ProjectSelectionWidget::initializeUI()
     m_mainLayout->addWidget(createProjectSelectionArea());
     m_mainLayout->addWidget(createAnalysisConfigArea());
     m_mainLayout->addWidget(createExcludeRulesArea());
+    m_mainLayout->addWidget(createFileTypeFilterArea());
     m_mainLayout->addWidget(createActionButtonsArea());
     
     // 状态标签
@@ -225,6 +250,88 @@ QWidget* ProjectSelectionWidget::createExcludeRulesArea()
     return m_excludeGroup;
 }
 
+QWidget* ProjectSelectionWidget::createFileTypeFilterArea()
+{
+    m_filterGroup = new QGroupBox(tr("文件类型过滤"), this);
+    QVBoxLayout *groupLayout = new QVBoxLayout(m_filterGroup);
+    
+    // 过滤模式选择
+    QHBoxLayout *modeLayout = new QHBoxLayout();
+    m_excludeModeRadio = new QRadioButton(tr("不统计文件类型"), this);
+    m_includeModeRadio = new QRadioButton(tr("只统计文件类型"), this);
+    
+    m_filterModeGroup = new QButtonGroup(this);
+    m_filterModeGroup->addButton(m_excludeModeRadio, static_cast<int>(ExcludeMode));
+    m_filterModeGroup->addButton(m_includeModeRadio, static_cast<int>(IncludeMode));
+    
+    // 默认选择排除模式
+    m_excludeModeRadio->setChecked(true);
+    
+    modeLayout->addWidget(m_excludeModeRadio);
+    modeLayout->addWidget(m_includeModeRadio);
+    modeLayout->addStretch();
+    
+    // 文件类型列表
+    m_fileTypeList = new QListWidget(this);
+    m_fileTypeList->setMaximumHeight(120);
+    m_fileTypeList->setSelectionMode(QAbstractItemView::MultiSelection);
+    
+    // 添加文件类型输入
+    QHBoxLayout *addLayout = new QHBoxLayout();
+    m_fileTypeEdit = new QLineEdit(this);
+    m_fileTypeEdit->setPlaceholderText(tr("输入文件类型，如: *.txt"));
+    m_addFileTypeButton = new QPushButton(tr("添加"), this);
+    m_addFileTypeButton->setFixedWidth(60);
+    
+    addLayout->addWidget(m_fileTypeEdit, 1);
+    addLayout->addWidget(m_addFileTypeButton);
+    
+    // 预设按钮
+    QHBoxLayout *presetLayout = new QHBoxLayout();
+    m_presetCodeButton = new QPushButton(tr("代码文件"), this);
+    m_presetDocButton = new QPushButton(tr("文档文件"), this);
+    m_presetConfigButton = new QPushButton(tr("配置文件"), this);
+    
+    presetLayout->addWidget(m_presetCodeButton);
+    presetLayout->addWidget(m_presetDocButton);
+    presetLayout->addWidget(m_presetConfigButton);
+    presetLayout->addStretch();
+    
+    // 操作按钮
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    m_removeFileTypeButton = new QPushButton(tr("删除选中"), this);
+    m_resetFileTypeButton = new QPushButton(tr("清空列表"), this);
+    
+    buttonLayout->addWidget(m_removeFileTypeButton);
+    buttonLayout->addWidget(m_resetFileTypeButton);
+    buttonLayout->addStretch();
+    
+    groupLayout->addLayout(modeLayout);
+    groupLayout->addWidget(m_fileTypeList);
+    groupLayout->addLayout(addLayout);
+    groupLayout->addLayout(presetLayout);
+    groupLayout->addLayout(buttonLayout);
+    
+    // 连接信号
+    connect(m_filterModeGroup, QOverload<int>::of(&QButtonGroup::buttonClicked),
+            this, &ProjectSelectionWidget::onFilterModeChanged);
+    connect(m_addFileTypeButton, &QPushButton::clicked, this, &ProjectSelectionWidget::addFileTypeFilter);
+    connect(m_removeFileTypeButton, &QPushButton::clicked, this, &ProjectSelectionWidget::removeFileTypeFilter);
+    connect(m_resetFileTypeButton, &QPushButton::clicked, this, &ProjectSelectionWidget::resetFileTypeFilters);
+    connect(m_fileTypeEdit, &QLineEdit::returnPressed, this, &ProjectSelectionWidget::addFileTypeFilter);
+    connect(m_presetCodeButton, &QPushButton::clicked, [this]() {
+        setFileTypeFilters(m_defaultCodeTypes);
+    });
+    connect(m_presetDocButton, &QPushButton::clicked, [this]() {
+        setFileTypeFilters(m_defaultDocTypes);
+    });
+    connect(m_presetConfigButton, &QPushButton::clicked, [this]() {
+        setFileTypeFilters(m_defaultConfigTypes);
+    });
+    
+    return m_filterGroup;
+}
+
 QWidget* ProjectSelectionWidget::createActionButtonsArea()
 {
     QWidget *buttonWidget = new QWidget(this);
@@ -310,12 +417,51 @@ void ProjectSelectionWidget::setIncludeBlankLines(bool include)
     m_includeBlankLinesCheck->setChecked(include);
 }
 
+ProjectSelectionWidget::FilterMode ProjectSelectionWidget::getFilterMode() const
+{
+    return m_currentFilterMode;
+}
+
+void ProjectSelectionWidget::setFilterMode(FilterMode mode)
+{
+    m_currentFilterMode = mode;
+    if (mode == ExcludeMode) {
+        m_excludeModeRadio->setChecked(true);
+    } else {
+        m_includeModeRadio->setChecked(true);
+    }
+}
+
+QStringList ProjectSelectionWidget::getFileTypeFilters() const
+{
+    QStringList filters;
+    for (int i = 0; i < m_fileTypeList->count(); ++i) {
+        filters << m_fileTypeList->item(i)->text();
+    }
+    return filters;
+}
+
+void ProjectSelectionWidget::setFileTypeFilters(const QStringList &types)
+{
+    m_fileTypeList->clear();
+    for (const QString &type : types) {
+        if (!type.trimmed().isEmpty()) {
+            m_fileTypeList->addItem(type.trimmed());
+        }
+    }
+}
+
 void ProjectSelectionWidget::resetToDefaults()
 {
     m_projectPathEdit->clear();
     m_includeCommentsCheck->setChecked(true);
     m_includeBlankLinesCheck->setChecked(true);
     resetExcludePatterns();
+    
+    // 重置文件类型过滤设置
+    setFilterMode(ExcludeMode);
+    m_fileTypeList->clear();
+    
     updateUIState();
     emit configurationChanged();
 }
@@ -410,6 +556,57 @@ void ProjectSelectionWidget::removeExcludePattern()
 void ProjectSelectionWidget::resetExcludePatterns()
 {
     setExcludePatterns(m_defaultExcludePatterns);
+    emit configurationChanged();
+}
+
+void ProjectSelectionWidget::onFilterModeChanged()
+{
+    int checkedId = m_filterModeGroup->checkedId();
+    m_currentFilterMode = static_cast<FilterMode>(checkedId);
+    emit configurationChanged();
+}
+
+void ProjectSelectionWidget::addFileTypeFilter()
+{
+    QString pattern = m_fileTypeEdit->text().trimmed();
+    if (pattern.isEmpty()) {
+        return;
+    }
+    
+    // 确保模式以 *. 开头
+    if (!pattern.startsWith("*.") && !pattern.startsWith("*")) {
+        if (pattern.startsWith(".")) {
+            pattern = "*" + pattern;
+        } else {
+            pattern = "*." + pattern;
+        }
+    }
+    
+    // 检查是否已存在
+    for (int i = 0; i < m_fileTypeList->count(); ++i) {
+        if (m_fileTypeList->item(i)->text() == pattern) {
+            m_fileTypeEdit->clear();
+            return;
+        }
+    }
+    
+    m_fileTypeList->addItem(pattern);
+    m_fileTypeEdit->clear();
+    emit configurationChanged();
+}
+
+void ProjectSelectionWidget::removeFileTypeFilter()
+{
+    QList<QListWidgetItem*> selectedItems = m_fileTypeList->selectedItems();
+    for (QListWidgetItem* item : selectedItems) {
+        delete m_fileTypeList->takeItem(m_fileTypeList->row(item));
+    }
+    emit configurationChanged();
+}
+
+void ProjectSelectionWidget::resetFileTypeFilters()
+{
+    m_fileTypeList->clear();
     emit configurationChanged();
 }
 

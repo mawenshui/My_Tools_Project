@@ -22,6 +22,10 @@
 #include <QtCharts/QChart>
 #include "../../core/models/analysis_result.h"
 #include "../../core/models/file_statistics.h"
+#include "../../core/export/csv_exporter.h"
+#include "../../core/export/markdown_exporter.h"
+#include "../dialogs/csv_export_dialog.h"
+#include "../dialogs/markdown_export_dialog.h"
 #include "html_preview_dialog.h"
 
 QT_CHARTS_USE_NAMESPACE
@@ -97,18 +101,37 @@ public:
     void setDisplayMode(DisplayMode mode);
     
     /**
-     * @brief 导出数据到CSV
+     * @brief 导出数据到CSV（新版本）
+     * @return 导出是否成功
+     */
+    bool exportToCSV();
+    
+    /**
+     * @brief 导出数据到CSV（兼容旧版本）
      * @param filePath 文件路径
-     * @return 是否成功
+     * @return 导出是否成功
      */
     bool exportToCSV(const QString &filePath) const;
     
     /**
-     * @brief 导出数据到HTML
+     * @brief 导出为HTML格式
      * @param filePath 文件路径
-     * @return 是否成功
+     * @return 导出是否成功
      */
     bool exportToHTML(const QString &filePath) const;
+    
+    /**
+     * @brief 导出为Markdown格式（使用对话框）
+     * @return 导出是否成功
+     */
+    bool exportToMarkdown();
+    
+    /**
+     * @brief 导出为Markdown格式
+     * @param filePath 文件路径
+     * @return 导出是否成功
+     */
+    bool exportToMarkdown(const QString &filePath) const;
 
 
     
@@ -187,12 +210,27 @@ private slots:
     void onFileTreeItemSelectionChanged();
     
     /**
-     * @brief 导出CSV按钮点击
+     * @brief 导出CSV按钮点击槽函数
      */
     void onExportCSVClicked();
     
     /**
-     * @brief 导出HTML按钮点击
+     * @brief CSV导出进度更新槽函数
+     * @param current 当前进度
+     * @param total 总进度
+     * @param message 进度消息
+     */
+    void onCSVExportProgress(int current, int total, const QString &message);
+    
+    /**
+     * @brief CSV导出完成槽函数
+     * @param success 是否成功
+     * @param message 完成消息
+     */
+    void onCSVExportCompleted(bool success, const QString &message);
+    
+    /**
+     * @brief 导出HTML按钮点击槽函数
      */
     void onExportHTMLClicked();
     
@@ -200,6 +238,26 @@ private slots:
      * @brief 显示HTML预览对话框
      */
     void showHTMLPreviewDialog();
+    
+    /**
+     * @brief 导出Markdown按钮点击槽函数
+     */
+    void onExportMarkdownClicked();
+    
+    /**
+     * @brief Markdown导出进度更新槽函数
+     * @param current 当前进度
+     * @param total 总进度
+     * @param message 进度消息
+     */
+    void onMarkdownExportProgress(int current, int total, const QString &message);
+    
+    /**
+     * @brief Markdown导出完成槽函数
+     * @param success 是否成功
+     * @param message 结果消息
+     */
+    void onMarkdownExportCompleted(bool success, const QString &message);
 
 
     
@@ -353,6 +411,7 @@ private:
     QWidget *m_toolBar;                     ///< 工具栏
     QPushButton *m_exportCSVButton;         ///< 导出CSV按钮
     QPushButton *m_exportHTMLButton;        ///< 导出HTML按钮
+    QPushButton *m_exportMarkdownButton;    ///< 导出Markdown按钮
 
     QList<QChart*> m_chartData;             ///< 图表数据缓存
     QPushButton *m_refreshButton;           ///< 刷新按钮
@@ -363,6 +422,8 @@ private:
     AnalysisResult m_analysisResult;        ///< 分析结果
     DisplayMode m_currentDisplayMode;       ///< 当前显示模式
     ChartGenerationOptions m_chartOptions;  ///< 图表生成选项
+    CSVExporter *m_csvExporter;             ///< CSV导出器
+    MarkdownExporter *m_markdownExporter;   ///< Markdown导出器
 };
 
 #endif // STATISTICS_WIDGET_H

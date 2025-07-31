@@ -98,6 +98,30 @@ public:
     void setIncludeBlankLines(bool include);
     
     /**
+     * @brief 设置文件类型过滤模式
+     * @param excludeMode true为排除模式，false为包含模式
+     */
+    void setFileTypeFilterMode(bool excludeMode);
+    
+    /**
+     * @brief 设置文件类型过滤列表
+     * @param fileTypes 文件类型列表（如 *.cpp, *.h）
+     */
+    void setFileTypeFilters(const QStringList &fileTypes);
+    
+    /**
+     * @brief 获取文件类型过滤模式
+     * @return true为排除模式，false为包含模式
+     */
+    bool getFileTypeFilterMode() const;
+    
+    /**
+     * @brief 获取文件类型过滤列表
+     * @return 文件类型列表
+     */
+    const QStringList& getFileTypeFilters() const;
+    
+    /**
      * @brief 获取支持的文件扩展名
      * @return 支持的扩展名列表
      */
@@ -229,6 +253,13 @@ private:
     bool isSupportedExtension(const QString &extension) const;
     
     /**
+     * @brief 检查文件是否匹配类型过滤规则
+     * @param filePath 文件路径
+     * @return 是否匹配过滤规则
+     */
+    bool matchesFileTypeFilter(const QString &filePath) const;
+    
+    /**
      * @brief 分析单个文件
      * @param filePath 文件路径
      * @return 文件统计信息
@@ -280,6 +311,10 @@ private:
     bool m_includeComments;                 ///< 是否包含注释行
     bool m_includeBlankLines;               ///< 是否包含空白行
     bool m_cancelled;                       ///< 是否已取消
+    
+    // 文件类型过滤相关
+    bool m_fileTypeFilterExcludeMode;       ///< 文件类型过滤模式：true为排除，false为包含
+    QStringList m_fileTypeFilters;          ///< 文件类型过滤列表
     
     int m_currentFileIndex;                 ///< 当前处理文件索引
     QTimer *m_processTimer;                 ///< 处理定时器

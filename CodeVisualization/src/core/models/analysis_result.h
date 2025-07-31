@@ -73,10 +73,16 @@ public:
     int getTotalFiles() const;
     
     /**
-     * @brief 获取语言统计信息
-     * @return 语言名称到统计信息的映射
+     * @brief 获取语言代码行数统计
+     * @return 语言名称到代码行数的映射
      */
     QMap<QString, int> getLanguageStatistics() const;
+    
+    /**
+     * @brief 获取语言文件数量统计
+     * @return 语言名称到文件数量的映射
+     */
+    QMap<QString, int> getLanguageFileCount() const;
     
     /**
      * @brief 获取支持的语言数量

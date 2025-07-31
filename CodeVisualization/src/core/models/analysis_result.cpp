@@ -76,6 +76,19 @@ QMap<QString, int> AnalysisResult::getLanguageStatistics() const
     return languageStats;
 }
 
+QMap<QString, int> AnalysisResult::getLanguageFileCount() const
+{
+    QMap<QString, int> languageFileCount;
+    
+    for (const FileStatistics &fileStats : m_fileStatistics) {
+        if (!fileStats.language.isEmpty()) {
+            languageFileCount[fileStats.language]++;
+        }
+    }
+    
+    return languageFileCount;
+}
+
 int AnalysisResult::getLanguageCount() const
 {
     QMap<QString, int> languageStats = getLanguageStatistics();
