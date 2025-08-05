@@ -10,9 +10,9 @@
 #include <QtCore/QBuffer>
 #include <QtCore/QDateTime>
 
-HtmlPreviewDialog::HtmlPreviewDialog(const AnalysisResult &analysisResult, 
-                                   const QList<QChart*> &chartData,
-                                   QWidget *parent)
+HtmlPreviewDialog::HtmlPreviewDialog(const AnalysisResult &analysisResult,
+                                     const QList<QChart*>& chartData,
+                                     QWidget *parent)
     : QDialog(parent)
     , m_analysisResult(analysisResult)
     , m_chartData(chartData)
@@ -20,7 +20,6 @@ HtmlPreviewDialog::HtmlPreviewDialog(const AnalysisResult &analysisResult,
     setWindowTitle(tr("HTML导出预览"));
     setModal(true);
     resize(1200, 800);
-    
     initializeUI();
     updatePreview();
 }
@@ -33,104 +32,82 @@ void HtmlPreviewDialog::initializeUI()
 {
     m_mainLayout = new QVBoxLayout(this);
     m_splitter = new QSplitter(Qt::Horizontal, this);
-    
     // 创建设置面板和预览面板
     m_settingsPanel = createSettingsPanel();
     m_previewPanel = createPreviewPanel();
-    
     m_splitter->addWidget(m_settingsPanel);
     m_splitter->addWidget(m_previewPanel);
     m_splitter->setSizes({300, 900});
-    
     m_mainLayout->addWidget(m_splitter);
-    
     // 创建按钮布局
     m_buttonLayout = new QHBoxLayout();
     m_buttonLayout->addStretch();
-    
     m_exportButton = new QPushButton(tr("导出HTML"), this);
     m_cancelButton = new QPushButton(tr("取消"), this);
-    
     m_exportButton->setDefault(true);
     m_exportButton->setMinimumSize(100, 30);
     m_cancelButton->setMinimumSize(100, 30);
-    
     m_buttonLayout->addWidget(m_exportButton);
     m_buttonLayout->addWidget(m_cancelButton);
-    
     m_mainLayout->addLayout(m_buttonLayout);
-    
     // 连接信号
     connect(m_exportButton, &QPushButton::clicked, this, &HtmlPreviewDialog::onExportClicked);
     connect(m_cancelButton, &QPushButton::clicked, this, &HtmlPreviewDialog::onCancelClicked);
+    m_exportButton->setHidden(true);
 }
 
 QWidget* HtmlPreviewDialog::createSettingsPanel()
 {
     QWidget *panel = new QWidget(this);
     QVBoxLayout *layout = new QVBoxLayout(panel);
-    
     // 报告标题设置
     m_titleGroup = new QGroupBox(tr("报告设置"), panel);
     QVBoxLayout *titleLayout = new QVBoxLayout(m_titleGroup);
-    
     QLabel *titleLabel = new QLabel(tr("报告标题:"), m_titleGroup);
     m_titleEdit = new QLineEdit(m_settings.reportTitle, m_titleGroup);
-    
     titleLayout->addWidget(titleLabel);
     titleLayout->addWidget(m_titleEdit);
-    
     // 内容选择
     m_contentGroup = new QGroupBox(tr("导出内容"), panel);
     QVBoxLayout *contentLayout = new QVBoxLayout(m_contentGroup);
-    
     m_overviewCheck = new QCheckBox(tr("概览统计"), m_contentGroup);
     m_languageStatsCheck = new QCheckBox(tr("语言统计"), m_contentGroup);
     m_fileListCheck = new QCheckBox(tr("文件列表"), m_contentGroup);
     m_detailedTableCheck = new QCheckBox(tr("详细表格"), m_contentGroup);
     m_chartsCheck = new QCheckBox(tr("数据图表"), m_contentGroup);
-    
     // 设置默认选中状态
     m_overviewCheck->setChecked(m_settings.includeOverview);
     m_languageStatsCheck->setChecked(m_settings.includeLanguageStats);
     m_fileListCheck->setChecked(m_settings.includeFileList);
     m_detailedTableCheck->setChecked(m_settings.includeDetailedTable);
     m_chartsCheck->setChecked(m_settings.includeCharts);
-    
     contentLayout->addWidget(m_overviewCheck);
     contentLayout->addWidget(m_languageStatsCheck);
     contentLayout->addWidget(m_fileListCheck);
     contentLayout->addWidget(m_detailedTableCheck);
     contentLayout->addWidget(m_chartsCheck);
-    
     // 图表选择
     m_chartGroup = new QGroupBox(tr("图表类型"), panel);
     QVBoxLayout *chartLayout = new QVBoxLayout(m_chartGroup);
-    
     m_pieChartCheck = new QCheckBox(tr("饼图 (语言分布)"), m_chartGroup);
     m_barChartCheck = new QCheckBox(tr("柱状图 (代码行数)"), m_chartGroup);
     m_lineChartCheck = new QCheckBox(tr("折线图 (趋势分析)"), m_chartGroup);
     m_areaChartCheck = new QCheckBox(tr("面积图 (累积统计)"), m_chartGroup);
-    
     // 设置默认选中状态
     m_pieChartCheck->setChecked(m_settings.includePieChart);
     m_barChartCheck->setChecked(m_settings.includeBarChart);
     m_lineChartCheck->setChecked(m_settings.includeLineChart);
     m_areaChartCheck->setChecked(m_settings.includeAreaChart);
-    
     chartLayout->addWidget(m_pieChartCheck);
     chartLayout->addWidget(m_barChartCheck);
     chartLayout->addWidget(m_lineChartCheck);
     chartLayout->addWidget(m_areaChartCheck);
-    
     // 根据图表复选框状态启用/禁用图表类型选择
     m_chartGroup->setEnabled(m_chartsCheck->isChecked());
-    
     layout->addWidget(m_titleGroup);
     layout->addWidget(m_contentGroup);
     layout->addWidget(m_chartGroup);
     layout->addStretch();
-    
     // 连接信号
     connect(m_titleEdit, &QLineEdit::textChanged, this, &HtmlPreviewDialog::onReportTitleChanged);
     connect(m_overviewCheck, &QCheckBox::toggled, this, &HtmlPreviewDialog::onContentSelectionChanged);
@@ -138,15 +115,12 @@ QWidget* HtmlPreviewDialog::createSettingsPanel()
     connect(m_fileListCheck, &QCheckBox::toggled, this, &HtmlPreviewDialog::onContentSelectionChanged);
     connect(m_detailedTableCheck, &QCheckBox::toggled, this, &HtmlPreviewDialog::onContentSelectionChanged);
     connect(m_chartsCheck, &QCheckBox::toggled, this, &HtmlPreviewDialog::onContentSelectionChanged);
-    
     connect(m_pieChartCheck, &QCheckBox::toggled, this, &HtmlPreviewDialog::onChartSelectionChanged);
     connect(m_barChartCheck, &QCheckBox::toggled, this, &HtmlPreviewDialog::onChartSelectionChanged);
     connect(m_lineChartCheck, &QCheckBox::toggled, this, &HtmlPreviewDialog::onChartSelectionChanged);
     connect(m_areaChartCheck, &QCheckBox::toggled, this, &HtmlPreviewDialog::onChartSelectionChanged);
-    
     // 图表复选框状态改变时启用/禁用图表类型选择
     connect(m_chartsCheck, &QCheckBox::toggled, m_chartGroup, &QGroupBox::setEnabled);
-    
     return panel;
 }
 
@@ -154,16 +128,12 @@ QWidget* HtmlPreviewDialog::createPreviewPanel()
 {
     QWidget *panel = new QWidget(this);
     QVBoxLayout *layout = new QVBoxLayout(panel);
-    
     QLabel *previewLabel = new QLabel(tr("预览效果:"), panel);
     previewLabel->setStyleSheet("font-weight: bold; font-size: 14px;");
-    
     m_webView = new QTextBrowser(panel);
     m_webView->setOpenExternalLinks(true);
-    
     layout->addWidget(previewLabel);
     layout->addWidget(m_webView);
-    
     return panel;
 }
 
@@ -180,7 +150,6 @@ void HtmlPreviewDialog::onContentSelectionChanged()
     m_settings.includeFileList = m_fileListCheck->isChecked();
     m_settings.includeDetailedTable = m_detailedTableCheck->isChecked();
     m_settings.includeCharts = m_chartsCheck->isChecked();
-    
     updatePreview();
 }
 
@@ -190,7 +159,6 @@ void HtmlPreviewDialog::onChartSelectionChanged()
     m_settings.includeBarChart = m_barChartCheck->isChecked();
     m_settings.includeLineChart = m_lineChartCheck->isChecked();
     m_settings.includeAreaChart = m_areaChartCheck->isChecked();
-    
     updatePreview();
 }
 
@@ -344,69 +312,69 @@ QString HtmlPreviewDialog::generateHTMLContent() const
             <p><strong>生成时间:</strong> %4</p>
         </div>
 )";
-    
+
     html = html.arg(m_settings.reportTitle)
-              .arg(m_settings.reportTitle)
-              .arg(m_analysisResult.getProjectPath())
-              .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
-    
+           .arg(m_settings.reportTitle)
+           .arg(m_analysisResult.getProjectPath())
+           .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
+
     // 添加概览统计
     if (m_settings.includeOverview) {
         html += R"(
         <h2>概览统计</h2>
         <div class="stats-grid">
 )";
-        
+
         html += QString(R"(
             <div class="stat-card">
                 <div class="stat-value">%1</div>
                 <div class="stat-label">总文件数</div>
             </div>
 )")
-        .arg(formatNumber(m_analysisResult.getTotalFiles()));
-        
+                .arg(formatNumber(m_analysisResult.getTotalFiles()));
+
         html += QString(R"(
             <div class="stat-card">
                 <div class="stat-value">%1</div>
                 <div class="stat-label">总行数</div>
             </div>
 )")
-        .arg(formatNumber(m_analysisResult.getTotalLines()));
-        
+                .arg(formatNumber(m_analysisResult.getTotalLines()));
+
         html += QString(R"(
             <div class="stat-card">
                 <div class="stat-value">%1</div>
                 <div class="stat-label">代码行数</div>
             </div>
 )")
-        .arg(formatNumber(m_analysisResult.getTotalCodeLines()));
-        
+                .arg(formatNumber(m_analysisResult.getTotalCodeLines()));
+
         html += QString(R"(
             <div class="stat-card">
                 <div class="stat-value">%1</div>
                 <div class="stat-label">编程语言</div>
             </div>
 )")
-        .arg(formatNumber(m_analysisResult.getLanguageCount()));
-        
+                .arg(formatNumber(m_analysisResult.getLanguageCount()));
+
         html += R"(
         </div>
 )";
     }
-    
+
     // 添加图表部分
     if (m_settings.includeCharts && !m_chartData.isEmpty()) {
         html += R"(
         <div class="charts-section">
             <h2>数据图表</h2>
 )";
-        
+
         for (int i = 0; i < m_chartData.size(); ++i) {
             QChart* chart = m_chartData[i];
             if (chart) {
                 QString chartTitle = chart->title();
                 bool shouldInclude = false;
-                
+
                 // 根据图表标题判断是否应该包含
                 if (chartTitle.contains("饼图") || chartTitle.contains("分布")) {
                     shouldInclude = m_settings.includePieChart;
@@ -420,33 +388,33 @@ QString HtmlPreviewDialog::generateHTMLContent() const
                     // 默认包含未分类的图表
                     shouldInclude = true;
                 }
-                
+
                 if (shouldInclude) {
                     QString base64Image = chartToBase64(chart);
                     if (!base64Image.isEmpty()) {
                         if (chartTitle.isEmpty()) {
                             chartTitle = QString("图表 %1").arg(i + 1);
                         }
-                        
+
                         html += QString(R"(
             <div class="chart-container">
                 <div class="chart-title">%1</div>
                 <img class="chart-image" src="data:image/png;base64,%2" alt="%3" />
             </div>
 )")
-                        .arg(chartTitle)
-                        .arg(base64Image)
-                        .arg(chartTitle);
+                                .arg(chartTitle)
+                                .arg(base64Image)
+                                .arg(chartTitle);
                     }
                 }
             }
         }
-        
+
         html += R"(
         </div>
 )";
     }
-    
+
     // 添加语言统计表格
     if (m_settings.includeLanguageStats) {
         html += R"(
@@ -460,12 +428,12 @@ QString HtmlPreviewDialog::generateHTMLContent() const
                 <th>百分比</th>
             </tr>
 )";
-        
+
         const QMap<QString, int> &langStats = m_analysisResult.getLanguageStatistics();
         for (auto it = langStats.begin(); it != langStats.end(); ++it) {
             int lineCount = it.value();
             double percentage = (double)lineCount / m_analysisResult.getTotalLines() * 100;
-            
+
             html += QString(R"(
             <tr>
                 <td>%1</td>
@@ -475,18 +443,18 @@ QString HtmlPreviewDialog::generateHTMLContent() const
                 <td>%5%</td>
             </tr>
 )")
-            .arg(it.key())
-            .arg("-")  // File count not available in this data structure
-            .arg(formatNumber(lineCount))
-            .arg("-")  // Code lines not available in this data structure
-            .arg(QString::number(percentage, 'f', 1));
+                    .arg(it.key())
+                    .arg("-")  // File count not available in this data structure
+                    .arg(formatNumber(lineCount))
+                    .arg("-")  // Code lines not available in this data structure
+                    .arg(QString::number(percentage, 'f', 1));
         }
-        
+
         html += R"(
         </table>
 )";
     }
-    
+
     // 添加详细表格
     if (m_settings.includeDetailedTable) {
         html += R"(
@@ -502,7 +470,7 @@ QString HtmlPreviewDialog::generateHTMLContent() const
                 <th>文件大小</th>
             </tr>
 )";
-        
+
         const QVector<FileStatistics> &fileStats = m_analysisResult.getFileStatistics();
         for (const FileStatistics &stats : fileStats) {
             html += QString(R"(
@@ -516,42 +484,42 @@ QString HtmlPreviewDialog::generateHTMLContent() const
                 <td>%7</td>
             </tr>
 )")
-            .arg(QFileInfo(stats.filePath).fileName())
-            .arg(stats.language)
-            .arg(formatNumber(stats.totalLines))
-            .arg(formatNumber(stats.codeLines))
-            .arg(formatNumber(stats.commentLines))
-            .arg(formatNumber(stats.blankLines))
-            .arg(formatFileSize(stats.fileSize));
+                    .arg(QFileInfo(stats.filePath).fileName())
+                    .arg(stats.language)
+                    .arg(formatNumber(stats.totalLines))
+                    .arg(formatNumber(stats.codeLines))
+                    .arg(formatNumber(stats.commentLines))
+                    .arg(formatNumber(stats.blankLines))
+                    .arg(formatFileSize(stats.fileSize));
         }
-        
+
         html += R"(
         </table>
 )";
     }
-    
+
     // 添加文件列表
     if (m_settings.includeFileList) {
         html += R"(
         <h2>项目文件结构</h2>
         <div class="file-tree">
 )";
-        
+
         // 这里可以添加文件树的生成逻辑
         html += QString("项目根目录: %1<br/>").arg(m_analysisResult.getProjectPath());
         html += QString("总计 %1 个文件").arg(m_analysisResult.getTotalFiles());
-        
+
         html += R"(
         </div>
 )";
     }
-    
+
     html += R"(
     </div>
 </body>
 </html>
 )";
-    
+
     return html;
 }
 
@@ -560,25 +528,25 @@ QString HtmlPreviewDialog::chartToBase64(QChart* chart) const
     if (!chart) {
         return QString();
     }
-    
+
     // 创建图表视图
     QChartView chartView(chart);
     chartView.setRenderHint(QPainter::Antialiasing);
     chartView.resize(800, 600);
-    
+
     // 渲染到图片
     QPixmap pixmap(800, 600);
     pixmap.fill(Qt::white);
     QPainter painter(&pixmap);
     painter.setRenderHint(QPainter::Antialiasing);
     chartView.render(&painter);
-    
+
     // 转换为Base64
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
     buffer.open(QIODevice::WriteOnly);
     pixmap.save(&buffer, "PNG");
-    
+
     return byteArray.toBase64();
 }
 
@@ -592,7 +560,7 @@ QString HtmlPreviewDialog::formatFileSize(qint64 bytes) const
     const qint64 KB = 1024;
     const qint64 MB = KB * 1024;
     const qint64 GB = MB * 1024;
-    
+
     if (bytes >= GB) {
         return QString("%1 GB").arg(QString::number(bytes / (double)GB, 'f', 2));
     } else if (bytes >= MB) {
