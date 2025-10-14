@@ -2,9 +2,12 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QTimer>
+#include <QDir>
+#include <QFile>
+#include <QTextStream>
 
 // 连接超时时间（毫秒）
-const int CONNECTION_TIMEOUT = 10000;
+const int CONNECTION_TIMEOUT = 30000;
 
 SSHClient::SSHClient(QObject *parent) : QObject(parent),
     m_process(nullptr),
@@ -16,6 +19,7 @@ SSHClient::SSHClient(QObject *parent) : QObject(parent),
     m_username(""),
     m_keyFilePath(""),
     m_keyFilePassword(""),
+    m_password(""),
     m_authMode(KeyFile),
     m_connectionTimeout(CONNECTION_TIMEOUT)
 {
@@ -75,6 +79,37 @@ void SSHClient::connectToHost(const QString &host, int port, const QString &user
     qDebug() << "执行SSH密钥认证命令：" << sshCommand;
     // 发送命令输出信号，显示在界面上
     emit commandOutput("执行SSH密钥认证命令：" + sshCommand);
+    m_process->start(sshCommand);
+}
+
+void SSHClient::connectToHostWithPassword(const QString &host, int port, const QString &username, const QString &password)
+{
+    // 保存连接参数
+    m_host = host;
+    m_port = port;
+    m_username = username;
+    m_password = password;
+    m_keyFilePath = "";  // 清空密钥文件路径
+    m_keyFilePassword = "";  // 清空密钥密码
+    m_authMode = AuthMode::Password;
+    // 确保进程已经设置好
+    if(!m_process)
+    {
+        setupProcess();
+    }
+    // 如果已经连接，先断开
+    if(m_connected)
+    {
+        disconnect();
+    }
+    // 构建SSH命令
+    QString sshCommand = getSSHCommand();
+    // 启动连接超时定时器
+    m_connectionTimer->start(m_connectionTimeout);
+    // 启动SSH进程
+    qDebug() << "执行SSH密码认证命令：" << sshCommand;
+    // 发送命令输出信号，显示在界面上
+    emit commandOutput("执行SSH密码认证命令：" + sshCommand);
     m_process->start(sshCommand);
 }
 
@@ -211,9 +246,10 @@ void SSHClient::onProcessReadyReadStandardOutput()
     // 读取标准输出
     QByteArray output = m_process->readAllStandardOutput();
     QString outputStr = QString::fromUtf8(output);
-    // 记录所有标准输出到日志
+    // 详细记录SSH标准输出
     qDebug() << "SSH标准输出：" << outputStr;
-    // 检查是否包含密码提示（由于使用MergedChannels，密码提示现在会出现在标准输出中）
+    qDebug() << "当前连接状态：" << (m_connected ? "已连接" : "未连接") << "，认证模式：" << (m_authMode == AuthMode::Password ? "密码认证" : "密钥认证");
+    // 检查是否包含密码提示（某些SSH实现可能在标准输出中显示密码提示）
     // 增加更多可能的密码提示检测模式
     if(!m_connected && (
                 outputStr.contains("password", Qt::CaseInsensitive) ||
@@ -235,18 +271,33 @@ void SSHClient::onProcessReadyReadStandardOutput()
         {
             if(m_process && m_process->state() == QProcess::Running)
             {
-                // 根据认证模式选择发送的密码
-                // 使用密钥文件密码
-                QString passwordToSend = m_keyFilePassword;
-                if(!m_keyFilePassword.isEmpty())
+                QString passwordToSend;
+                if(m_authMode == AuthMode::Password)
                 {
-                    qDebug() << "发送密钥密码";
+                    // 密码认证模式，发送账户密码
+                    passwordToSend = m_password;
+                    qDebug() << "发送账户密码";
+                }
+                else
+                {
+                    // 密钥认证模式，发送密钥密码
+                    passwordToSend = m_keyFilePassword;
+                    if(!m_keyFilePassword.isEmpty())
+                    {
+                        qDebug() << "发送密钥密码";
+                    }
+                    else
+                    {
+                        // 密钥没有密码，发送空行
+                        qDebug() << "密钥无密码，发送空行";
+                    }
+                }
+                if(!passwordToSend.isEmpty())
+                {
                     m_process->write((passwordToSend + "\n").toUtf8());
                 }
                 else
                 {
-                    // 密钥没有密码，发送空行
-                    qDebug() << "密钥无密码，发送空行";
                     m_process->write("\n");
                 }
                 qDebug() << "密码已发送";
@@ -305,7 +356,8 @@ void SSHClient::onProcessReadyReadStandardError()
     QString errorStr = QString::fromUtf8(error);
     // 详细记录SSH标准错误输出
     qDebug() << "SSH标准错误输出：" << errorStr;
-    // 尽管我们使用MergedChannels，但有些SSH实现可能仍然在标准错误中输出密码提示
+    qDebug() << "当前连接状态：" << (m_connected ? "已连接" : "未连接") << "，认证模式：" << (m_authMode == AuthMode::Password ? "密码认证" : "密钥认证");
+    // SSH的密码提示通常在标准错误中输出
     // 检查是否包含密码提示
     if(!m_connected && (
                 errorStr.contains("password", Qt::CaseInsensitive) ||
@@ -327,18 +379,33 @@ void SSHClient::onProcessReadyReadStandardError()
         {
             if(m_process && m_process->state() == QProcess::Running)
             {
-                // 根据认证模式选择发送的密码
-                // 使用密钥文件密码
-                QString passwordToSend = m_keyFilePassword;
-                if(!m_keyFilePassword.isEmpty())
+                QString passwordToSend;
+                if(m_authMode == AuthMode::Password)
                 {
-                    qDebug() << "发送密钥密码（从标准错误检测）";
+                    // 密码认证模式，发送账户密码
+                    passwordToSend = m_password;
+                    qDebug() << "发送账户密码（从标准错误检测）";
+                }
+                else
+                {
+                    // 密钥认证模式，发送密钥密码
+                    passwordToSend = m_keyFilePassword;
+                    if(!m_keyFilePassword.isEmpty())
+                    {
+                        qDebug() << "发送密钥密码（从标准错误检测）";
+                    }
+                    else
+                    {
+                        // 密钥没有密码，发送空行
+                        qDebug() << "密钥无密码，发送空行（从标准错误检测）";
+                    }
+                }
+                if(!passwordToSend.isEmpty())
+                {
                     m_process->write((passwordToSend + "\n").toUtf8());
                 }
                 else
                 {
-                    // 密钥没有密码，发送空行
-                    qDebug() << "密钥无密码，发送空行（从标准错误检测）";
                     m_process->write("\n");
                 }
                 qDebug() << "密码已发送（从标准错误检测）";
@@ -432,8 +499,8 @@ void SSHClient::setupProcess()
     // 设置进程环境
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     m_process->setProcessEnvironment(env);
-    // 设置进程启动模式，使用合并通道模式以更好地处理交互式会话
-    m_process->setProcessChannelMode(QProcess::MergedChannels);
+    // 设置进程启动模式，使用分离通道模式以正确处理SSH的密码提示（通常在标准错误中）
+    m_process->setProcessChannelMode(QProcess::SeparateChannels);
     // 连接信号和槽
     connect(m_process, &QProcess::started, this, &SSHClient::onProcessStarted);
     connect(m_process, &QProcess::errorOccurred, this, &SSHClient::onProcessError);
@@ -472,41 +539,79 @@ void SSHClient::cleanupProcess()
 QString SSHClient::getSSHCommand(const QString &command) const
 {
     QString sshCommand;
+    if(m_authMode == AuthMode::Password)
+    {
+        // 密码认证模式
 #ifdef Q_OS_WIN
-    // Windows平台使用OpenSSH客户端
-    sshCommand = QString("ssh -tt -p %1 -i \"%2\" %3@%4")
-                 .arg(m_port)
-                 .arg(m_keyFilePath)
-                 .arg(m_username)
-                 .arg(m_host);
-    // 添加选项以自动接受未知主机密钥
-    sshCommand += " -o StrictHostKeyChecking=no";
-    // 添加选项以禁用主机密钥检查，避免交互式提示
-    sshCommand += " -o UserKnownHostsFile=/dev/null";
-    // 添加选项以设置连接超时
-    sshCommand += " -o ConnectTimeout=10";
-    // 添加选项以指定认证方式，优先使用密钥认证
-    sshCommand += " -o PreferredAuthentications=publickey,password";
-    // 添加选项以禁用批处理模式，确保交互式会话
-    sshCommand += " -o BatchMode=no";
+        // Windows平台：使用plink工具进行密码认证
+        // 检查plink是否可用
+        QProcess checkProcess;
+        checkProcess.start("where", QStringList() << "plink");
+        checkProcess.waitForFinished(3000);
+        
+        if (checkProcess.exitCode() == 0) {
+            // 使用PuTTY的plink工具，支持密码参数
+            sshCommand = QString("plink -ssh -P %1 -l %2 -pw %3 %4")
+                         .arg(m_port)
+                         .arg(m_username)
+                         .arg(m_password)
+                         .arg(m_host);
+            sshCommand += " -batch"; // 非交互模式
+        } else {
+            // 使用标准ssh命令，通过程序交互式输入密码
+            sshCommand = QString("ssh -t -p %1 %2@%3")
+                         .arg(m_port)
+                         .arg(m_username)
+                         .arg(m_host);
+            sshCommand += " -o StrictHostKeyChecking=no";
+            sshCommand += " -o UserKnownHostsFile=/dev/null";
+            sshCommand += " -o ConnectTimeout=10";
+            sshCommand += " -o PreferredAuthentications=password";
+            sshCommand += " -o PasswordAuthentication=yes";
+            sshCommand += " -o PubkeyAuthentication=no";
+            sshCommand += " -o BatchMode=no";
+            sshCommand += " -o KbdInteractiveAuthentication=yes";
+        }
 #else
-    // Linux平台使用系统SSH客户端
-    sshCommand = QString("ssh -tt -p %1 -i \"%2\" %3@%4")
-                 .arg(m_port)
-                 .arg(m_keyFilePath)
-                 .arg(m_username)
-                 .arg(m_host);
-    // 添加选项以自动接受未知主机密钥
-    sshCommand += " -o StrictHostKeyChecking=no";
-    // 添加选项以禁用主机密钥检查，避免交互式提示
-    sshCommand += " -o UserKnownHostsFile=/dev/null";
-    // 添加选项以设置连接超时
-    sshCommand += " -o ConnectTimeout=10";
-    // 添加选项以指定认证方式，优先使用密钥认证
-    sshCommand += " -o PreferredAuthentications=publickey,password";
-    // 添加选项以禁用批处理模式，确保交互式会话
-    sshCommand += " -o BatchMode=no";
+        // Linux平台使用sshpass + ssh
+        sshCommand = QString("sshpass -p '%1' ssh -tt -p %2 %3@%4")
+                     .arg(m_password)
+                     .arg(m_port)
+                     .arg(m_username)
+                     .arg(m_host);
+        // 添加通用SSH选项
+        sshCommand += " -o StrictHostKeyChecking=no";
+        sshCommand += " -o UserKnownHostsFile=/dev/null";
+        sshCommand += " -o ConnectTimeout=10";
+        sshCommand += " -o PreferredAuthentications=password";
+        sshCommand += " -o BatchMode=no";
 #endif
+    }
+    else
+    {
+        // 密钥认证模式
+#ifdef Q_OS_WIN
+        // Windows平台使用OpenSSH客户端
+        sshCommand = QString("ssh -tt -p %1 -i \"%2\" %3@%4")
+                     .arg(m_port)
+                     .arg(m_keyFilePath)
+                     .arg(m_username)
+                     .arg(m_host);
+#else
+        // Linux平台使用系统SSH客户端
+        sshCommand = QString("ssh -tt -p %1 -i \"%2\" %3@%4")
+                     .arg(m_port)
+                     .arg(m_keyFilePath)
+                     .arg(m_username)
+                     .arg(m_host);
+#endif
+        // 添加通用SSH选项
+        sshCommand += " -o StrictHostKeyChecking=no";
+        sshCommand += " -o UserKnownHostsFile=/dev/null";
+        sshCommand += " -o ConnectTimeout=10";
+        sshCommand += " -o PreferredAuthentications=publickey,password";
+        sshCommand += " -o BatchMode=no";
+    }
     // 如果有命令，则附加到SSH命令后
     if(!command.isEmpty())
     {

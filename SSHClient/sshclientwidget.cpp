@@ -23,7 +23,7 @@
 #include <QTimer>
 
 SSHClientWidget::SSHClientWidget(QWidget *parent)
-    : QMainWindow(parent)
+    : QWidget(parent)
     , ui(new Ui::SSHClientWidget)
     , m_sshClient(nullptr)
     , m_keyGenProcess(nullptr)
@@ -57,6 +57,9 @@ SSHClientWidget::SSHClientWidget(QWidget *parent)
     connect(m_sshClient, &SSHClient::networkCheckError, this, &SSHClientWidget::onNetworkCheckError);
     connect(m_keyGenProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this, &SSHClientWidget::onKeyGenFinished);
     connect(m_keyGenProcess, &QProcess::errorOccurred, this, &SSHClientWidget::onKeyGenError);
+    // 连接认证方式切换信号
+    connect(ui->radioButton_keyAuth, &QRadioButton::toggled, this, &SSHClientWidget::onAuthModeChanged);
+    connect(ui->radioButton_passwordAuth, &QRadioButton::toggled, this, &SSHClientWidget::onAuthModeChanged);
     // 初始化UI状态
     updateUIState(false);
     updateAuthUIState();
@@ -128,22 +131,41 @@ void SSHClientWidget::on_connectButton_clicked()
         QMessageBox::warning(this, "连接错误", "端口号无效，请输入1-65535之间的数字！");
         return;
     }
-    // 密钥认证
-    QString keyFilePath = ui->keyFileLineEdit->text().trimmed();
-    QString keyPassword = ui->keyPasswordLineEdit->text();
-    if(keyFilePath.isEmpty())
-    {
-        QMessageBox::warning(this, "连接错误", "请选择SSH密钥文件！");
-        return;
-    }
     // 更新UI状态
     ui->connectButton->setEnabled(false);
-    ui->statusbar->showMessage("正在连接到 " + host + "...");
     appendOutput("", false, false, false); // 空行
-    appendOutput("▶ 正在连接到 " + host + ":" + portStr + " (密钥认证)...", false, false, true);
-    appendOutput("", false, false, false); // 空行
-    // 尝试连接
-    m_sshClient->connectToHost(host, port, username, keyFilePath, keyPassword);
+    // 根据认证方式进行连接
+    if(ui->radioButton_passwordAuth->isChecked())
+    {
+        // 密码认证
+        QString password = ui->passwdEdit->text();
+        if(password.isEmpty())
+        {
+            QMessageBox::warning(this, "连接错误", "请输入密码！");
+            ui->connectButton->setEnabled(true);
+            return;
+        }
+        appendOutput("▶ 正在连接到 " + host + ":" + portStr + " (密码认证)...", false, false, true);
+        appendOutput("", false, false, false); // 空行
+        // 尝试密码连接
+        m_sshClient->connectToHostWithPassword(host, port, username, password);
+    }
+    else
+    {
+        // 密钥认证
+        QString keyFilePath = ui->keyFileLineEdit->text().trimmed();
+        QString keyPassword = ui->keyPasswordLineEdit->text();
+        if(keyFilePath.isEmpty())
+        {
+            QMessageBox::warning(this, "连接错误", "请选择SSH密钥文件！");
+            ui->connectButton->setEnabled(true);
+            return;
+        }
+        appendOutput("▶ 正在连接到 " + host + ":" + portStr + " (密钥认证)...", false, false, true);
+        appendOutput("", false, false, false); // 空行
+        // 尝试密钥连接
+        m_sshClient->connectToHost(host, port, username, keyFilePath, keyPassword);
+    }
 }
 
 void SSHClientWidget::on_disconnectButton_clicked()
@@ -151,7 +173,6 @@ void SSHClientWidget::on_disconnectButton_clicked()
     if(m_sshClient && m_sshClient->isConnected())
     {
         ui->disconnectButton->setEnabled(false);
-        ui->statusbar->showMessage("正在断开连接...");
         appendOutput("", false, false, false); // 空行
         appendOutput("▶ 正在断开连接...", false, false, true);
         appendOutput("", false, false, false); // 空行
@@ -181,7 +202,6 @@ void SSHClientWidget::on_checkNetworkButton_clicked()
         return;
     }
     ui->checkNetworkButton->setEnabled(false);
-    ui->statusbar->showMessage("正在检测网络连接...");
     appendOutput("", false, false, false); // 空行
     appendOutput(QString("▶ 正在检测到 %1:%2 的网络连接...").arg(host).arg(port), false, false, true);
     appendOutput("", false, false, false); // 空行
@@ -217,6 +237,43 @@ void SSHClientWidget::on_generateKeyButton_clicked()
         sshKeygenCmd = "powershell.exe";
         // 添加PowerShell启动参数，禁用配置文件加载和允许脚本执行
         args << "-NoProfile" << "-ExecutionPolicy" << "Bypass";
+        // 检查密钥文件是否已存在
+        QString keyPath = QDir::homePath() + "/.ssh/id_" + keyType.toLower();
+        QString pubKeyPath = keyPath + ".pub";
+        if(QFile::exists(keyPath) || QFile::exists(pubKeyPath))
+        {
+            // 弹窗询问用户是否删除现有密钥文件
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "密钥文件已存在",
+                                          "检测到已存在的SSH密钥文件，是否删除并重新生成？",
+                                          QMessageBox::Yes | QMessageBox::No);
+            if(reply == QMessageBox::No)
+            {
+                // 用户选择不删除，直接返回
+                return;
+            }
+            // 用户选择删除，先删除现有文件
+            if(QFile::exists(keyPath))
+            {
+                if(!QFile::remove(keyPath))
+                {
+                    QMessageBox::critical(this, "错误", "无法删除现有的私钥文件: " + keyPath);
+                    return;
+                }
+                qInfo() << "已删除私钥文件: " << keyPath;
+                appendOutput("已删除私钥文件: " + keyPath, false, false, true);
+            }
+            if(QFile::exists(pubKeyPath))
+            {
+                if(!QFile::remove(pubKeyPath))
+                {
+                    QMessageBox::critical(this, "错误", "无法删除现有的公钥文件: " + pubKeyPath);
+                    return;
+                }
+                qInfo() << "已删除公钥文件: " << pubKeyPath;
+                appendOutput("已删除公钥文件: " + pubKeyPath, false, false, true);
+            }
+        }
         // 构建完整的ssh-keygen命令，确保.ssh目录存在
         QString sshKeygenArgs = "& {";
         // 首先确保.ssh目录存在
@@ -699,7 +756,6 @@ void SSHClientWidget::onCommandEntered()
 void SSHClientWidget::onConnected()
 {
     updateUIState(true);
-    ui->statusbar->showMessage("已连接");
     appendOutput("", false, false, false); // 空行
     appendOutput("▶ 连接成功！", false, false, true);
     appendOutput("", false, false, false); // 空行
@@ -708,7 +764,6 @@ void SSHClientWidget::onConnected()
 void SSHClientWidget::onDisconnected()
 {
     updateUIState(false);
-    ui->statusbar->showMessage("已断开连接");
     appendOutput("", false, false, false); // 空行
     appendOutput("▶ 已断开连接", false, false, true);
     appendOutput("", false, false, false); // 空行
@@ -717,7 +772,6 @@ void SSHClientWidget::onDisconnected()
 void SSHClientWidget::onConnectionError(const QString &error)
 {
     updateUIState(false);
-    ui->statusbar->showMessage("连接失败");
     appendOutput("", false, false, false); // 空行
     appendOutput("▶ 连接错误: " + error, true, false, true);
     appendOutput("", false, false, false); // 空行
@@ -745,7 +799,6 @@ void SSHClientWidget::onNetworkCheckComplete(bool isConnected)
     ui->checkNetworkButton->setEnabled(true);
     if(isConnected)
     {
-        ui->statusbar->showMessage("网络连接正常");
         appendOutput("", false, false, false); // 空行
         appendOutput("▶ 网络连接检测成功：可以连接到目标主机", false, false, true);
         appendOutput("", false, false, false); // 空行
@@ -753,7 +806,6 @@ void SSHClientWidget::onNetworkCheckComplete(bool isConnected)
     }
     else
     {
-        ui->statusbar->showMessage("网络连接异常");
         appendOutput("", false, false, false); // 空行
         appendOutput("▶ 网络连接检测失败：无法连接到目标主机", true, false, true);
         appendOutput("", false, false, false); // 空行
@@ -764,7 +816,6 @@ void SSHClientWidget::onNetworkCheckComplete(bool isConnected)
 void SSHClientWidget::onNetworkCheckError(const QString &error)
 {
     ui->checkNetworkButton->setEnabled(true);
-    ui->statusbar->showMessage("网络检测失败");
     appendOutput("", false, false, false); // 空行
     appendOutput("▶ 网络检测错误: " + error, true, false, true);
     appendOutput("", false, false, false); // 空行
@@ -889,7 +940,16 @@ bool SSHClientWidget::isToolAvailable(const QString& tool)
     QString checkMsg = "[工具检查] 检查工具是否可用: " + tool;
     qDebug() << checkMsg;
     appendOutput(checkMsg);
-    bool available = QProcess::execute("which", QStringList() << tool) == 0;
+    
+    bool available = false;
+#ifdef Q_OS_WIN
+    // Windows平台使用where命令
+    available = QProcess::execute("where", QStringList() << tool) == 0;
+#else
+    // Linux平台使用which命令
+    available = QProcess::execute("which", QStringList() << tool) == 0;
+#endif
+    
     if(available)
     {
         QString availableMsg = "[工具检查] 工具 " + tool + " 可用";
@@ -1253,5 +1313,26 @@ bool SSHClientWidget::deployKeyWithoutPassword()
     qDebug() << manualMsg;
     appendOutput(manualMsg);
     return false;
+}
+
+void SSHClientWidget::onAuthModeChanged()
+{
+    bool isPasswordAuth = ui->radioButton_passwordAuth->isChecked();
+    // 根据认证方式显示/隐藏相关控件
+    ui->passwdEdit->setEnabled(isPasswordAuth);
+    ui->keyFileLineEdit->setEnabled(!isPasswordAuth);
+    ui->keyPasswordLineEdit->setEnabled(!isPasswordAuth);
+    ui->browseKeyFileButton->setEnabled(!isPasswordAuth);
+    ui->generateKeyButton->setEnabled(!isPasswordAuth);
+    // 清空相关输入框（可选）
+    if(isPasswordAuth)
+    {
+        ui->keyFileLineEdit->clear();
+        ui->keyPasswordLineEdit->clear();
+    }
+    else
+    {
+        ui->passwdEdit->clear();
+    }
 }
 

@@ -84,6 +84,7 @@ private slots:
     void onGenerateUniqueId();          //生成唯一标识码
     void onUniqueIdSegmentChanged();    //唯一标识码分段输入变化处理
     void onCalculateCheckCode();        //计算校验码
+    void onAutoCalculateCheckCode();    //自动计算校验码（参数变化时触发）
     void onUniqueIdResultChanged();     //唯一标识码结果编辑变化处理
     void onLoadPreset();                //加载预设配置
     void onSavePreset();                //保存预设配置

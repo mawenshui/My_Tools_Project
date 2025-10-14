@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 #else
-    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("GBK"));
 #endif
     // 初始化日志文件
     QString logDir = QApplication::applicationDirPath() + "/logs";
@@ -169,7 +169,6 @@ int main(int argc, char* argv[])
             // 关闭当前文件
             g_logStream.setDevice(nullptr);
             g_logFile.close();
-            
             // 以读写模式重新打开文件（不需要追加模式，因为每次启动都创建新文件）
             if(g_logFile.open(QIODevice::ReadWrite | QIODevice::Text))
             {

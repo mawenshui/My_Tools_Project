@@ -1,7 +1,7 @@
 #ifndef SSHCLIENTWIDGET_H
 #define SSHCLIENTWIDGET_H
 
-#include <QMainWindow>
+#include <QWidget>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTemporaryDir>
@@ -15,7 +15,7 @@ namespace Ui
 }
 QT_END_NAMESPACE
 
-class SSHClientWidget : public QMainWindow
+class SSHClientWidget : public QWidget
 {
     Q_OBJECT
 
@@ -32,6 +32,7 @@ private slots:
     // 移除了密码认证相关的槽函数声明
     void on_browseKeyFileButton_clicked();
     void on_generateKeyButton_clicked();
+    void onAuthModeChanged();
     void onKeyGenFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void onKeyGenError(QProcess::ProcessError error);
 

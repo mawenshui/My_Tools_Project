@@ -3,12 +3,12 @@
         "239.255.1.21:9221",
         "239.255.1.9:9221"
     ],
-    "dataDir": "D:/__python_script/sendData2",
+    "dataDir": "C:/Users/admin/Desktop/南京数据",
     "excludeTopics": [
     ],
     "includeTopics": [
     ],
-    "order": "倒序",
+    "order": "顺序",
     "sendInterval": "100",
     "uniqueMode": false,
     "version": 1

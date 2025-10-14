@@ -22,13 +22,13 @@ FaultAlarmWidget::FaultAlarmWidget(QWidget *parent)
 {
     //配置保存定时器（防抖机制）
     m_saveTimer->setSingleShot(true);
-    m_saveTimer->setInterval(500); //500ms延迟
+    m_saveTimer->setInterval(500);     //500ms延迟
     initUI();
     initConnections();
     loadStyleSheet();
     updateUI();
     updateSendButtonStates();
-    loadConfiguration(); //在UI初始化完成后加载配置
+    loadConfiguration();     //在UI初始化完成后加载配置
 }
 
 /**
@@ -49,12 +49,12 @@ FaultAlarmWidget::~FaultAlarmWidget()
 void FaultAlarmWidget::initUI()
 {
     setWindowTitle("故障告警数据帧处理工具");
-    setMinimumSize(800, 600); // 减小最小尺寸，适应小屏设备
-    // 创建主布局 - 使用QGridLayout替代QHBoxLayout，更好地支持响应式布局
+    setMinimumSize(800, 600);     //减小最小尺寸，适应小屏设备
+    //创建主布局 - 使用QGridLayout替代QHBoxLayout，更好地支持响应式布局
     QGridLayout *mainLayout = new QGridLayout(this);
-    mainLayout->setSpacing(5); // 减小间距，节省空间
-    mainLayout->setContentsMargins(5, 5, 5, 5); // 减小边距，节省空间
-    // 创建左侧配置区域
+    mainLayout->setSpacing(5);     //减小间距，节省空间
+    mainLayout->setContentsMargins(5, 5, 5, 5);     //减小边距，节省空间
+    //创建左侧配置区域
     QScrollArea *configScrollArea = new QScrollArea();
     configScrollArea->setWidgetResizable(true);
     configScrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
@@ -68,16 +68,16 @@ void FaultAlarmWidget::initUI()
     QVBoxLayout *configLayout = new QVBoxLayout(configWidget);
     configLayout->setSpacing(5);
     configLayout->setContentsMargins(5, 5, 5, 5);
-    // 创建数据配置部分
+    //创建数据配置部分
     m_dataConfigWidget = createDataConfigWidget();
     configLayout->addWidget(m_dataConfigWidget);
-    // 创建发送配置部分
+    //创建发送配置部分
     m_sendConfigWidget = createSendConfigWidget();
     configLayout->addWidget(m_sendConfigWidget);
     configScrollArea->setWidget(configWidget);
-    // 创建右侧日志显示区域
+    //创建右侧日志显示区域
     m_logWidget = createLogWidget();
-    // 使用QSplitter允许用户调整左右区域的大小
+    //使用QSplitter允许用户调整左右区域的大小
     QSplitter *mainSplitter = new QSplitter(Qt::Horizontal);
     mainSplitter->setStyleSheet(
         "QSplitter::handle { background-color: #4C566A; }"
@@ -88,7 +88,7 @@ void FaultAlarmWidget::initUI()
     mainSplitter->addWidget(m_logWidget);
     mainSplitter->setStretchFactor(0, 2);
     mainSplitter->setStretchFactor(1, 1);
-    // 将分割器添加到主布局
+    //将分割器添加到主布局
     mainLayout->addWidget(mainSplitter, 0, 0);
     mainLayout->setRowStretch(0, 1);
     mainLayout->setColumnStretch(0, 1);
@@ -107,20 +107,20 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
         "QLabel{color:#E5E9F0;}"
     );
     QGridLayout* layout = new QGridLayout(groupBox);
-    layout->setSpacing(5); // 减小间距，节省空间
-    layout->setContentsMargins(5, 10, 5, 5); // 减小边距，节省空间
-// 使用两列布局，更好地利用水平空间
+    layout->setSpacing(5);     //减小间距，节省空间
+    layout->setContentsMargins(5, 10, 5, 5);     //减小边距，节省空间
+    //使用两列布局，更好地利用水平空间
     int leftCol = 0;
     int rightCol = 2;
     int leftRow = 0;
     int rightRow = 0;
-// 左侧列 - 基本参数
-// 控制位设置
+    //左侧列 - 基本参数
+    //控制位设置
     layout->addWidget(new QLabel("控制位:"), leftRow, leftCol);
     m_controlCombo = new QComboBox();
     m_controlCombo->addItem("0", 0);
     m_controlCombo->addItem("1", 1);
-    m_controlCombo->setCurrentIndex(1); // 默认选择1
+    m_controlCombo->setCurrentIndex(1);     //默认选择1
     m_controlCombo->setStyleSheet(
         "QComboBox { background - color: #3B4252;color: #ECEFF4;border: 1px solid #4C566A;border - radius: 3px;padding: 3px;min - width: 6em;}"
         "QComboBox::drop - down{subcontrol - origin: padding;subcontrol - position: top right;width: 20px;border - left: 1px solid #4C566A;border - top - right - radius: 3px;border - bottom - right - radius: 3px;}"
@@ -128,7 +128,7 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
         "QComboBox QAbstractItemView{background - color: #3B4252;color: #ECEFF4;border: 1px solid #4C566A;selection - background - color: #5E81AC;selection - color: #ECEFF4;}"
     );
     layout->addWidget(m_controlCombo, leftRow++, leftCol + 1);
-// 数值输入格式选择
+    //数值输入格式选择
     layout->addWidget(new QLabel("数值格式:"), leftRow, leftCol);
     m_formatCombo = new QComboBox();
     m_formatCombo->addItem("十进制", 0);
@@ -142,7 +142,7 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     connect(m_formatCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &FaultAlarmWidget::onFormatChanged);
     layout->addWidget(m_formatCombo, leftRow++, leftCol + 1);
-// 告警类型选择
+    //告警类型选择
     layout->addWidget(new QLabel("告警类型:"), leftRow, leftCol);
     m_alarmTypeCombo = new QComboBox();
     m_alarmTypeCombo->addItem("故障码", 0x01);
@@ -154,12 +154,12 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
         "QComboBox QAbstractItemView{background - color: #3B4252;color: #ECEFF4;border: 1px solid #4C566A;selection - background - color: #5E81AC;selection - color: #ECEFF4;}"
     );
     layout->addWidget(m_alarmTypeCombo, leftRow++, leftCol + 1);
-// 故障码/预警码
+    //故障码/预警码
     layout->addWidget(new QLabel("故障码/预警码:"), leftRow, leftCol);
     m_faultCodeSpin = new QSpinBox();
     m_faultCodeSpin->setRange(0, 65535);
     m_faultCodeSpin->setValue(1001);
-    m_faultCodeSpin->setDisplayIntegerBase(10); // 默认十进制显示
+    m_faultCodeSpin->setDisplayIntegerBase(10);     //默认十进制显示
     m_faultCodeSpin->setStyleSheet(
         "QSpinBox {background - color: #3B4252;color: #ECEFF4;border: 1px solid #4C566A;border - radius: 3px;padding: 3px;selection - background - color: #5E81AC;}"
         "QSpinBox::up - button, QSpinBox::down - button{background - color: #4C566A;width: 16px;border: 1px solid #5E81AC;}"
@@ -167,7 +167,7 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
         "QSpinBox::up - button: pressed, QSpinBox::down - button: pressed{background - color: #81A1C1;}"
     );
     layout->addWidget(m_faultCodeSpin, leftRow++, leftCol + 1);
-// 隔离标志
+    //隔离标志
     layout->addWidget(new QLabel("隔离标志:"), leftRow, leftCol);
     m_isolationCombo = new QComboBox();
     m_isolationCombo->addItem("预警码(填0)", 0x00);
@@ -180,7 +180,7 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
         "QComboBox QAbstractItemView{background - color: #3B4252;color: #ECEFF4;border: 1px solid #4C566A;selection - background - color: #5E81AC;selection - color: #ECEFF4;}"
     );
     layout->addWidget(m_isolationCombo, leftRow++, leftCol + 1);
-// 故障等级
+    //故障等级
     layout->addWidget(new QLabel("故障等级:"), leftRow, leftCol);
     m_faultLevelCombo = new QComboBox();
     m_faultLevelCombo->addItem("预警码(填0)", 0x00);
@@ -190,8 +190,8 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     m_faultLevelCombo->setStyleSheet("QComboBox { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; min-width: 6em; }QComboBox::drop-down { subcontrol-origin: padding; subcontrol-position: top right; width: 20px; border-left: 1px solid #4C566A; border-top-right-radius: 3px; border-bottom-right-radius: 3px; }QComboBox::down-arrow { image: url(:/icons/icons/arrow-down.png); }QComboBox QAbstractItemView { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; selection-background-color: #5E81AC; selection-color: #ECEFF4; }"
                                     );
     layout->addWidget(m_faultLevelCombo, leftRow++, leftCol + 1);
-// 右侧列 - 数值和设备参数
-// 预警数值
+    //右侧列 - 数值和设备参数
+    //预警数值
     layout->addWidget(new QLabel("预警数值:"), rightRow, rightCol);
     m_warningValueSpin = new QDoubleSpinBox();
     m_warningValueSpin->setRange(0, 65535);
@@ -200,7 +200,7 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     m_warningValueSpin->setStyleSheet("QDoubleSpinBox { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { background-color: #4C566A; width: 16px; border: 1px solid #5E81AC; }QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover { background-color: #5E81AC; }QDoubleSpinBox::up-button:pressed, QDoubleSpinBox::down-button:pressed { background-color: #81A1C1; }"
                                      );
     layout->addWidget(m_warningValueSpin, rightRow++, rightCol + 1);
-// 预警阈值
+    //预警阈值
     layout->addWidget(new QLabel("预警阈值:"), rightRow, rightCol);
     m_warningThresholdSpin = new QDoubleSpinBox();
     m_warningThresholdSpin->setRange(0, 65535);
@@ -209,34 +209,34 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     m_warningThresholdSpin->setStyleSheet("QDoubleSpinBox { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }QDoubleSpinBox::up-button, QDoubleSpinBox::down-button { background-color: #4C566A; width: 16px; border: 1px solid #5E81AC; }QDoubleSpinBox::up-button:hover, QDoubleSpinBox::down-button:hover { background-color: #5E81AC; }QDoubleSpinBox::up-button:pressed, QDoubleSpinBox::down-button:pressed { background-color: #81A1C1; }"
                                          );
     layout->addWidget(m_warningThresholdSpin, rightRow++, rightCol + 1);
-// 主题号
+    //主题号
     layout->addWidget(new QLabel("主题号:"), rightRow, rightCol);
     m_topicNumberSpin = new QSpinBox();
     m_topicNumberSpin->setRange(0, 65535);
     m_topicNumberSpin->setValue(1000);
-    m_topicNumberSpin->setDisplayIntegerBase(10); // 默认十进制显示
+    m_topicNumberSpin->setDisplayIntegerBase(10);     //默认十进制显示
     m_topicNumberSpin->setStyleSheet("QSpinBox { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }QSpinBox::up-button, QSpinBox::down-button { background-color: #4C566A; width: 16px; border: 1px solid #5E81AC; }QSpinBox::up-button:hover, QSpinBox::down-button:hover { background-color: #5E81AC; }QSpinBox::up-button:pressed, QSpinBox::down-button:pressed { background-color: #81A1C1; }"
                                     );
     layout->addWidget(m_topicNumberSpin, rightRow++, rightCol + 1);
-// 源设备号
+    //源设备号
     layout->addWidget(new QLabel("源设备号:"), rightRow, rightCol);
     m_sourceDeviceSpin = new QSpinBox();
     m_sourceDeviceSpin->setRange(0, 255);
     m_sourceDeviceSpin->setValue(1);
-    m_sourceDeviceSpin->setDisplayIntegerBase(10); // 默认十进制显示
+    m_sourceDeviceSpin->setDisplayIntegerBase(10);     //默认十进制显示
     m_sourceDeviceSpin->setStyleSheet("QSpinBox { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }QSpinBox::up-button, QSpinBox::down-button { background-color: #4C566A; width: 16px; border: 1px solid #5E81AC; }QSpinBox::up-button:hover, QSpinBox::down-button:hover { background-color: #5E81AC; }QSpinBox::up-button:pressed, QSpinBox::down-button:pressed { background-color: #81A1C1; }"
                                      );
     layout->addWidget(m_sourceDeviceSpin, rightRow++, rightCol + 1);
-// 目的设备号
+    //目的设备号
     layout->addWidget(new QLabel("目的设备号:"), rightRow, rightCol);
     m_destDeviceSpin = new QSpinBox();
     m_destDeviceSpin->setRange(0, 255);
     m_destDeviceSpin->setValue(2);
-    m_destDeviceSpin->setDisplayIntegerBase(10); // 默认十进制显示
+    m_destDeviceSpin->setDisplayIntegerBase(10);     //默认十进制显示
     m_destDeviceSpin->setStyleSheet("QSpinBox { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }QSpinBox::up-button, QSpinBox::down-button { background-color: #4C566A; width: 16px; border: 1px solid #5E81AC; }QSpinBox::up-button:hover, QSpinBox::down-button:hover { background-color: #5E81AC; }QSpinBox::up-button:pressed, QSpinBox::down-button:pressed { background-color: #81A1C1; }"
                                    );
     layout->addWidget(m_destDeviceSpin, rightRow++, rightCol + 1);
-// 唯一标识码部分 - 使用单独的GroupBox和栅格布局
+    //唯一标识码部分 - 使用单独的GroupBox和栅格布局
     QGroupBox *uniqueIdGroupBox = new QGroupBox("唯一标识码");
     uniqueIdGroupBox->setStyleSheet("QGroupBox { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 4px; margin-top: 8px; font-weight: bold; }QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top center; padding: 0 5px; background-color: #434C5E; }QLabel { color: #E5E9F0; }"
                                    );
@@ -244,21 +244,21 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     uniqueIdLayout->setSpacing(5);
     uniqueIdLayout->setContentsMargins(5, 10, 5, 5);
     int uidRow = 0;
-// 组织机构代码
+    //组织机构代码
     uniqueIdLayout->addWidget(new QLabel("组织机构代码(9位):"), uidRow, 0);
     m_orgCodeEdit = new QLineEdit();
     m_orgCodeEdit->setMaxLength(9);
     m_orgCodeEdit->setPlaceholderText("9位组织机构代码");
-    m_orgCodeEdit->setText("633772342"); // 默认值
+    m_orgCodeEdit->setText("633772342");     //默认值
     m_orgCodeEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
     uniqueIdLayout->addWidget(m_orgCodeEdit, uidRow++, 1);
-// 生产日期
+    //生产日期
     uniqueIdLayout->addWidget(new QLabel("生产日期(8位):"), uidRow, 0);
     QHBoxLayout *dateLayout = new QHBoxLayout();
     m_productDateEdit = new QLineEdit();
     m_productDateEdit->setMaxLength(8);
     m_productDateEdit->setPlaceholderText("YYYYMMDD格式");
-    m_productDateEdit->setText(QDate::currentDate().toString("yyyyMMdd")); // 默认当前日期
+    m_productDateEdit->setText(QDate::currentDate().toString("yyyyMMdd"));     //默认当前日期
     m_productDateEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
     QPushButton *todayBtn = new QPushButton("今天");
     todayBtn->setMaximumWidth(50);
@@ -270,15 +270,15 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     });
     dateLayout->addWidget(m_productDateEdit);
     dateLayout->addWidget(todayBtn);
-    dateLayout->setStretch(0, 1); // 让输入框占据更多空间
+    dateLayout->setStretch(0, 1);     //让输入框占据更多空间
     uniqueIdLayout->addLayout(dateLayout, uidRow++, 1);
-// 序列码
+    //序列码
     uniqueIdLayout->addWidget(new QLabel("序列码(6位):"), uidRow, 0);
     QHBoxLayout *serialLayout = new QHBoxLayout();
     m_serialCodeEdit = new QLineEdit();
     m_serialCodeEdit->setMaxLength(6);
     m_serialCodeEdit->setPlaceholderText("6位序列码");
-    m_serialCodeEdit->setText("SG1234"); // 默认值
+    m_serialCodeEdit->setText("SG1234");     //默认值
     m_serialCodeEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
     QPushButton *randomBtn = new QPushButton("随机");
     randomBtn->setMaximumWidth(50);
@@ -291,15 +291,15 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     });
     serialLayout->addWidget(m_serialCodeEdit);
     serialLayout->addWidget(randomBtn);
-    serialLayout->setStretch(0, 1); // 让输入框占据更多空间
+    serialLayout->setStretch(0, 1);     //让输入框占据更多空间
     uniqueIdLayout->addLayout(serialLayout, uidRow++, 1);
-// 校验位
+    //校验位
     uniqueIdLayout->addWidget(new QLabel("校验位(1位):"), uidRow, 0);
     QHBoxLayout *checkLayout = new QHBoxLayout();
     m_checkCodeEdit = new QLineEdit();
     m_checkCodeEdit->setMaxLength(1);
     m_checkCodeEdit->setPlaceholderText("1位校验码");
-    m_checkCodeEdit->setReadOnly(true); // 校验位自动计算，只读
+    m_checkCodeEdit->setReadOnly(true);     //校验位自动计算，只读
     m_checkCodeEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }QLineEdit:read-only { background-color: #2E3440; color: #D8DEE9; }");
     QPushButton *calcBtn = new QPushButton("计算");
     calcBtn->setMaximumWidth(50);
@@ -307,9 +307,9 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     connect(calcBtn, &QPushButton::clicked, this, &FaultAlarmWidget::onCalculateCheckCode);
     checkLayout->addWidget(m_checkCodeEdit);
     checkLayout->addWidget(calcBtn);
-    checkLayout->setStretch(0, 1); // 让输入框占据更多空间
+    checkLayout->setStretch(0, 1);     //让输入框占据更多空间
     uniqueIdLayout->addLayout(checkLayout, uidRow++, 1);
-// 最终结果
+    //最终结果
     uniqueIdLayout->addWidget(new QLabel("最终结果(24位):"), uidRow, 0);
     QHBoxLayout *resultLayout = new QHBoxLayout();
     m_uniqueIdResultEdit = new QLineEdit();
@@ -322,12 +322,12 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     connect(generateBtn, &QPushButton::clicked, this, &FaultAlarmWidget::onGenerateUniqueId);
     resultLayout->addWidget(m_uniqueIdResultEdit);
     resultLayout->addWidget(generateBtn);
-    resultLayout->setStretch(0, 1); // 让输入框占据更多空间
+    resultLayout->setStretch(0, 1);     //让输入框占据更多空间
     uniqueIdLayout->addLayout(resultLayout, uidRow++, 1);
-// 将唯一标识码组添加到主布局
+    //将唯一标识码组添加到主布局
     layout->addWidget(uniqueIdGroupBox, leftRow, 0, 1, 4);
     leftRow++;
-// 操作按钮 - 放在底部，跨越所有列
+    //操作按钮 - 放在底部，跨越所有列
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     QPushButton *resetBtn = new QPushButton("重置数据");
     resetBtn->setStyleSheet("QPushButton { background-color: #4C566A; color: #ECEFF4; border: 1px solid #5E81AC; border-radius: 3px; padding: 5px; }QPushButton:hover { background-color: #5E81AC; }QPushButton:pressed { background-color: #81A1C1; }");
@@ -358,13 +358,13 @@ QWidget* FaultAlarmWidget::createSendConfigWidget()
         "QLabel{color: #E5E9F0;}"
     );
     QGridLayout *layout = new QGridLayout(groupBox);
-    layout->setSpacing(5); // 减小间距，节省空间
-    layout->setContentsMargins(5, 10, 5, 5); // 减小边距，节省空间
-// 使用两列布局，更好地利用水平空间
+    layout->setSpacing(5);     //减小间距，节省空间
+    layout->setContentsMargins(5, 10, 5, 5);     //减小边距，节省空间
+    //使用两列布局，更好地利用水平空间
     int leftCol = 0;
     int rightCol = 2;
-// 左侧列 - 网络配置
-// 目标IP地址
+    //左侧列 - 网络配置
+    //目标IP地址
     layout->addWidget(new QLabel("目标IP:"), 0, leftCol);
     m_targetIpEdit = new QLineEdit();
     m_targetIpEdit->setText("127.0.0.1");
@@ -373,7 +373,7 @@ QWidget* FaultAlarmWidget::createSendConfigWidget()
         "QLineEdit {background - color: #3B4252;color: #ECEFF4;border: 1px solid #4C566A;border - radius: 3px;padding: 3px;selection - background - color: #5E81AC;}"
     );
     layout->addWidget(m_targetIpEdit, 0, leftCol + 1);
-// 目标端口
+    //目标端口
     layout->addWidget(new QLabel("目标端口:"), 1, leftCol);
     m_targetPortSpin = new QSpinBox();
     m_targetPortSpin->setRange(1, 65535);
@@ -385,8 +385,8 @@ QWidget* FaultAlarmWidget::createSendConfigWidget()
         "QSpinBox::up - button: pressed, QSpinBox::down - button: pressed{background - color: #81A1C1;}"
     );
     layout->addWidget(m_targetPortSpin, 1, leftCol + 1);
-// 右侧列 - 发送配置
-// 发送间隔
+    //右侧列 - 发送配置
+    //发送间隔
     layout->addWidget(new QLabel("发送间隔(ms):"), 0, rightCol);
     m_intervalSpin = new QSpinBox();
     m_intervalSpin->setRange(100, 60000);
@@ -398,7 +398,7 @@ QWidget* FaultAlarmWidget::createSendConfigWidget()
         "QSpinBox::up - button: pressed, QSpinBox::down - button: pressed{background - color: #81A1C1;}"
     );
     layout->addWidget(m_intervalSpin, 0, rightCol + 1);
-// 发送按钮 - 使用水平布局，更好地利用空间
+    //发送按钮 - 使用水平布局，更好地利用空间
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     m_sendSingleBtn = new QPushButton("发送单帧");
     m_sendSingleBtn->setStyleSheet(
@@ -419,7 +419,7 @@ QWidget* FaultAlarmWidget::createSendConfigWidget()
         "QPushButton: pressed { background - color: #D08770; }"
         "QPushButton: disabled { background - color: #3B4252; color: #4C566A; }"
     );
-// 设置按钮策略，使其在小屏幕上能够适当缩小
+    //设置按钮策略，使其在小屏幕上能够适当缩小
     QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_sendSingleBtn->setSizePolicy(sizePolicy);
     m_startContinuousBtn->setSizePolicy(sizePolicy);
@@ -427,7 +427,7 @@ QWidget* FaultAlarmWidget::createSendConfigWidget()
     buttonLayout->addWidget(m_sendSingleBtn);
     buttonLayout->addWidget(m_startContinuousBtn);
     buttonLayout->addWidget(m_stopContinuousBtn);
-// 将按钮布局添加到主布局，跨越所有列
+    //将按钮布局添加到主布局，跨越所有列
     layout->addLayout(buttonLayout, 2, 0, 1, 4);
     return groupBox;
 }
@@ -445,30 +445,30 @@ QWidget* FaultAlarmWidget::createLogWidget()
         "QLabel {  color: #E5E9F0; }"
     );
     QVBoxLayout *layout = new QVBoxLayout(groupBox);
-    layout->setSpacing(5); // 减小间距，节省空间
-    layout->setContentsMargins(5, 10, 5, 5); // 减小边距，节省空间
-    // 日志显示区域
+    layout->setSpacing(5);     //减小间距，节省空间
+    layout->setContentsMargins(5, 10, 5, 5);     //减小边距，节省空间
+    //日志显示区域
     m_logTextEdit = new QTextEdit();
     m_logTextEdit->setReadOnly(true);
-    // 设置最小高度，确保在小屏幕上也有足够的显示空间
+    //设置最小高度，确保在小屏幕上也有足够的显示空间
     m_logTextEdit->setMinimumHeight(150);
-    // 设置字体大小，确保在小屏幕上也能清晰显示
+    //设置字体大小，确保在小屏幕上也能清晰显示
     QFont font = m_logTextEdit->font();
-    font.setPointSize(9); // 稍微小一点的字体
+    font.setPointSize(9);     //稍微小一点的字体
     m_logTextEdit->setFont(font);
-    // 设置垂直滚动条策略，确保内容过多时可以滚动查看
+    //设置垂直滚动条策略，确保内容过多时可以滚动查看
     m_logTextEdit->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    // 设置水平滚动条策略，确保内容过宽时可以滚动查看
+    //设置水平滚动条策略，确保内容过宽时可以滚动查看
     m_logTextEdit->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     m_logTextEdit->setStyleSheet(
         "QTextEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px;  selection-background-color: #5E81AC; selection-color: #ECEFF4; }"
     );
     layout->addWidget(m_logTextEdit);
-    // 清空日志按钮 - 放在右下角
+    //清空日志按钮 - 放在右下角
     QHBoxLayout *buttonLayout = new QHBoxLayout();
-    buttonLayout->addStretch(); // 添加弹性空间，使按钮靠右对齐
+    buttonLayout->addStretch();     //添加弹性空间，使按钮靠右对齐
     m_clearLogBtn = new QPushButton("清空日志");
-    // 设置按钮大小策略，使其在小屏幕上能够适当缩小
+    //设置按钮大小策略，使其在小屏幕上能够适当缩小
     QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_clearLogBtn->setSizePolicy(sizePolicy);
     m_clearLogBtn->setStyleSheet(
@@ -503,6 +503,10 @@ void FaultAlarmWidget::initConnections()
     connect(m_serialCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
     connect(m_checkCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
     connect(m_uniqueIdResultEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdResultChanged);
+    //自动计算校验码连接（当前23位参数变化时自动计算）
+    connect(m_orgCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
+    connect(m_productDateEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
+    connect(m_serialCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
     //实时保存配置连接 - 数据配置控件（使用防抖机制）
     connect(m_controlCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this]()
@@ -679,7 +683,7 @@ void FaultAlarmWidget::onAlarmTypeChanged()
 {
     int alarmType = m_alarmTypeCombo->currentData().toInt();
     //根据告警类型启用/禁用相关控件
-    if(alarmType == 0x01)    //故障码
+    if(alarmType == 0x01)        //故障码
     {
         m_warningValueSpin->setEnabled(false);
         m_warningThresholdSpin->setEnabled(false);
@@ -689,15 +693,15 @@ void FaultAlarmWidget::onAlarmTypeChanged()
         m_warningValueSpin->setValue(0.0);
         m_warningThresholdSpin->setValue(0.0);
     }
-    else     //预警码
+    else         //预警码
     {
         m_warningValueSpin->setEnabled(true);
         m_warningThresholdSpin->setEnabled(true);
         m_isolationCombo->setEnabled(false);
         m_faultLevelCombo->setEnabled(false);
         //设置默认值
-        m_isolationCombo->setCurrentIndex(0); //填0
-        m_faultLevelCombo->setCurrentIndex(0); //填0
+        m_isolationCombo->setCurrentIndex(0);     //填0
+        m_faultLevelCombo->setCurrentIndex(0);     //填0
     }
 }
 
@@ -760,7 +764,7 @@ void FaultAlarmWidget::onCalculateCheckCode()
         }
         else
         {
-            checkSum += ch.toLatin1(); //ASCII值
+            checkSum += ch.toLatin1();     //ASCII值
         }
     }
     QString checkCode = QString::number(checkSum % 10);
@@ -770,6 +774,43 @@ void FaultAlarmWidget::onCalculateCheckCode()
     m_checkCodeEdit->blockSignals(false);
     //更新完整结果
     onUniqueIdSegmentChanged();
+}
+
+/**
+ * @brief 自动计算校验码（参数变化时触发）
+ */
+void FaultAlarmWidget::onAutoCalculateCheckCode()
+{
+    //获取前23位
+    QString orgCode = m_orgCodeEdit->text().leftJustified(9, '0', true).left(9);
+    QString productDate = m_productDateEdit->text().leftJustified(8, '0', true).left(8);
+    QString serialCode = m_serialCodeEdit->text().leftJustified(6, '0', true).left(6);
+    
+    //只有当前23位都有内容时才自动计算校验码
+    if(!orgCode.isEmpty() && !productDate.isEmpty() && !serialCode.isEmpty())
+    {
+        QString first23 = orgCode + productDate + serialCode;
+        //计算校验码
+        int checkSum = 0;
+        for(const QChar &ch : first23)
+        {
+            if(ch.isDigit())
+            {
+                checkSum += ch.digitValue();
+            }
+            else
+            {
+                checkSum += ch.toLatin1();     //ASCII值
+            }
+        }
+        QString checkCode = QString::number(checkSum % 10);
+        //更新校验位（阻止信号避免递归）
+        m_checkCodeEdit->blockSignals(true);
+        m_checkCodeEdit->setText(checkCode);
+        m_checkCodeEdit->blockSignals(false);
+        //更新完整结果
+        onUniqueIdSegmentChanged();
+    }
 }
 
 /**
@@ -855,8 +896,8 @@ void FaultAlarmWidget::onSavePreset()
  */
 void FaultAlarmWidget::onResetData()
 {
-    m_controlCombo->setCurrentIndex(1); //默认选择1
-    m_formatCombo->setCurrentIndex(0);  //默认选择十进制
+    m_controlCombo->setCurrentIndex(1);     //默认选择1
+    m_formatCombo->setCurrentIndex(0);      //默认选择十进制
     m_alarmTypeCombo->setCurrentIndex(0);
     m_faultCodeSpin->setValue(1001);
     m_isolationCombo->setCurrentIndex(0);
@@ -885,7 +926,7 @@ void FaultAlarmWidget::onResetData()
 void FaultAlarmWidget::onFormatChanged()
 {
     int format = m_formatCombo->currentData().toInt();
-    int base = (format == 0) ? 10 : 16; //0=十进制, 1=十六进制
+    int base = (format == 0) ? 10 : 16;     //0=十进制, 1=十六进制
     //更新所有数值输入控件的显示格式
     m_faultCodeSpin->setDisplayIntegerBase(base);
     m_topicNumberSpin->setDisplayIntegerBase(base);
@@ -934,7 +975,7 @@ QByteArray FaultAlarmWidget::buildDataFrame()
     frame.append(m_currentData.control);
     //数据域长度 (先低后高)
     frame.append(static_cast<char>(m_currentData.dataLength & 0xFF));
-    frame.append(static_cast<char>((m_currentData.dataLength >> 8) & 0x07)); //高3位
+    frame.append(static_cast<char>((m_currentData.dataLength >> 8) & 0x07));     //高3位
     //主题号 (先低后高)
     frame.append(static_cast<char>(m_currentData.topicNumber & 0xFF));
     frame.append(static_cast<char>((m_currentData.topicNumber >> 8) & 0xFF));
@@ -1037,7 +1078,7 @@ QString FaultAlarmWidget::generateUniqueId()
         }
         else
         {
-            checkSum += ch.toLatin1(); //ASCII值
+            checkSum += ch.toLatin1();     //ASCII值
         }
     }
     QString checkCode = QString::number(checkSum % 10);

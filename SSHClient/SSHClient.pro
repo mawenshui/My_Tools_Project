@@ -39,11 +39,3 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-# 添加SSH库支持
-win32 {
-    # Windows平台下的SSH库配置
-    # 注意：实际使用时需要配置正确的libssh路径
-    # LIBS += -L$$PWD/libs/win32/ -llibssh
-    # INCLUDEPATH += $$PWD/libs/win32/include
-}

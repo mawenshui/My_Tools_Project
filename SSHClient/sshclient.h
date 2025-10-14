@@ -14,9 +14,10 @@ class SSHClient : public QObject
 {
     Q_OBJECT
 public:
-    // 认证方式枚举 - 只保留密钥文件认证
+    // 认证方式枚举
     enum AuthMode {
-        KeyFile     // 密钥文件认证
+        KeyFile,    // 密钥文件认证
+        Password    // 密码认证
     };
     
     explicit SSHClient(QObject *parent = nullptr);
@@ -24,6 +25,9 @@ public:
     
     // 使用密钥文件连接到远程主机
     void connectToHost(const QString &host, int port, const QString &username, const QString &keyFilePath, const QString &keyFilePassword = QString());
+    
+    // 使用密码连接到远程主机
+    void connectToHostWithPassword(const QString &host, int port, const QString &username, const QString &password);
     
     // 断开连接
     void disconnect();
@@ -79,6 +83,7 @@ private:
     QString m_username;
     QString m_keyFilePath;
     QString m_keyFilePassword;
+    QString m_password;  // 密码认证时使用
     AuthMode m_authMode;
     int m_connectionTimeout = 5000; // 连接超时时间，默认5秒
     
