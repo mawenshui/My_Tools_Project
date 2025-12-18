@@ -6,10 +6,13 @@
     "dataDir": "C:/Users/admin/Desktop/南京数据",
     "excludeTopics": [
     ],
+    "flowFastMultiplier": 0.01,
+    "flowNormalMultiplier": 0.8,
     "includeTopics": [
     ],
     "order": "顺序",
     "sendInterval": "100",
+    "timeoutCheckedMultiplier": 1.5,
     "uniqueMode": false,
     "version": 1
 }
