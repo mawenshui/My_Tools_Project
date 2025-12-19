@@ -1,9 +1,8 @@
 {
     "addresses": [
-        "239.255.1.21:9221",
-        "239.255.1.9:9221"
+        "239.255.1.21:9221"
     ],
-    "dataDir": "C:/Users/admin/Desktop/南京数据",
+    "dataDir": "D:/_Project/SW4100/V4.02/PHMManager/bin_debug_windows/PHMData/9221_frame_20251219",
     "excludeTopics": [
     ],
     "flowFastMultiplier": 0.01,
@@ -11,7 +10,7 @@
     "includeTopics": [
     ],
     "order": "顺序",
-    "sendInterval": "100",
+    "sendInterval": 100,
     "timeoutCheckedMultiplier": 1.5,
     "uniqueMode": false,
     "version": 1

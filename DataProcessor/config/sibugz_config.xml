@@ -8,7 +8,7 @@
             <comid>0x111</comid>
         </task>
         <task name="全车断电">
-            <outTime>12</outTime>
+            <outTime>18.5</outTime>
             <startIndex>30</startIndex>
             <id>0xC0</id>
             <comid>0x110</comid>
@@ -376,7 +376,7 @@
             <comid>0x1051</comid>
         </task>
         <task name="低压配电组合1输出5断电">
-            <outTime>2</outTime>
+            <outTime>8.5</outTime>
             <startIndex>1250</startIndex>
             <id>0xCA</id>
             <comid>0x1050</comid>
@@ -546,7 +546,7 @@
             <comid>0xB021</comid>
         </task>
         <task name="地面直流电源二D主断电">
-            <outTime>1.5</outTime>
+            <outTime>0.3</outTime>
             <startIndex>1810</startIndex>
             <id>0xCA</id>
             <comid>0xB020</comid>
@@ -647,7 +647,7 @@
             <id>3411</id>
         </task>
         <!--task name="测发控地面电源加断电控制">
-            < 未使用 >
+            <未使用>
             <outTime>12</outTime>
             <startIndex>2190</startIndex>
             <id>3412</id>

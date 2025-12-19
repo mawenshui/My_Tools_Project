@@ -49,6 +49,13 @@ void UdpSender::stop()
         return;
     }
     qCDebug(udpLog) << "正在停止 UDP 发送器...";
+    int pending = m_queue.size();
+    if (pending > 0)
+    {
+        qCWarning(udpLog) << "丢弃未发送的数据包数量:" << pending;
+        m_queue.clear();
+        emit logMessage("WARN", QString("丢弃未发送的数据包数量: %1").arg(pending));
+    }
     //设置停止标志
     m_running = false;
     //唤醒可能等待的线程

@@ -38,6 +38,16 @@ struct ThemeColors
 };
 
 /**
+ * @brief 流程与超时倍率常量（可统一调整）
+ * - FAST_MULTIPLIER：快速流程使用默认值的比例
+ * - NORMAL_MULTIPLIER：正常流程使用默认值的比例（保证不超时）
+ * - TIMEOUT_CHECKED_MULTIPLIER：勾选“超时”时的默认倍率
+ */
+constexpr double FLOW_FAST_MULTIPLIER = 0.01;
+constexpr double FLOW_NORMAL_MULTIPLIER = 0.8;
+constexpr double TIMEOUT_CHECKED_MULTIPLIER = 1.5;
+
+/**
  * @brief 配置错误枚举
  */
 enum class ConfigError

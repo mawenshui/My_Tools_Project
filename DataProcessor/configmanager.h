@@ -30,6 +30,9 @@ public:
     explicit ConfigManager(QObject *parent = nullptr);
     ~ConfigManager();
 
+    // 异步初始化：在事件循环启动后加载配置并开始监控
+    void initializeAsync();
+
     //加载和保存配置
     bool loadConfig();
     bool saveConfig();
@@ -62,6 +65,8 @@ signals:
 private:
     //初始化默认配置
     void initDefaultConfig();
+    // 同步初始化：加载配置并启动文件监控
+    void initializeSync();
 
     //获取配置文件路径
     QString getConfigPath() const;

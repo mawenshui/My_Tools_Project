@@ -1,5 +1,5 @@
 /* 全局样式 */
-QMainWindow {
+QMainWindow, QDialog {
     background-color: #2E3440;
     color: #ECEFF4;
     font-family: "Microsoft YaHei UI", sans-serif;
@@ -519,4 +519,98 @@ QToolTip {
     padding: 3px;
     border-radius: 3px;
     opacity: 230;
+}
+
+/* =============================
+   倍率相关对话框（设置/帮助）
+   ============================= */
+
+/* MultiplierSettingsDialog 根容器与局部控件 */
+QDialog#multiplierSettingsDialog {
+    background-color: #2E3440; /* 与全局一致的深色背景 */
+    border: 1px solid #4C566A;
+    border-radius: 8px;
+}
+
+QDialog#multiplierSettingsDialog QLabel#dialogTitle {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ECEFF4;
+    padding: 2px 0;
+}
+
+QDialog#multiplierSettingsDialog QFrame#settingsPanel {
+    background-color: #3B4252;
+    border: 1px solid #4C566A;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+QDialog#multiplierSettingsDialog QLabel#dialogSubtleText {
+    color: #D8DEE9; /* 次要提示文字 */
+    font-size: 12px;
+}
+
+QDialog#multiplierSettingsDialog QDoubleSpinBox {
+    min-width: 120px; /* 输入宽度，便于右对齐数值阅读 */
+}
+
+QDialog#multiplierSettingsDialog QDialogButtonBox#dialogButtons QPushButton {
+    min-width: 80px; /* 按钮统一宽度 */
+}
+
+/* MultiplierHelpDialog 根容器与局部控件 */
+QDialog#multiplierHelpDialog {
+    background-color: #2E3440;
+    border: 1px solid #4C566A;
+    border-radius: 8px;
+}
+
+QDialog#multiplierHelpDialog QLabel#dialogTitle {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ECEFF4;
+    padding: 2px 0;
+}
+
+QDialog#multiplierHelpDialog QScrollArea#dialogScrollArea {
+    background-color: #3B4252;
+    border: 1px solid #4C566A;
+    border-radius: 6px;
+    padding: 0;
+    margin: 0;
+}
+
+QDialog#multiplierHelpDialog QLabel#dialogBodyText {
+    color: #ECEFF4;
+    padding: 4px; /* 滚动区域内文字留白 */
+    background: transparent; /* 文本不覆盖背景，避免白边 */
+}
+
+/* 修复 QScrollArea 视口背景为浅色导致的白边 */
+QDialog#multiplierHelpDialog QAbstractScrollArea::viewport {
+    background-color: #3B4252;
+    border: none;
+}
+
+/* 同步滚动区域内部容器背景，防止边界色差 */
+QDialog#multiplierHelpDialog QWidget#scrollAreaWidgetContents {
+    background-color: #3B4252;
+}
+
+/* 恢复默认按钮使用主题内的青色作为强调色 */
+QDialog#multiplierHelpDialog QPushButton#restoreButton {
+    background-color: #8FBCBB;
+    color: #2E3440;
+    border: 1px solid #88C0D0;
+    border-radius: 3px;
+    padding: 5px 10px;
+}
+
+QDialog#multiplierHelpDialog QPushButton#restoreButton:hover {
+    background-color: #88C0D0;
+}
+
+QDialog#multiplierHelpDialog QPushButton#restoreButton:pressed {
+    background-color: #81A1C1;
 }

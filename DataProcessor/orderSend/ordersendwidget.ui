@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>700</width>
-    <height>425</height>
+    <width>923</width>
+    <height>614</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>网络数据发送工具</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2">
+  <layout class="QGridLayout" name="gridLayout_7">
    <item row="0" column="0">
     <widget class="QSplitter" name="splitter_2">
      <property name="orientation">
@@ -27,8 +27,8 @@
        <property name="title">
         <string>发送设置</string>
        </property>
-       <layout class="QGridLayout" name="gridLayout_7">
-        <item row="0" column="0">
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
          <widget class="QGroupBox" name="groupBox_2">
           <property name="title">
            <string>目标地址：</string>
@@ -44,7 +44,7 @@
           </layout>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item>
          <widget class="QGroupBox" name="groupBox_3">
           <property name="title">
            <string>端口号：</string>
@@ -60,7 +60,7 @@
           </layout>
          </widget>
         </item>
-        <item row="2" column="0">
+        <item>
          <widget class="QGroupBox" name="groupBox_4">
           <property name="title">
            <string>指令选择：</string>
@@ -86,7 +86,7 @@
           </layout>
          </widget>
         </item>
-        <item row="3" column="0">
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
            <widget class="QPushButton" name="pushButtonstart">
@@ -99,12 +99,22 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="btnLoopSingle">
+            <property name="toolTip">
+             <string>循环发送当前选中的指令</string>
+            </property>
+            <property name="text">
+             <string>单个循环发送</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="pushButton">
             <property name="toolTip">
              <string>循环发送选中的命令</string>
             </property>
             <property name="text">
-             <string>循环发送</string>
+             <string>列表循环发送</string>
             </property>
            </widget>
           </item>
@@ -123,15 +133,179 @@
           </item>
          </layout>
         </item>
-        <item row="4" column="0">
+        <item>
+         <widget class="QWidget" name="widgetInterval" native="true">
+          <layout class="QHBoxLayout" name="horizontalLayout_Interval">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>5</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="labelInterval">
+             <property name="text">
+              <string>循环间隔(ms):</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="spinLoopInterval">
+             <property name="toolTip">
+              <string>设置循环发送时，每条指令发送完毕后的等待间隔时间（毫秒）。
+只能在停止状态下修改。</string>
+             </property>
+             <property name="maximum">
+              <number>3600000</number>
+             </property>
+             <property name="singleStep">
+              <number>100</number>
+             </property>
+             <property name="value">
+              <number>2000</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_Interval">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_5">
+          <property name="title">
+           <string>本次发送超时时间</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>指令应答超时时间(毫秒)：</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" colspan="2">
+            <widget class="QLineEdit" name="lineEdit_yingda"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>指令反馈超时时间(毫秒)：</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1" colspan="2">
+            <widget class="QLineEdit" name="lineEdit_fankui"/>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>指令反馈应答超时时间(毫秒)：</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QLineEdit" name="lineEdit_fankuiyingda"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBoxFlow">
+          <property name="title">
+           <string>流程选择</string>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_flow">
+           <item>
+            <widget class="QRadioButton" name="radioFlowFast">
+             <property name="toolTip">
+              <string>使用默认超时时间的 FAST_MULTIPLIER 倍（当前：0.01×）。禁用手动输入。</string>
+             </property>
+             <property name="text">
+              <string>快速流程</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioFlowNormal">
+             <property name="toolTip">
+              <string>使用默认超时时间的 NORMAL_MULTIPLIER 倍（当前：0.8×）。禁用手动输入。</string>
+             </property>
+             <property name="text">
+              <string>正常流程</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioFlowManual">
+             <property name="toolTip">
+              <string>启用手动输入，按输入的毫秒值精确控制超时。</string>
+             </property>
+             <property name="text">
+              <string>手动配置</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QPushButton" name="btnMultiplierSettings">
+            <property name="text">
+             <string>倍率设置...</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnMultiplierHelp">
+            <property name="text">
+             <string>帮助...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelFlowHelp">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>20</width>
-            <height>141</height>
+            <width>17</width>
+            <height>97</height>
            </size>
           </property>
          </spacer>

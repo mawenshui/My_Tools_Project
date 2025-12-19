@@ -6,6 +6,13 @@
 #include <QtGlobal>
 #include <QLoggingCategory>
 #include <memory>
+#include <QLabel>
+#include <QFile>
+#include <QTextStream>
+#include <QDir>
+#include <QDateTime>
+
+// 去除诊断模式与默认文件日志：如需文件日志，请在后续版本中按需启用到可执行程序目录下的 logs 文件夹。
 
 //定义日志分类
 Q_LOGGING_CATEGORY(appLog, "[app.main]")
@@ -27,13 +34,12 @@ bool initializeAppDirectories()
         qCInfo(appLog) << "目录初始化完成:" << dir.absolutePath();
         return true;
     };
-    //创建配置和日志目录
+    //创建配置目录（日志目录按需启用时将位于可执行程序同级的 logs）
     const QString configPath = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    const QString logPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/logs";
-    if (!createDir(configPath) || !createDir(logPath))
+    if (!createDir(configPath))
     {
         QMessageBox::critical(nullptr, "致命错误",
-                              QString("无法初始化必要的目录:\n%1\n%2").arg(configPath, logPath));
+                              QString("无法初始化必要的目录:\n%1").arg(configPath));
         return false;
     }
     return true;
@@ -58,6 +64,9 @@ int main(int argc, char *argv[])
     //启用高DPI缩放
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication app(argc, argv);
+    // 设置用于 QStandardPaths 的组织与应用名称，确保 AppData 路径稳定
+    QCoreApplication::setOrganizationName("My_Tools_Project");
+    QCoreApplication::setApplicationName("DataProcessor");
     //设置应用程序图标
     app.setWindowIcon(QIcon(":/icons/icons/app.png"));
     //设置日志格式
@@ -69,6 +78,7 @@ int main(int argc, char *argv[])
         {
             return EXIT_FAILURE;
         }
+
         MainWindow mainWindow;
         //连接应用程序退出信号到清理槽
         QObject::connect(&app, &QCoreApplication::aboutToQuit, [&mainWindow]()
@@ -77,6 +87,8 @@ int main(int argc, char *argv[])
         });
         //显示主窗口
         mainWindow.show();
+        mainWindow.raise();
+        mainWindow.activateWindow();
         return app.exec();
     }
     catch (const std::exception &e)

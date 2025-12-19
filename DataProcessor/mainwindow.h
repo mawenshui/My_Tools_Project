@@ -16,12 +16,15 @@
 #include <QTextCharFormat>
 #include <QComboBox>
 #include <QToolBar>
+#include <QPointer>
 
 #include "alldefine.h"
 #include "workerclass.h"
 #include "configmanager.h"
 #include "customdatasender.h"
 #include "orderSend/ordersendwidget.h"
+
+class FaultAlarmWidget;
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -65,6 +68,7 @@ private slots:
 
     //日志过滤下拉框变化事件
     void onLogFilterChanged(int index);
+    void onMainTabChanged(int index);
 
 private:
     //初始化函数
@@ -76,6 +80,8 @@ private:
     void setupConnections();        //设置信号槽连接
     void setupLogFilter();          //设置日志过滤器
     void updateButtonStates(bool isRunning, bool isPaused); //更新按钮状态
+    void ensureOrderSendPage();
+    void ensureFaultAlarmPage();
 
     //配置验证函数
     QStringList getAddressList(); //获取所有地址
@@ -99,7 +105,7 @@ private:
 
 private:
     QScopedPointer<Ui::MainWindow> ui; //UI 对象
-    ConfigManager m_configManager;     //配置管理器
+    QScopedPointer<ConfigManager> m_configManager;     //配置管理器（延迟构造）
     QTimer m_saveTimer;                //配置保存防抖定时器
     mutable QMutex m_configMutex;      //配置访问互斥锁
     QThread m_workerThread;            //工作线程
@@ -109,6 +115,8 @@ private:
     QMap<QString, QList<LogEntry >> m_logEntriesByLevel; //日志条目缓存
     QString m_currentFilterLevel; //当前日志过滤级别
     ThemeColors m_logColors; //日志颜色配置
+    QPointer<OrderSendWidget> m_orderSendWidget; // 懒加载：指令发送页
+    QPointer<FaultAlarmWidget> m_faultAlarmWidget; // 懒加载：故障告警页
 
 };
 

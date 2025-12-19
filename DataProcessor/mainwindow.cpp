@@ -11,6 +11,9 @@
 #include <QLoggingCategory>
 #include <QComboBox>
 #include <QStatusBar>
+#include <QVBoxLayout>
+#include "faultAlarmWidget/faultAlarmWidget.h"
+#include "threadmanager.h"
 
 //定义日志分类
 Q_LOGGING_CATEGORY(mainWindowLog, "[app.MainWindow]")
@@ -24,7 +27,13 @@ MainWindow::MainWindow(QWidget *parent)
       ui(new Ui::MainWindow()),
       m_currentFilterLevel("ALL")  //默认显示所有日志级别
 {
+    qCInfo(mainWindowLog) << "MainWindow 构造开始";
     ui->setupUi(this);
+    qCInfo(mainWindowLog) << "UI setup 完成";
+    qCInfo(mainWindowLog) << "准备构造 ConfigManager";
+    m_configManager.reset(new ConfigManager(this));
+    qCInfo(mainWindowLog) << "ConfigManager 构造完成（即将异步初始化）";
+    m_configManager->initializeAsync();
     //设置任务栏图标
     setWindowIcon(QIcon(":/icons/icons/app.png"));
     //初始化界面和配置
@@ -39,6 +48,18 @@ MainWindow::MainWindow(QWidget *parent)
     //配置保存防抖定时器（500毫秒单次触发）
     m_saveTimer.setInterval(500);
     m_saveTimer.setSingleShot(true);
+    ThreadManager::instance().registerThread(&m_workerThread, "WorkerThread", [this]()
+    {
+        if (m_worker)
+        {
+            m_worker->stopProcessing();
+        }
+        if (m_workerThread.isRunning())
+        {
+            m_workerThread.quit();
+        }
+    });
+    qCInfo(mainWindowLog) << "MainWindow 初始化完成，等待显示";
 }
 
 /**
@@ -47,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     //停止工作线程并释放资源
+    ThreadManager::instance().unregisterThread(&m_workerThread);
     if(m_worker)
     {
         m_worker->stopProcessing();
@@ -83,12 +105,22 @@ void MainWindow::loadAndApplyStyleSheet(const QString &styleSheetPath)
 void MainWindow::cleanupBeforeExit()
 {
     qCInfo(mainWindowLog) << "正在执行退出前的清理...";
-    //保存当前配置
     saveConfig();
-    //释放资源（如果有）
-    if(m_workerThread.isRunning())
+    bool needWait = ThreadManager::instance().hasRunningThreads();
+    QProgressDialog progress(QStringLiteral("正在退出，等待线程结束…"), QString(), 0, 0, this);
+    if (needWait)
     {
-        m_workerThread.wait();
+        progress.setWindowModality(Qt::ApplicationModal);
+        progress.setCancelButton(nullptr);
+        progress.setMinimumDuration(0);
+        progress.setAutoClose(true);
+        progress.show();
+        qApp->processEvents();
+    }
+    ThreadManager::instance().shutdownAll(2000);
+    if (needWait)
+    {
+        progress.close();
     }
     qCInfo(mainWindowLog) << "清理完成。";
 }
@@ -145,6 +177,9 @@ void MainWindow::initUI()
     logToolBar->addWidget(new QLabel("日志等级过滤:"));
     logToolBar->addWidget(m_pLogFilterCombo);
     addToolBar(Qt::TopToolBarArea, logToolBar);
+    // 监听主功能区标签页切换，按需构造自定义页
+    connect(ui->tabWidget_2, &QTabWidget::currentChanged,
+            this, &MainWindow::onMainTabChanged);
 }
 
 /**
@@ -152,23 +187,35 @@ void MainWindow::initUI()
  */
 void MainWindow::loadConfig()
 {
+    qCInfo(mainWindowLog) << "开始刷新界面配置";
     //从配置管理器中加载配置
-    QVariantMap config = m_configManager.getConfig();
-    ui->dirEdit->setText(config["dataDir"].toString());
-    ui->orderCombo->setCurrentText(config["order"].toString());
-    ui->includeEdit->setText(config["includeTopics"].toStringList().join(","));
-    ui->excludeEdit->setText(config["excludeTopics"].toStringList().join(","));
-    ui->uniqueCheck->setChecked(config["uniqueMode"].toBool());
-    ui->sendIntervalEdit->setText(config["sendInterval"].toString());
-    //加载地址列表
-    for(const auto &addr : config["addresses"].toStringList())
+    if (!m_configManager)
     {
-        //过滤空行
-        if(!addr.trimmed().isEmpty())
-        {
-            ui->addrList->addItem(addr.trimmed());
-        }
+        qCWarning(mainWindowLog) << "ConfigManager 未初始化，跳过加载配置";
+        return;
     }
+    const QVariantMap config = m_configManager->getConfig();
+    ui->dirEdit->setText(config.value("dataDir").toString());
+    ui->orderCombo->setCurrentText(config.value("order").toString());
+    ui->includeEdit->setText(config.value("includeTopics").toStringList().join(","));
+    ui->excludeEdit->setText(config.value("excludeTopics").toStringList().join(","));
+    ui->uniqueCheck->setChecked(config.value("uniqueMode").toBool());
+    ui->sendIntervalEdit->setText(config.value("sendInterval").toString());
+    // 加载地址列表（批量、禁用重绘，避免白屏期间耗时过长）
+    const QStringList addresses = config.value("addresses").toStringList();
+    ui->addrList->setUpdatesEnabled(false);
+    ui->addrList->blockSignals(true);
+    ui->addrList->clear();
+    QStringList filtered;
+    for (const auto &addr : addresses)
+    {
+        const QString t = addr.trimmed();
+        if (!t.isEmpty()) filtered << t;
+    }
+    ui->addrList->addItems(filtered);
+    ui->addrList->blockSignals(false);
+    ui->addrList->setUpdatesEnabled(true);
+    qCInfo(mainWindowLog) << "界面配置刷新完成，地址数:" << filtered.size();
 }
 
 /**
@@ -188,7 +235,14 @@ void MainWindow::saveConfig()
     QStringList addrList = getAddressList();
     config["addresses"] = addrList;
     //更新配置
-    m_configManager.updateConfig(config);
+    if (m_configManager)
+    {
+        m_configManager->updateConfig(config);
+    }
+    else
+    {
+        qCWarning(mainWindowLog) << "ConfigManager 未初始化，无法保存配置";
+    }
 }
 
 /**
@@ -246,6 +300,14 @@ void MainWindow::setupConnections()
     connect(ui->stopButton, &QPushButton::clicked, this, &MainWindow::onStopClicked);
     //连接自动保存配置定时器
     connect(&m_saveTimer, &QTimer::timeout, this, &MainWindow::saveConfig);
+
+    // 当配置异步加载或重新加载完成时，刷新界面中的配置显示
+    if (m_configManager)
+    {
+        connect(m_configManager.data(), &ConfigManager::configReloaded,
+                this, [this]() { qCInfo(mainWindowLog) << "收到 configReloaded 信号，刷新界面配置"; loadConfig(); },
+                Qt::QueuedConnection);
+    }
 }
 
 /**
@@ -255,6 +317,64 @@ void MainWindow::setupLogFilter()
 {
     //初始化日志格式
     m_logFormat.setFont(QFont("Consolas", 10));
+}
+
+/**
+ * @brief 主功能区标签页切换时的处理（懒加载自定义页面）
+ * @param index 当前页索引
+ */
+void MainWindow::onMainTabChanged(int index)
+{
+    QWidget *page = ui->tabWidget_2->widget(index);
+    if (!page)
+    {
+        qCWarning(mainWindowLog) << "tabWidget_2 当前索引无页面:" << index;
+        return;
+    }
+    const QString name = page->objectName();
+    qCInfo(mainWindowLog) << "切换到标签页:" << name << "(index=" << index << ")";
+    if (name == QLatin1String("tab_3"))
+    {
+        ensureOrderSendPage();
+    }
+    else if (name == QLatin1String("tab_FaultAlarmWidget"))
+    {
+        ensureFaultAlarmPage();
+    }
+}
+
+/**
+ * @brief 懒加载构造 指令数据发送 页
+ */
+void MainWindow::ensureOrderSendPage()
+{
+    if (m_orderSendWidget)
+    {
+        return;
+    }
+    qCInfo(mainWindowLog) << "首次进入 指令数据发送 页，正在构造 OrderSendWidget...";
+    m_orderSendWidget = new OrderSendWidget(ui->tab_3);
+    auto *layout = new QVBoxLayout(ui->tab_3);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_orderSendWidget);
+    qCInfo(mainWindowLog) << "OrderSendWidget 构造完成并加入页面。";
+}
+
+/**
+ * @brief 懒加载构造 故障告警模拟 页
+ */
+void MainWindow::ensureFaultAlarmPage()
+{
+    if (m_faultAlarmWidget)
+    {
+        return;
+    }
+    qCInfo(mainWindowLog) << "首次进入 故障告警模拟 页，正在构造 FaultAlarmWidget...";
+    m_faultAlarmWidget = new FaultAlarmWidget(ui->tab_FaultAlarmWidget);
+    auto *layout = new QVBoxLayout(ui->tab_FaultAlarmWidget);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_faultAlarmWidget);
+    qCInfo(mainWindowLog) << "FaultAlarmWidget 构造完成并加入页面。";
 }
 
 /**
@@ -378,7 +498,15 @@ void MainWindow::onStartClicked()
     //创建工作类对象并移动到工作线程
     m_worker.reset(new WorkerClass);
     m_worker->setAddrList(addrList);
-    m_worker->configure(m_configManager.getConfig());
+    if (m_configManager)
+    {
+        m_worker->configure(m_configManager->getConfig());
+    }
+    else
+    {
+        qCWarning(mainWindowLog) << "ConfigManager 未初始化，工作类将使用默认配置";
+        m_worker->configure(QVariantMap{});
+    }
     m_worker->moveToThread(&m_workerThread);
     //连接信号槽并启动线程
     connectWorkerSlots();

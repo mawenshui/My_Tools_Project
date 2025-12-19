@@ -7,6 +7,9 @@
 #include <QDir>
 #include <QCryptographicHash>
 #include <QRandomGenerator>
+#include <QLoggingCategory>
+
+Q_LOGGING_CATEGORY(FaultAlarmLog, "[app.FaultAlarm]")
 
 /**
  * @brief FaultAlarmWidget构造函数
@@ -20,6 +23,7 @@ FaultAlarmWidget::FaultAlarmWidget(QWidget *parent)
     , m_saveTimer(new QTimer(this))
     , m_isContinuousSending(false)
 {
+    qCInfo(FaultAlarmLog) << "FaultAlarmWidget 构造开始";
     //配置保存定时器（防抖机制）
     m_saveTimer->setSingleShot(true);
     m_saveTimer->setInterval(500);     //500ms延迟
@@ -29,6 +33,7 @@ FaultAlarmWidget::FaultAlarmWidget(QWidget *parent)
     updateUI();
     updateSendButtonStates();
     loadConfiguration();     //在UI初始化完成后加载配置
+    qCInfo(FaultAlarmLog) << "FaultAlarmWidget 构造完成";
 }
 
 /**

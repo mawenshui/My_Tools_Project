@@ -1,6 +1,7 @@
 //sendworker.cpp
 #include <QRegularExpression>
 #include "sendworker.h"
+#include "../alldefine.h"
 
 
 #define SHAKE_TIME 200 //应答超时时间
@@ -16,6 +17,11 @@ SendWorker::SendWorker(QObject *parent) : QObject(parent)
 SendWorker::~SendWorker()
 {
     m_sender->deleteLater();
+}
+
+void SendWorker::requestStop()
+{
+    m_stopRequested.store(true);
 }
 
 void SendWorker::crcData(unsigned char* data, int len)
@@ -35,18 +41,104 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
                              const QMap<QString, int>& workIdMap, const QMap<QString, double>& timeMap,
                              bool comCrc, bool reCrc, bool comReply, bool havereturn,
                              bool ReReply, bool replycrc, bool returnErr, bool noShake,
-                             bool isReplyTimeout, bool isReturnTimeout, bool isReReplyTimeout)
+                             bool isReplyTimeout, bool isReturnTimeout, bool isReReplyTimeout,
+                             int replyTimeoutMs, int returnTimeoutMs, int reReplyTimeoutMs,
+                             int flowMode)
 {
-    if(!commandIdMap.contains(comname))
+    m_stopRequested.store(false);
+    if(!commandIdMap.contains(comname) || m_stopRequested.load())
     {
         emit logMessage("ERROR", QString("未找到指令: [0x%1]").arg(comname));
         emit finished();
         return;
     }
     QString l_comname = comname;
+    emit logMessage("DEBUG", QString("发送线程接收到超时(ms)：应答=%1，反馈=%2，反馈应答=%3，流程模式=%4")
+                                   .arg(replyTimeoutMs).arg(returnTimeoutMs).arg(reReplyTimeoutMs)
+                                   .arg(flowMode));
     int commandId = commandIdMap.value(comname, 0);
     int workId = workIdMap.value(comname, 0);
+    // 配置中的反馈超时（单位：秒），用于作为默认的反馈超时基础
     double timei = timeMap.value(comname, 0.0);
+    // 勾选框优先：若任一勾选，则仅对被勾选的类型应用延迟；
+    // 若全部未勾选：根据流程模式（快速/正常/手动）计算三种延时
+    bool anyChecked = isReplyTimeout || isReturnTimeout || isReReplyTimeout;
+    bool applyReplyDelay = anyChecked ? isReplyTimeout : true;
+    bool applyReturnDelay = anyChecked ? isReturnTimeout : true;
+    bool applyReReplyDelay = anyChecked ? isReReplyTimeout : true;
+
+    // 读取倍率（带回退与安全限制）
+    double mulFast = FLOW_FAST_MULTIPLIER;
+    double mulNormal = FLOW_NORMAL_MULTIPLIER;
+    double mulChecked = TIMEOUT_CHECKED_MULTIPLIER;
+    if(m_configMgr)
+    {
+        mulFast = m_configMgr->get("flowFastMultiplier", FLOW_FAST_MULTIPLIER).toDouble();
+        mulNormal = m_configMgr->get("flowNormalMultiplier", FLOW_NORMAL_MULTIPLIER).toDouble();
+        mulChecked = m_configMgr->get("timeoutCheckedMultiplier", TIMEOUT_CHECKED_MULTIPLIER).toDouble();
+    }
+    if(mulFast <= 0) mulFast = FLOW_FAST_MULTIPLIER;
+    if(mulNormal <= 0) mulNormal = FLOW_NORMAL_MULTIPLIER;
+    if(mulChecked <= 0) mulChecked = TIMEOUT_CHECKED_MULTIPLIER;
+
+    // 线程开始处标注模式与实际延时值（与UI规则保持一致）：
+    // 默认基线（来自常量与配置）
+    const int defaultReplyMs = SHAKE_TIME;
+    const int defaultReturnMs = static_cast<int>(timei * 1000.0);
+    const int defaultReReplyMs = RE_SHAKE_TIME;
+    // 计算（未勾选时）三种延时的实际值：依据流程模式
+    int manualReplyMs = 0;
+    int manualReturnMs = 0;
+    int manualReReplyMs = 0;
+    if(!anyChecked)
+    {
+        if(flowMode == 1) // 快速：默认×mulFast
+        {
+            manualReplyMs   = static_cast<int>(defaultReplyMs   * mulFast);
+            manualReturnMs  = static_cast<int>(defaultReturnMs  * mulFast);
+            manualReReplyMs = static_cast<int>(defaultReReplyMs * mulFast);
+        }
+        else if(flowMode == 2) // 正常：默认×mulNormal
+        {
+            manualReplyMs   = static_cast<int>(defaultReplyMs   * mulNormal);
+            manualReturnMs  = static_cast<int>(defaultReturnMs  * mulNormal);
+            manualReReplyMs = static_cast<int>(defaultReReplyMs * mulNormal);
+        }
+        else // 手动：使用手动毫秒值（无额外倍率）
+        {
+            manualReplyMs   = (replyTimeoutMs   > 0) ? replyTimeoutMs   : defaultReplyMs;
+            manualReturnMs  = (returnTimeoutMs  > 0) ? returnTimeoutMs  : defaultReturnMs;
+            manualReReplyMs = (reReplyTimeoutMs > 0) ? reReplyTimeoutMs : defaultReReplyMs;
+        }
+    }
+
+    const int effectiveReplyMs   = applyReplyDelay   ? (anyChecked ? static_cast<int>(defaultReplyMs   * mulChecked) : manualReplyMs)   : 0;
+    const int effectiveReturnMs  = applyReturnDelay  ? (anyChecked ? static_cast<int>(defaultReturnMs  * mulChecked) : manualReturnMs)  : 0;
+    const int effectiveReReplyMs = applyReReplyDelay ? (anyChecked ? static_cast<int>(defaultReReplyMs * mulChecked) : manualReReplyMs) : 0;
+
+    QString replyMode, returnMode, reReplyMode;
+    if(anyChecked)
+    {
+        const QString mStr = QStringLiteral("默认×%1").arg(QString::number(mulChecked, 'g', 3));
+        replyMode   = isReplyTimeout   ? mStr : QStringLiteral("未勾选（不延时）");
+        returnMode  = isReturnTimeout  ? mStr : QStringLiteral("未勾选（不延时）");
+        reReplyMode = isReReplyTimeout ? mStr : QStringLiteral("未勾选（不延时）");
+    }
+    else
+    {
+        const QString fastStr   = QStringLiteral("快速流程（%1×)").arg(QString::number(mulFast, 'g', 3));
+        const QString normalStr = QStringLiteral("正常流程（%1×)").arg(QString::number(mulNormal, 'g', 3));
+        const QString manualStr = QStringLiteral("手动配置（精确）");
+        QString flowModeStr = (flowMode==1) ? fastStr : ((flowMode==2) ? normalStr : manualStr);
+        replyMode = flowModeStr;
+        returnMode = flowModeStr;
+        reReplyMode = flowModeStr;
+    }
+
+    emit logMessage("DEBUG", QString("线程超时模式与延时：应答=%1/%2ms，反馈=%3/%4ms，反馈应答=%5/%6ms")
+                                   .arg(replyMode).arg(effectiveReplyMs)
+                                   .arg(returnMode).arg(effectiveReturnMs)
+                                   .arg(reReplyMode).arg(effectiveReReplyMs));
     unsigned char sendData[256] = {0};
     int dataLen = 0;
     sendData[0] = noShake ? 0x80 : 0x00;
@@ -172,10 +264,21 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
     {
         emit logMessage("ERROR", QString("发送失败: [%1]").arg(m_sender->errorString()));
     }
-    QThread::msleep(5); //短暂延迟
+    if (!sleepInterruptible(5))
+    {
+        emit logMessage("WARN", "发送被中断: 主命令发送后等待阶段");
+        emit finished();
+        return;
+    }
     //处理命令应答（如果未跳过）
     if(!comReply && !noShake)
     {
+        if (m_stopRequested.load())
+        {
+            emit logMessage("WARN", "发送被中断: 进入应答阶段前");
+            emit finished();
+            return;
+        }
         memset(sendData, 0, sizeof(sendData));
         dataLen = 17;
         sendData[1] = dataLen - 13;
@@ -200,10 +303,16 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
         {
             crcData(sendData, dataLen);
         }
-        if(isReplyTimeout)
+        // 应答延时：统一使用前面计算的 effectiveReplyMs（勾选→默认×1.5，未勾选→按流程模式或手动）
+        if(applyReplyDelay)
         {
-            int outtime = SHAKE_TIME * 1.5;
-            QThread::msleep(outtime);
+            int outtime = effectiveReplyMs;
+            if (!sleepInterruptible(outtime))
+            {
+                emit logMessage("WARN", "发送被中断: 应答延时阶段");
+                emit finished();
+                return;
+            }
             emit logMessage("DEBUG", QString("指令应答延时[%1]毫秒").arg(outtime));
         }
         //记录并发送应答
@@ -214,6 +323,12 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
     //处理反馈数据（如果未跳过）
     if(!havereturn)
     {
+        if (m_stopRequested.load())
+        {
+            emit logMessage("WARN", "发送被中断: 进入反馈阶段前");
+            emit finished();
+            return;
+        }
         memset(sendData, 0, sizeof(sendData));
         sendData[5] = 0x11;
         //根据命令ID构建不同的反馈数据结构
@@ -222,7 +337,7 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
             case 0xca:
             case 0xc0:
             case 0xcC:
-                dataLen = 19;
+                dataLen = 20;
                 sendData[1] = dataLen - 13;
 //               commandId++;
                 if(commandId == 0xca)
@@ -613,10 +728,16 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
         {
             crcData(sendData, dataLen);
         }
-        if(isReturnTimeout)
+        // 反馈延时：统一使用前面计算的 effectiveReturnMs（勾选→默认×1.5，未勾选→按流程模式或手动）
+        if(applyReturnDelay)
         {
-            int outtime = timei * 1000 * 1.5;
-            QThread::msleep(outtime);
+            int outtime = effectiveReturnMs;
+            if (!sleepInterruptible(outtime))
+            {
+                emit logMessage("WARN", "发送被中断: 反馈延时阶段");
+                emit finished();
+                return;
+            }
             emit logMessage("DEBUG", QString("反馈延时[%1]毫秒").arg(outtime));
         }
         //记录并发送反馈
@@ -626,6 +747,12 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
         //处理反馈应答（如果未跳过）
         if(!ReReply && !noShake)
         {
+            if (m_stopRequested.load())
+            {
+                emit logMessage("WARN", "发送被中断: 进入反馈应答阶段前");
+                emit finished();
+                return;
+            }
             memset(sendData, 0, sizeof(sendData));
             sendData[5] = 0x11;
             dataLen = 17;
@@ -639,10 +766,16 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
             {
                 crcData(sendData, dataLen);
             }
-            if(isReReplyTimeout)
+            // 反馈应答延时：统一使用前面计算的 effectiveReReplyMs（勾选→默认×1.5，未勾选→按流程模式或手动）
+            if(applyReReplyDelay)
             {
-                int outtime = RE_SHAKE_TIME * 1.5;
-                QThread::msleep(outtime);
+                int outtime = effectiveReReplyMs;
+                if (!sleepInterruptible(outtime))
+                {
+                    emit logMessage("WARN", "发送被中断: 反馈应答延时阶段");
+                    emit finished();
+                    return;
+                }
                 emit logMessage("DEBUG", QString("反馈应答延时[%1]毫秒").arg(outtime));
             }
             //记录并发送反馈应答
@@ -653,4 +786,29 @@ void SendWorker::sendCommand(const QString &address, quint16 port,
     }
     emit logMessage("INFO", QString("指令发送完成: [%1]").arg(comname));
     emit finished();
+}
+void SendWorker::setConfigManager(ConfigManager* mgr)
+{
+    m_configMgr = mgr;
+}
+
+bool SendWorker::sleepInterruptible(int ms)
+{
+    if (ms <= 0)
+    {
+        return !m_stopRequested.load();
+    }
+    int remaining = ms;
+    const int step = 50;
+    while (remaining > 0)
+    {
+        if (m_stopRequested.load())
+        {
+            return false;
+        }
+        int chunk = remaining > step ? step : remaining;
+        QThread::msleep(static_cast<unsigned long>(chunk));
+        remaining -= chunk;
+    }
+    return !m_stopRequested.load();
 }

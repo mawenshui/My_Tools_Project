@@ -18,7 +18,29 @@ TEMPLATE = app
 
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/
-DESTDIR = $$PWD/bin
+
+# 按debug|release模式分别设置输出目录
+CONFIG(debug, debug|release) {
+    DESTDIR = $$PWD/bin_debug
+    # 在调试版本中添加 DEBUG 宏定义
+    DEFINES += DEBUG
+} else {
+    DESTDIR = $$PWD/bin_release
+}
+
+# 在 Windows 下设置输出文件名包含构建类型
+win32 {
+    CONFIG(debug, debug|release) {
+        TARGET = $$join(TARGET,,,_debug)
+    } else {
+        TARGET = $$join(TARGET,,,_release)
+    }
+}
+# 如果还需要将目标文件 (.obj/.o) 也分开存放
+OBJECTS_DIR = $$DESTDIR/.obj
+MOC_DIR = $$DESTDIR/.moc
+RCC_DIR = $$DESTDIR/.rcc
+UI_DIR = $$DESTDIR/.ui
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -31,8 +53,11 @@ SOURCES += \
     faultAlarmWidget/faultAlarmWidget.cpp \
     main.cpp \
     mainwindow.cpp \
+    threadmanager.cpp \
     orderSend/ordersendwidget.cpp \
     orderSend/sendworker.cpp \
+    orderSend/multipliersettingsdialog.cpp \
+    orderSend/multiplierhelpdialog.cpp \
     tinyxml/tinystr.cpp \
     tinyxml/tinyxml.cpp \
     tinyxml/tinyxmlerror.cpp \
@@ -42,12 +67,15 @@ SOURCES += \
 
 HEADERS += \
     alldefine.h \
+    threadmanager.h \
     configmanager.h \
     customdatasender.h \
     faultAlarmWidget/faultAlarmWidget.h \
     mainwindow.h \
     orderSend/ordersendwidget.h \
     orderSend/sendworker.h \
+    orderSend/multipliersettingsdialog.h \
+    orderSend/multiplierhelpdialog.h \
     tinyxml/tinystr.h \
     tinyxml/tinyxml.h \
     udpsender.h \
@@ -55,7 +83,9 @@ HEADERS += \
 
 FORMS += \
     mainwindow.ui \
-    orderSend/ordersendwidget.ui
+    orderSend/ordersendwidget.ui \
+    orderSend/multipliersettingsdialog.ui \
+    orderSend/multiplierhelpdialog.ui
 
 RESOURCES += \
     rec.qrc

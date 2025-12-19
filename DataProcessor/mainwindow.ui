@@ -387,12 +387,12 @@
           </item>
          </layout>
         </widget>
-        <widget class="OrderSendWidget" name="tab_3">
+        <widget class="QWidget" name="tab_3">
          <attribute name="title">
           <string>指令数据发送</string>
          </attribute>
         </widget>
-        <widget class="FaultAlarmWidget" name="tab_FaultAlarmWidget">
+        <widget class="QWidget" name="tab_FaultAlarmWidget">
          <attribute name="title">
           <string>故障告警模拟</string>
          </attribute>
