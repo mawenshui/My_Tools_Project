@@ -177,11 +177,17 @@ explicit FaultAlarmWidget(QWidget *parent = nullptr);
 - `QSpinBox *m_destDeviceSpin`: 目的设备号输入
 
 ### 分段式唯一标识符控件
-- `QLineEdit *m_orgCodeEdit`: 组织机构代码输入 (4字符)
+- `QLineEdit *m_orgIdentifierEdit`: 组织机构标识符输入 (1字符)
+- `QLineEdit *m_orgCodeEdit`: 组织机构代码输入 (9字符)
 - `QLineEdit *m_productDateEdit`: 生产日期输入 (8字符，YYYYMMDD格式)
-- `QLineEdit *m_serialCodeEdit`: 序列号输入 (10字符)
-- `QLineEdit *m_checkCodeEdit`: 校验码输入 (2字符，只读)
-- `QLineEdit *m_uniqueIdResultEdit`: 组合结果输入 (24字符完整标识符)
+- `QLineEdit *m_productCategoryEdit`: 产品大类代码 (2字符)
+- `QLineEdit *m_levelCodeEdit`: 层级码 (2字符)
+- `QLineEdit *m_fixedCodeSEdit`: 固定码S (1字符)
+- `QLineEdit *m_subsystemCodeEdit`: 分系统码 (1字符)
+- `QLineEdit *m_deviceCodeEdit`: 设备码 (2字符)
+- `QLineEdit *m_sequenceNumberEdit`: 序号码 (2字符)
+- `QLineEdit *m_checkCodeEdit`: 校验码输入 (1字符，只读)
+- `QLineEdit *m_uniqueIdResultEdit`: 组合结果输入 (25字符完整标识符)
 
 ### 发送配置控件
 - `QLineEdit *m_targetIpEdit`: 目标IP输入
@@ -202,12 +208,12 @@ explicit FaultAlarmWidget(QWidget *parent = nullptr);
 故障告警数据帧采用以下格式：
 
 ```
-帧头(11字节) + 数据域(37字节) + 帧尾(2字节校验和)
+帧头(11字节) + 数据域(38字节) + 校验和(1字节) + 帧尾(1字节)
 ```
 
 #### 帧头结构
 1. 控制字节 (1字节): 用户可选择0或1
-2. 数据域长度 (2字节): 固定为37，小端序
+2. 数据域长度 (2字节): 固定为38，小端序
 3. 主题号 (2字节): 小端序
 4. 源设备号 (1字节)
 5. 目的设备号 (1字节)
@@ -220,19 +226,16 @@ explicit FaultAlarmWidget(QWidget *parent = nullptr);
 4. 故障等级 (1字节)
 5. 预警数值 (4字节): IEEE 754浮点数
 6. 预警阈值 (4字节): IEEE 754浮点数
-7. 唯一标识码 (24字节): 采用Data Matrix(DM)码制，ECC200类型，C40编码方案的分段式组合标识符，结构如下：
-   - 组织机构代码 (9字符): 统一社会信用代码的第九位至倒数第二位
-   - 生产日期 (8字符): YYYYMMDD格式，标识设备生产日期
-   - 序列码 (6字符): 含固定码S，标识设备所属分系统、设备及生产日期当天的设备序号
-   - 校验码 (1字符): 前23位十进制累加和对10取余的校验结果
-   
-   **编码规则**:
-   - 字符集: 阿拉伯数字0~9、大写字母A~Z（不含O、I）
-   - 校验算法: 数字按十进制计算，字母按ASCII码值（十进制）计算
-   - 唯一性要求: 各编码单位需确保编码的唯一性，不重复
+7. 唯一标识码 (25字节): 结构如下：
+   - 军地组织机构标识符 (1字符): 1位Base33编码
+   - 组织机构代码 (9字符): 9位数字
+   - 生产日期 (4字符): 8位YYYYMMDD日期经Base33编码压缩为4位
+   - 序列码 (10字符): 包含产品大类(2)+层级(2)+固定码S(1)+分系统(1)+设备(2)+序号(2)
+   - 校验码 (1字符): 前24位计算的校验位
 
 #### 帧尾结构
-- 校验和 (2字节): 对帧头和数据域的累加校验，小端序
+- 校验和 (1字节): 对帧头和数据域的累加校验 (mod 256)
+- 帧尾 (1字节): 固定为 0x07
 
 ## 使用方法
 

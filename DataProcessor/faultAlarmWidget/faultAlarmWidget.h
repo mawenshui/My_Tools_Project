@@ -65,7 +65,9 @@ public:
         quint8 faultLevel = 0;              //故障等级
         float warningValue = 0.0f;          //数据预警数值
         float warningThreshold = 0.0f;      //数据预警判定阈值
-        QString uniqueId = "";              //唯一标识码 (24字节)
+        QString uniqueId = "";              //唯一标识码 (25字节)
+        quint8 checksum = 0;                //校验和
+        quint8 frameTail = 0x07;            //帧尾
     };
 
 private slots:
@@ -90,6 +92,14 @@ private slots:
     void onSavePreset();                //保存预设配置
     void onResetData();                 //重置数据
     void onFormatChanged();             //数值格式改变
+
+private:
+    // 25字节标识码辅助函数
+    char toBase33(int val);
+    int fromBase33(char c);
+    QString dateToCode(const QDate& date);
+    QDate codeToDate(const QString& code);
+    int getCharValue(char c);           //获取字符校验数值
 
     /**
      * @brief 定时器槽函数
@@ -164,9 +174,16 @@ private:
     QDoubleSpinBox* m_warningValueSpin; //预警数值输入
     QDoubleSpinBox* m_warningThresholdSpin; //预警阈值输入
     //唯一标识码分段输入控件
+    QLineEdit* m_orgIdentifierEdit;      //组织机构标识符输入 (1位)
     QLineEdit* m_orgCodeEdit;            //组织机构代码输入 (9位)
     QLineEdit* m_productDateEdit;        //生产日期输入 (8位)
-    QLineEdit* m_serialCodeEdit;         //序列码输入 (6位)
+    //序列码输入 (10位)
+    QLineEdit* m_productCategoryEdit;    //产品大类代码 (2位)
+    QLineEdit* m_levelCodeEdit;          //层级码 (2位)
+    QLineEdit* m_fixedCodeSEdit;         //固定码S (1位)
+    QLineEdit* m_subsystemCodeEdit;      //分系统码 (1位)
+    QLineEdit* m_deviceCodeEdit;         //设备码 (2位)
+    QLineEdit* m_sequenceNumberEdit;     //序号码 (2位)
     QLineEdit* m_checkCodeEdit;          //校验位输入 (1位)
     QLineEdit* m_uniqueIdResultEdit;     //唯一标识码结果显示和编辑
     QSpinBox* m_topicNumberSpin;        //主题号输入

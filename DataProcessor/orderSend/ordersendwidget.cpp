@@ -393,7 +393,7 @@ void OrderSendWidget::updateTimeoutEditEnableState()
  */
 void OrderSendWidget::restoreDefaultTimeoutsForSelection()
 {
-    updateTimeoutUIForSelection();
+//    updateTimeoutUIForSelection();
 }
 
 /**

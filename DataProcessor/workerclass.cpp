@@ -276,8 +276,19 @@ void WorkerClass::processFile(const QString &filePath)
             emit logMessage("WARN", warn);
             continue;
         }
+        //识别数据格式（支持 [时间戳]\t数据 和 数据\t时间戳 两种格式）
+        QString hexDataStr;
+        if (parts[0].trimmed().startsWith('['))
+        {
+            hexDataStr = parts[1];
+        }
+        else
+        {
+            hexDataStr = parts[0];
+        }
+
         //数据清洗
-        const QByteArray cleanData = cleanHexData(parts[0]);
+        const QByteArray cleanData = cleanHexData(hexDataStr);
         if(cleanData.isEmpty())
         {
             const QString warn = QString("%1 第%2行 - 无效 HEX 数据")

@@ -249,6 +249,14 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     uniqueIdLayout->setSpacing(5);
     uniqueIdLayout->setContentsMargins(5, 10, 5, 5);
     int uidRow = 0;
+    //军地组织机构标识符
+    uniqueIdLayout->addWidget(new QLabel("军地组织机构标识符(1位):"), uidRow, 0);
+    m_orgIdentifierEdit = new QLineEdit();
+    m_orgIdentifierEdit->setMaxLength(1);
+    m_orgIdentifierEdit->setPlaceholderText("1位标识符");
+    m_orgIdentifierEdit->setText("1");     //默认值
+    m_orgIdentifierEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
+    uniqueIdLayout->addWidget(m_orgIdentifierEdit, uidRow++, 1);
     //组织机构代码
     uniqueIdLayout->addWidget(new QLabel("组织机构代码(9位):"), uidRow, 0);
     m_orgCodeEdit = new QLineEdit();
@@ -277,27 +285,67 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     dateLayout->addWidget(todayBtn);
     dateLayout->setStretch(0, 1);     //让输入框占据更多空间
     uniqueIdLayout->addLayout(dateLayout, uidRow++, 1);
-    //序列码
-    uniqueIdLayout->addWidget(new QLabel("序列码(6位):"), uidRow, 0);
-    QHBoxLayout *serialLayout = new QHBoxLayout();
-    m_serialCodeEdit = new QLineEdit();
-    m_serialCodeEdit->setMaxLength(6);
-    m_serialCodeEdit->setPlaceholderText("6位序列码");
-    m_serialCodeEdit->setText("SG1234");     //默认值
-    m_serialCodeEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
-    QPushButton *randomBtn = new QPushButton("随机");
-    randomBtn->setMaximumWidth(50);
-    randomBtn->setStyleSheet("QPushButton { background-color: #4C566A; color: #ECEFF4; border: 1px solid #5E81AC; border-radius: 3px; padding: 3px; }QPushButton:hover { background-color: #5E81AC; }QPushButton:pressed { background-color: #81A1C1; }");
-    connect(randomBtn, &QPushButton::clicked, [this]()
-    {
-        QString serialCode = QString("SG%1").arg(QRandomGenerator::global()->bounded(1000, 9999));
-        m_serialCodeEdit->setText(serialCode);
-        onUniqueIdSegmentChanged();
-    });
-    serialLayout->addWidget(m_serialCodeEdit);
-    serialLayout->addWidget(randomBtn);
-    serialLayout->setStretch(0, 1);     //让输入框占据更多空间
-    uniqueIdLayout->addLayout(serialLayout, uidRow++, 1);
+    
+    //序列码分段
+    QHBoxLayout *serialPartsLayout = new QHBoxLayout();
+    
+    //产品大类代码
+    m_productCategoryEdit = new QLineEdit();
+    m_productCategoryEdit->setMaxLength(2);
+    m_productCategoryEdit->setPlaceholderText("产品大类(2位)");
+    m_productCategoryEdit->setText("");     //默认值
+    m_productCategoryEdit->setToolTip("产品大类代码(2位)");
+    m_productCategoryEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
+    serialPartsLayout->addWidget(m_productCategoryEdit);
+
+    //层级码
+    m_levelCodeEdit = new QLineEdit();
+    m_levelCodeEdit->setMaxLength(2);
+    m_levelCodeEdit->setPlaceholderText("层级(2位)");
+    m_levelCodeEdit->setText("");     //默认值
+    m_levelCodeEdit->setToolTip("层级码(2位)");
+    m_levelCodeEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
+    serialPartsLayout->addWidget(m_levelCodeEdit);
+
+    //固定码S
+    m_fixedCodeSEdit = new QLineEdit();
+    m_fixedCodeSEdit->setMaxLength(1);
+    m_fixedCodeSEdit->setPlaceholderText("固定码(1位)");
+    m_fixedCodeSEdit->setText("S");     //默认值
+    m_fixedCodeSEdit->setToolTip("固定码S(1位)");
+    m_fixedCodeSEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
+    serialPartsLayout->addWidget(m_fixedCodeSEdit);
+
+    //分系统码
+    m_subsystemCodeEdit = new QLineEdit();
+    m_subsystemCodeEdit->setMaxLength(1);
+    m_subsystemCodeEdit->setPlaceholderText("分系统(1位)");
+    m_subsystemCodeEdit->setText("G");     //默认值
+    m_subsystemCodeEdit->setToolTip("分系统码(1位)");
+    m_subsystemCodeEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
+    serialPartsLayout->addWidget(m_subsystemCodeEdit);
+
+    //设备码
+    m_deviceCodeEdit = new QLineEdit();
+    m_deviceCodeEdit->setMaxLength(2);
+    m_deviceCodeEdit->setPlaceholderText("设备(2位)");
+    m_deviceCodeEdit->setText("");     //默认值
+    m_deviceCodeEdit->setToolTip("设备码(2位)");
+    m_deviceCodeEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
+    serialPartsLayout->addWidget(m_deviceCodeEdit);
+
+    //序号码
+    m_sequenceNumberEdit = new QLineEdit();
+    m_sequenceNumberEdit->setMaxLength(2);
+    m_sequenceNumberEdit->setPlaceholderText("序号(2位)");
+    m_sequenceNumberEdit->setText("");     //默认值
+    m_sequenceNumberEdit->setToolTip("序号码(2位)");
+    m_sequenceNumberEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
+    serialPartsLayout->addWidget(m_sequenceNumberEdit);
+
+    uniqueIdLayout->addWidget(new QLabel("序列码(10位，分段配置):"), uidRow, 0);
+    uniqueIdLayout->addLayout(serialPartsLayout, uidRow++, 1);
+
     //校验位
     uniqueIdLayout->addWidget(new QLabel("校验位(1位):"), uidRow, 0);
     QHBoxLayout *checkLayout = new QHBoxLayout();
@@ -315,11 +363,11 @@ QWidget* FaultAlarmWidget::createDataConfigWidget()
     checkLayout->setStretch(0, 1);     //让输入框占据更多空间
     uniqueIdLayout->addLayout(checkLayout, uidRow++, 1);
     //最终结果
-    uniqueIdLayout->addWidget(new QLabel("最终结果(24位):"), uidRow, 0);
+    uniqueIdLayout->addWidget(new QLabel("最终结果(25位):"), uidRow, 0);
     QHBoxLayout *resultLayout = new QHBoxLayout();
     m_uniqueIdResultEdit = new QLineEdit();
-    m_uniqueIdResultEdit->setMaxLength(24);
-    m_uniqueIdResultEdit->setPlaceholderText("24位完整唯一标识码");
+    m_uniqueIdResultEdit->setMaxLength(25);
+    m_uniqueIdResultEdit->setPlaceholderText("25位完整唯一标识码");
     m_uniqueIdResultEdit->setStyleSheet("QLineEdit { background-color: #3B4252; color: #ECEFF4; border: 1px solid #4C566A; border-radius: 3px; padding: 3px; selection-background-color: #5E81AC; }");
     QPushButton *generateBtn = new QPushButton("生成");
     generateBtn->setMaximumWidth(60);
@@ -503,15 +551,27 @@ void FaultAlarmWidget::initConnections()
     connect(m_alarmTypeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &FaultAlarmWidget::onAlarmTypeChanged);
     //唯一标识码分段输入连接
+    connect(m_orgIdentifierEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
     connect(m_orgCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
     connect(m_productDateEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
-    connect(m_serialCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
+    connect(m_productCategoryEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
+    connect(m_levelCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
+    connect(m_fixedCodeSEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
+    connect(m_subsystemCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
+    connect(m_deviceCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
+    connect(m_sequenceNumberEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
     connect(m_checkCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdSegmentChanged);
     connect(m_uniqueIdResultEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onUniqueIdResultChanged);
-    //自动计算校验码连接（当前23位参数变化时自动计算）
+    //自动计算校验码连接（当前24位参数变化时自动计算）
+    connect(m_orgIdentifierEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
     connect(m_orgCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
     connect(m_productDateEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
-    connect(m_serialCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
+    connect(m_productCategoryEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
+    connect(m_levelCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
+    connect(m_fixedCodeSEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
+    connect(m_subsystemCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
+    connect(m_deviceCodeEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
+    connect(m_sequenceNumberEdit, &QLineEdit::textChanged, this, &FaultAlarmWidget::onAutoCalculateCheckCode);
     //实时保存配置连接 - 数据配置控件（使用防抖机制）
     connect(m_controlCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, [this]()
@@ -579,7 +639,32 @@ void FaultAlarmWidget::initConnections()
     {
         m_saveTimer->start();
     });
-    connect(m_serialCodeEdit, &QLineEdit::textChanged,
+    connect(m_productCategoryEdit, &QLineEdit::textChanged,
+            this, [this]()
+    {
+        m_saveTimer->start();
+    });
+    connect(m_levelCodeEdit, &QLineEdit::textChanged,
+            this, [this]()
+    {
+        m_saveTimer->start();
+    });
+    connect(m_fixedCodeSEdit, &QLineEdit::textChanged,
+            this, [this]()
+    {
+        m_saveTimer->start();
+    });
+    connect(m_subsystemCodeEdit, &QLineEdit::textChanged,
+            this, [this]()
+    {
+        m_saveTimer->start();
+    });
+    connect(m_deviceCodeEdit, &QLineEdit::textChanged,
+            this, [this]()
+    {
+        m_saveTimer->start();
+    });
+    connect(m_sequenceNumberEdit, &QLineEdit::textChanged,
             this, [this]()
     {
         m_saveTimer->start();
@@ -715,15 +800,29 @@ void FaultAlarmWidget::onAlarmTypeChanged()
  */
 void FaultAlarmWidget::onGenerateUniqueId()
 {
+    //生成组织机构标识符 (1位)
+    m_orgIdentifierEdit->setText("1");
     //生成组织机构代码 (9位) - 示例代码
     QString orgCode = "633772342";
     m_orgCodeEdit->setText(orgCode);
     //生成生产日期 (8位) - 当前日期
     QString productDate = QDate::currentDate().toString("yyyyMMdd");
     m_productDateEdit->setText(productDate);
-    //生成序列码 (6位) - 包含固定码S和随机序号
-    QString serialCode = QString("SG%1").arg(QRandomGenerator::global()->bounded(1000, 9999));
-    m_serialCodeEdit->setText(serialCode);
+    //生成序列码 (10位) - 分段配置
+    //产品大类(2位) - 默认01
+    m_productCategoryEdit->setText("01");
+    //层级(2位) - 默认00
+    m_levelCodeEdit->setText("00");
+    //固定码(1位) - 默认S
+    m_fixedCodeSEdit->setText("S");
+    //分系统(1位) - 默认G
+    m_subsystemCodeEdit->setText("G");
+    //设备(2位) - 默认01
+    m_deviceCodeEdit->setText("01");
+    //序号(2位) - 随机
+    QString randomSeq = QString("%1").arg(QRandomGenerator::global()->bounded(0, 99), 2, 10, QChar('0'));
+    m_sequenceNumberEdit->setText(randomSeq);
+    
     //计算校验码
     onCalculateCheckCode();
     //更新最终结果
@@ -738,11 +837,33 @@ void FaultAlarmWidget::onGenerateUniqueId()
 void FaultAlarmWidget::onUniqueIdSegmentChanged()
 {
     //组合各个分段生成完整的唯一标识码
+    QString orgIdentifier = m_orgIdentifierEdit->text().leftJustified(1, 'E', true).left(1);
     QString orgCode = m_orgCodeEdit->text().leftJustified(9, '0', true).left(9);
-    QString productDate = m_productDateEdit->text().leftJustified(8, '0', true).left(8);
-    QString serialCode = m_serialCodeEdit->text().leftJustified(6, '0', true).left(6);
+    
+    // 处理日期转换 (8位yyyyMMdd -> 4位编码)
+    QString dateStr = m_productDateEdit->text();
+    QString dateCode;
+    if (dateStr.length() == 8) {
+         QDate date = QDate::fromString(dateStr, "yyyyMMdd");
+         if(date.isValid())
+             dateCode = dateToCode(date);
+         else
+             dateCode = "0000";
+    } else {
+         dateCode = dateStr.leftJustified(4, '0', true).left(4); 
+    }
+    
+    // 组合序列码 (10位)
+    QString serialCode = m_productCategoryEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_levelCodeEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_fixedCodeSEdit->text().leftJustified(1, 'S', true).left(1) +
+                         m_subsystemCodeEdit->text().leftJustified(1, 'G', true).left(1) +
+                         m_deviceCodeEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_sequenceNumberEdit->text().leftJustified(2, '0', true).left(2);
+
     QString checkCode = m_checkCodeEdit->text().leftJustified(1, '0', true).left(1);
-    QString fullUniqueId = orgCode + productDate + serialCode + checkCode;
+    
+    QString fullUniqueId = orgIdentifier + orgCode + dateCode + serialCode + checkCode;
     //阻止递归调用
     m_uniqueIdResultEdit->blockSignals(true);
     m_uniqueIdResultEdit->setText(fullUniqueId);
@@ -754,14 +875,36 @@ void FaultAlarmWidget::onUniqueIdSegmentChanged()
  */
 void FaultAlarmWidget::onCalculateCheckCode()
 {
-    //获取前23位
+    //获取前24位
+    QString orgIdentifier = m_orgIdentifierEdit->text().leftJustified(1, 'E', true).left(1);
     QString orgCode = m_orgCodeEdit->text().leftJustified(9, '0', true).left(9);
-    QString productDate = m_productDateEdit->text().leftJustified(8, '0', true).left(8);
-    QString serialCode = m_serialCodeEdit->text().leftJustified(6, '0', true).left(6);
-    QString first23 = orgCode + productDate + serialCode;
+    
+    // 处理日期转换
+    QString dateStr = m_productDateEdit->text();
+    QString dateCode;
+    if (dateStr.length() == 8) {
+         QDate date = QDate::fromString(dateStr, "yyyyMMdd");
+         if(date.isValid())
+             dateCode = dateToCode(date);
+         else
+             dateCode = "0000";
+    } else {
+         dateCode = dateStr.leftJustified(4, '0', true).left(4); 
+    }
+    
+    // 组合序列码 (10位)
+    QString serialCode = m_productCategoryEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_levelCodeEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_fixedCodeSEdit->text().leftJustified(1, 'S', true).left(1) +
+                         m_subsystemCodeEdit->text().leftJustified(1, 'G', true).left(1) +
+                         m_deviceCodeEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_sequenceNumberEdit->text().leftJustified(2, '0', true).left(2);
+
+    QString first24 = orgIdentifier + orgCode + dateCode + serialCode;
+    
     //计算校验码
     int checkSum = 0;
-    for(const QChar &ch : first23)
+    for(const QChar &ch : first24)
     {
         if(ch.isDigit())
         {
@@ -769,7 +912,7 @@ void FaultAlarmWidget::onCalculateCheckCode()
         }
         else
         {
-            checkSum += ch.toLatin1();     //ASCII值
+            checkSum += getCharValue(ch.toLatin1()); // Use getCharValue helper
         }
     }
     QString checkCode = QString::number(checkSum % 10);
@@ -786,18 +929,38 @@ void FaultAlarmWidget::onCalculateCheckCode()
  */
 void FaultAlarmWidget::onAutoCalculateCheckCode()
 {
-    //获取前23位
+    //获取前24位
+    QString orgIdentifier = m_orgIdentifierEdit->text().leftJustified(1, 'E', true).left(1);
     QString orgCode = m_orgCodeEdit->text().leftJustified(9, '0', true).left(9);
-    QString productDate = m_productDateEdit->text().leftJustified(8, '0', true).left(8);
-    QString serialCode = m_serialCodeEdit->text().leftJustified(6, '0', true).left(6);
+    QString dateStr = m_productDateEdit->text();
     
-    //只有当前23位都有内容时才自动计算校验码
-    if(!orgCode.isEmpty() && !productDate.isEmpty() && !serialCode.isEmpty())
+    // 组合序列码 (10位)
+    QString serialCode = m_productCategoryEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_levelCodeEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_fixedCodeSEdit->text().leftJustified(1, 'S', true).left(1) +
+                         m_subsystemCodeEdit->text().leftJustified(1, 'G', true).left(1) +
+                         m_deviceCodeEdit->text().leftJustified(2, '0', true).left(2) +
+                         m_sequenceNumberEdit->text().leftJustified(2, '0', true).left(2);
+    
+    //只有当前24位都有内容时才自动计算校验码
+    if(!orgIdentifier.isEmpty() && !orgCode.isEmpty() && !dateStr.isEmpty() && !serialCode.isEmpty())
     {
-        QString first23 = orgCode + productDate + serialCode;
+        // 处理日期转换
+        QString dateCode;
+        if (dateStr.length() == 8) {
+             QDate date = QDate::fromString(dateStr, "yyyyMMdd");
+             if(date.isValid())
+                 dateCode = dateToCode(date);
+             else
+                 dateCode = "0000";
+        } else {
+             dateCode = dateStr.leftJustified(4, '0', true).left(4); 
+        }
+        
+        QString first24 = orgIdentifier + orgCode + dateCode + serialCode;
         //计算校验码
         int checkSum = 0;
-        for(const QChar &ch : first23)
+        for(const QChar &ch : first24)
         {
             if(ch.isDigit())
             {
@@ -805,7 +968,7 @@ void FaultAlarmWidget::onAutoCalculateCheckCode()
             }
             else
             {
-                checkSum += ch.toLatin1();     //ASCII值
+                checkSum += getCharValue(ch.toLatin1());     //Use getCharValue
             }
         }
         QString checkCode = QString::number(checkSum % 10);
@@ -825,22 +988,47 @@ void FaultAlarmWidget::onUniqueIdResultChanged()
 {
     //当用户直接编辑结果时，尝试解析并更新各个分段
     QString fullId = m_uniqueIdResultEdit->text();
-    if(fullId.length() >= 24)
+    if(fullId.length() >= 25)
     {
         //阻止递归调用
+        m_orgIdentifierEdit->blockSignals(true);
         m_orgCodeEdit->blockSignals(true);
         m_productDateEdit->blockSignals(true);
-        m_serialCodeEdit->blockSignals(true);
+        m_productCategoryEdit->blockSignals(true);
+        m_levelCodeEdit->blockSignals(true);
+        m_fixedCodeSEdit->blockSignals(true);
+        m_subsystemCodeEdit->blockSignals(true);
+        m_deviceCodeEdit->blockSignals(true);
+        m_sequenceNumberEdit->blockSignals(true);
         m_checkCodeEdit->blockSignals(true);
         //解析各个分段
-        m_orgCodeEdit->setText(fullId.mid(0, 9));
-        m_productDateEdit->setText(fullId.mid(9, 8));
-        m_serialCodeEdit->setText(fullId.mid(17, 6));
-        m_checkCodeEdit->setText(fullId.mid(23, 1));
+        m_orgIdentifierEdit->setText(fullId.mid(0, 1));
+        m_orgCodeEdit->setText(fullId.mid(1, 9));
+        
+        // Date Code (4 bytes) -> Date String (8 bytes)
+        QString dateCode = fullId.mid(10, 4);
+        QDate date = codeToDate(dateCode);
+        m_productDateEdit->setText(date.toString("yyyyMMdd"));
+        
+        // Serial Code (10 bytes) -> 6 parts
+        m_productCategoryEdit->setText(fullId.mid(14, 2));
+        m_levelCodeEdit->setText(fullId.mid(16, 2));
+        m_fixedCodeSEdit->setText(fullId.mid(18, 1));
+        m_subsystemCodeEdit->setText(fullId.mid(19, 1));
+        m_deviceCodeEdit->setText(fullId.mid(20, 2));
+        m_sequenceNumberEdit->setText(fullId.mid(22, 2));
+
+        m_checkCodeEdit->setText(fullId.mid(24, 1));
         //恢复信号
+        m_orgIdentifierEdit->blockSignals(false);
         m_orgCodeEdit->blockSignals(false);
         m_productDateEdit->blockSignals(false);
-        m_serialCodeEdit->blockSignals(false);
+        m_productCategoryEdit->blockSignals(false);
+        m_levelCodeEdit->blockSignals(false);
+        m_fixedCodeSEdit->blockSignals(false);
+        m_subsystemCodeEdit->blockSignals(false);
+        m_deviceCodeEdit->blockSignals(false);
+        m_sequenceNumberEdit->blockSignals(false);
         m_checkCodeEdit->blockSignals(false);
     }
 }
@@ -913,9 +1101,18 @@ void FaultAlarmWidget::onResetData()
     m_sourceDeviceSpin->setValue(1);
     m_destDeviceSpin->setValue(2);
     //重置唯一标识码分段输入
+    m_orgIdentifierEdit->setText("1");
     m_orgCodeEdit->setText("633772342");
     m_productDateEdit->setText(QDate::currentDate().toString("yyyyMMdd"));
-    m_serialCodeEdit->setText("SG1234");
+    
+    //重置序列码分段
+    m_productCategoryEdit->setText("");
+    m_levelCodeEdit->setText("");
+    m_fixedCodeSEdit->setText("S");
+    m_subsystemCodeEdit->setText("G");
+    m_deviceCodeEdit->setText("");
+    m_sequenceNumberEdit->setText("");
+
     m_checkCodeEdit->clear();
     m_uniqueIdResultEdit->clear();
     //计算校验码并更新结果
@@ -973,9 +1170,9 @@ QByteArray FaultAlarmWidget::buildDataFrame()
     m_currentData.faultLevel = m_faultLevelCombo->currentData().toInt();
     m_currentData.warningValue = m_warningValueSpin->value();
     m_currentData.warningThreshold = m_warningThresholdSpin->value();
-    m_currentData.uniqueId = m_uniqueIdResultEdit->text().leftJustified(24, '\0', true);
-    //数据域长度固定为37字节 (1+2+1+1+4+4+24)
-    m_currentData.dataLength = 37;
+    m_currentData.uniqueId = m_uniqueIdResultEdit->text().leftJustified(25, '\0', true);
+    //数据域长度固定为38字节 (1+2+1+1+4+4+25)
+    m_currentData.dataLength = 38;
     //构建帧头 (11字节)
     frame.append(m_currentData.control);
     //数据域长度 (先低后高)
@@ -999,37 +1196,99 @@ QByteArray FaultAlarmWidget::buildDataFrame()
     frame.append(static_cast<char>((m_currentData.faultCode >> 8) & 0xFF));
     frame.append(m_currentData.isolationFlag);
     frame.append(m_currentData.faultLevel);
-    //预警数值 (4字节浮点数)
-    union
+    //预警数值 (float 4字节)
+    //注意：这里假设float为IEEE 754标准，且字节序匹配
+    const char *pWarningValue = reinterpret_cast<const char *>(&m_currentData.warningValue);
+    frame.append(pWarningValue, 4);
+    //预警阈值 (float 4字节)
+    const char *pWarningThreshold = reinterpret_cast<const char *>(&m_currentData.warningThreshold);
+    frame.append(pWarningThreshold, 4);
+    //唯一标识码 (25字节)
+    QByteArray uniqueIdBytes = m_currentData.uniqueId.toLatin1();
+    //确保长度为25，不足补0
+    if(uniqueIdBytes.length() < 25)
     {
-        float f;
-        quint32 i;
-    } warningValueUnion;
-    warningValueUnion.f = m_currentData.warningValue;
-    frame.append(static_cast<char>(warningValueUnion.i & 0xFF));
-    frame.append(static_cast<char>((warningValueUnion.i >> 8) & 0xFF));
-    frame.append(static_cast<char>((warningValueUnion.i >> 16) & 0xFF));
-    frame.append(static_cast<char>((warningValueUnion.i >> 24) & 0xFF));
-    //预警阈值 (4字节浮点数)
-    union
+        uniqueIdBytes = uniqueIdBytes.leftJustified(25, '\0');
+    }
+    else if(uniqueIdBytes.length() > 25)
     {
-        float f;
-        quint32 i;
-    } warningThresholdUnion;
-    warningThresholdUnion.f = m_currentData.warningThreshold;
-    frame.append(static_cast<char>(warningThresholdUnion.i & 0xFF));
-    frame.append(static_cast<char>((warningThresholdUnion.i >> 8) & 0xFF));
-    frame.append(static_cast<char>((warningThresholdUnion.i >> 16) & 0xFF));
-    frame.append(static_cast<char>((warningThresholdUnion.i >> 24) & 0xFF));
-    //唯一标识码 (24字节)
-    QByteArray uniqueIdBytes = m_currentData.uniqueId.toUtf8().leftJustified(24, '\0', true);
+        uniqueIdBytes = uniqueIdBytes.left(25);
+    }
     frame.append(uniqueIdBytes);
-    //计算并添加校验和 (2字节)
-    quint16 checksum = calculateChecksum(frame);
-    frame.append(static_cast<char>(checksum & 0xFF));
-    frame.append(static_cast<char>((checksum >> 8) & 0xFF));
+    //计算校验和 (从帧头到数据域结束的所有字节累加和)
+    uint8_t checksum = 0;
+    for(char byte : frame)
+    {
+        checksum += static_cast<uint8_t>(byte);
+    }
+    m_currentData.checksum = checksum;
+    frame.append(checksum);
+    //帧尾 (1字节)
+    frame.append(static_cast<char>(m_currentData.frameTail));
     return frame;
 }
+
+// 辅助函数实现
+
+char FaultAlarmWidget::toBase33(int val)
+{
+    static const QString base33Digits = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    if (val >= 0 && val < base33Digits.length())
+    {
+        return base33Digits[val].toLatin1();
+    }
+    return '0'; // Fallback
+}
+
+int FaultAlarmWidget::fromBase33(char c)
+{
+    static const QString base33Digits = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    int idx = base33Digits.indexOf(c);
+    if (idx != -1) return idx;
+    
+    return 0; // Fallback
+}
+
+QString FaultAlarmWidget::dateToCode(const QDate& date)
+{
+    if (!date.isValid()) return "0000";
+    
+    // Year: Remove first 2 digits, then Hex. e.g. 2025 -> 25 -> 19
+    int year = date.year() % 100;
+    QString yearHex = QString("%1").arg(year, 2, 16, QChar('0')).toUpper();
+    
+    // Month: Base33
+    char monthChar = toBase33(date.month());
+    
+    // Day: Base33
+    char dayChar = toBase33(date.day());
+    
+    return yearHex + QString(monthChar) + QString(dayChar);
+}
+
+QDate FaultAlarmWidget::codeToDate(const QString& code)
+{
+    if (code.length() != 4) return QDate::currentDate();
+    
+    // Year
+    bool ok;
+    int yearVal = code.mid(0, 2).toInt(&ok, 16);
+    int year = 2000 + yearVal; // Assume 20xx
+    
+    // Month
+    int month = fromBase33(code[2].toLatin1());
+    
+    // Day
+    int day = fromBase33(code[3].toLatin1());
+    
+    return QDate(year, month, day);
+}
+
+int FaultAlarmWidget::getCharValue(char c)
+{
+    return fromBase33(c);
+}
+
 
 /**
  * @brief 计算校验和
@@ -1065,17 +1324,20 @@ void FaultAlarmWidget::updateTimestamp()
  */
 QString FaultAlarmWidget::generateUniqueId()
 {
+    //军地组织机构标识符 (1位)
+    QString orgIdentifier = "E";
     //组织机构代码 (9位) - 示例代码
     QString orgCode = "633772342";
-    //生产日期 (8位) - 当前日期
-    QString productDate = QDate::currentDate().toString("yyyyMMdd");
-    //序列码 (6位) - 包含固定码S和随机序号
-    QString serialCode = QString("SG%1").arg(QRandomGenerator::global()->bounded(1000, 9999));
-    //前23位
-    QString first23 = orgCode + productDate + serialCode;
+    //生产日期 (8位) -> 4位编码
+    QDate date = QDate::currentDate();
+    QString dateCode = dateToCode(date);
+    //序列码 (10位)
+    QString serialCode = QString("%1").arg(QRandomGenerator::global()->bounded(0, 999999999), 10, 10, QChar('0'));
+    //前24位
+    QString first24 = orgIdentifier + orgCode + dateCode + serialCode;
     //计算校验码
     int checkSum = 0;
-    for(const QChar &ch : first23)
+    for(const QChar &ch : first24)
     {
         if(ch.isDigit())
         {
@@ -1083,11 +1345,11 @@ QString FaultAlarmWidget::generateUniqueId()
         }
         else
         {
-            checkSum += ch.toLatin1();     //ASCII值
+            checkSum += getCharValue(ch.toLatin1());
         }
     }
     QString checkCode = QString::number(checkSum % 10);
-    return first23 + checkCode;
+    return first24 + checkCode;
 }
 
 /**
@@ -1270,9 +1532,18 @@ QJsonObject FaultAlarmWidget::dataToJson() const
     json["sourceDevice"] = m_sourceDeviceSpin->value();
     json["destDevice"] = m_destDeviceSpin->value();
     //保存唯一标识码分段信息
+    json["orgIdentifier"] = m_orgIdentifierEdit->text();
     json["orgCode"] = m_orgCodeEdit->text();
     json["productDate"] = m_productDateEdit->text();
-    json["serialCode"] = m_serialCodeEdit->text();
+    
+    //保存序列码分段
+    json["productCategory"] = m_productCategoryEdit->text();
+    json["levelCode"] = m_levelCodeEdit->text();
+    json["fixedCodeS"] = m_fixedCodeSEdit->text();
+    json["subsystemCode"] = m_subsystemCodeEdit->text();
+    json["deviceCode"] = m_deviceCodeEdit->text();
+    json["sequenceNumber"] = m_sequenceNumberEdit->text();
+
     json["checkCode"] = m_checkCodeEdit->text();
     json["uniqueIdResult"] = m_uniqueIdResultEdit->text();
     json["targetIp"] = m_targetIpEdit->text();
@@ -1300,8 +1571,31 @@ void FaultAlarmWidget::jsonToData(const QJsonObject &json)
     if(json.contains("orgCode"))
     {
         m_orgCodeEdit->setText(json["orgCode"].toString());
+        if(json.contains("orgIdentifier"))
+            m_orgIdentifierEdit->setText(json["orgIdentifier"].toString());
         m_productDateEdit->setText(json["productDate"].toString());
-        m_serialCodeEdit->setText(json["serialCode"].toString());
+        
+        //加载序列码分段
+        if(json.contains("productCategory")) {
+            m_productCategoryEdit->setText(json["productCategory"].toString());
+            m_levelCodeEdit->setText(json["levelCode"].toString());
+            m_fixedCodeSEdit->setText(json["fixedCodeS"].toString());
+            m_subsystemCodeEdit->setText(json["subsystemCode"].toString());
+            m_deviceCodeEdit->setText(json["deviceCode"].toString());
+            m_sequenceNumberEdit->setText(json["sequenceNumber"].toString());
+        } else if(json.contains("serialCode")) {
+             // 兼容旧的完整序列码字段 (如果有)
+             QString serialCode = json["serialCode"].toString();
+             if(serialCode.length() >= 10) {
+                 m_productCategoryEdit->setText(serialCode.mid(0, 2));
+                 m_levelCodeEdit->setText(serialCode.mid(2, 2));
+                 m_fixedCodeSEdit->setText(serialCode.mid(4, 1));
+                 m_subsystemCodeEdit->setText(serialCode.mid(5, 1));
+                 m_deviceCodeEdit->setText(serialCode.mid(6, 2));
+                 m_sequenceNumberEdit->setText(serialCode.mid(8, 2));
+             }
+        }
+
         m_checkCodeEdit->setText(json["checkCode"].toString());
         m_uniqueIdResultEdit->setText(json["uniqueIdResult"].toString());
     }
@@ -1313,7 +1607,8 @@ void FaultAlarmWidget::jsonToData(const QJsonObject &json)
         {
             m_orgCodeEdit->setText(oldUniqueId.mid(0, 9));
             m_productDateEdit->setText(oldUniqueId.mid(9, 8));
-            m_serialCodeEdit->setText(oldUniqueId.mid(17, 6));
+            // 旧版序列码只有6位，无法直接映射到新的10位分段
+            // 这里我们只设置结果显示，分段留空或设默认
             m_checkCodeEdit->setText(oldUniqueId.mid(23, 1));
             m_uniqueIdResultEdit->setText(oldUniqueId);
         }
