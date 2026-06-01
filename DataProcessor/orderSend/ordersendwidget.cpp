@@ -439,6 +439,10 @@ void OrderSendWidget::setUILockedForSending(bool locked)
     {
         ui->spinLoopInterval->setEnabled(!locked);
     }
+    if(ui->spinRoundIntervalSec)
+    {
+        ui->spinRoundIntervalSec->setEnabled(!locked);
+    }
     // 编辑框根据当前逻辑或锁定状态刷新
     updateTimeoutEditEnableState();
 }
@@ -659,10 +663,15 @@ void OrderSendWidget::sendNextLoopCommand()
     if(m_loopRunning && m_currentLoopIndex >= ui->comboBox->count())
     {
         m_currentLoopIndex = 0;
+        const int roundIntervalSec = ui->spinRoundIntervalSec ? ui->spinRoundIntervalSec->value() : 60;
+        const int roundIntervalMs = roundIntervalSec * 1000;
         emit logMessage("DEBUG", "***************************************************************************");
-        emit logMessage("DEBUG", "******************列表循环发送完成，等待一分钟后自动进行下一次循环******************");
+        emit logMessage("DEBUG",
+                        QString("******************列表循环发送完成，等待 %1 秒后自动进行下一次循环******************")
+                            .arg(roundIntervalSec));
         emit logMessage("DEBUG", "***************************************************************************");
-        QThread::msleep(60000);
+        QTimer::singleShot(roundIntervalMs, this, &OrderSendWidget::sendNextLoopCommand);
+        return;
     }
     //设置当前命令并触发发送
     ui->comboBox->setCurrentIndex(m_currentLoopIndex);
@@ -709,4 +718,3 @@ void OrderSendWidget::on_btnLoopSingle_clicked()
     setUILockedForSending(true);
     on_pushButtonstart_clicked(); //开始第一次发送
 }
-

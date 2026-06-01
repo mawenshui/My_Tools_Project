@@ -397,6 +397,11 @@
           <string>故障告警模拟</string>
          </attribute>
         </widget>
+        <widget class="QWidget" name="tab_DDSimulator">
+         <attribute name="title">
+          <string>DDSimulator</string>
+         </attribute>
+        </widget>
        </widget>
       </item>
      </layout>

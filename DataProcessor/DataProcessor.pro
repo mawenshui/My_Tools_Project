@@ -50,6 +50,7 @@ UI_DIR = $$DESTDIR/.ui
 SOURCES += \
     configmanager.cpp \
     customdatasender.cpp \
+    ddSimulator/ddsimulatorwidget.cpp \
     faultAlarmWidget/faultAlarmWidget.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -70,6 +71,7 @@ HEADERS += \
     threadmanager.h \
     configmanager.h \
     customdatasender.h \
+    ddSimulator/ddsimulatorwidget.h \
     faultAlarmWidget/faultAlarmWidget.h \
     mainwindow.h \
     orderSend/ordersendwidget.h \

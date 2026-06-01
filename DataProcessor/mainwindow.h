@@ -25,6 +25,7 @@
 #include "orderSend/ordersendwidget.h"
 
 class FaultAlarmWidget;
+class DDSimulatorWidget;
 
 QT_BEGIN_NAMESPACE
 namespace Ui
@@ -82,6 +83,7 @@ private:
     void updateButtonStates(bool isRunning, bool isPaused); //更新按钮状态
     void ensureOrderSendPage();
     void ensureFaultAlarmPage();
+    void ensureDDSimulatorPage();
 
     //配置验证函数
     QStringList getAddressList(); //获取所有地址
@@ -117,6 +119,7 @@ private:
     ThemeColors m_logColors; //日志颜色配置
     QPointer<OrderSendWidget> m_orderSendWidget; // 懒加载：指令发送页
     QPointer<FaultAlarmWidget> m_faultAlarmWidget; // 懒加载：故障告警页
+    QPointer<DDSimulatorWidget> m_ddSimulatorWidget; // 懒加载：DDSimulator页
 
 };
 

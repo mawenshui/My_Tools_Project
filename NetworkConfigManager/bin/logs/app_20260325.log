@@ -1,0 +1,1088 @@
+[2026-03-25 12:37:13.290] [DEBUG] QFactoryLoader::QFactoryLoader() checking directory path "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/iconengines" ...
+[2026-03-25 12:37:13.338] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/iconengines/qsvgicon.dll"
+[2026-03-25 12:37:13.352] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/iconengines/qsvgicon.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QIconEngineFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "svg",
+            "svgz",
+            "svg.gz"
+        ]
+    },
+    "archreq": 0,
+    "className": "QSvgIconPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.353] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/iconengines/qsvgicon.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:13.353] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/iconengines/qsvgicond.dll"
+[2026-03-25 12:37:13.373] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/iconengines/qsvgicond.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QIconEngineFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "svg",
+            "svgz",
+            "svg.gz"
+        ]
+    },
+    "archreq": 1,
+    "className": "QSvgIconPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.373] [DEBUG] Got keys from plugin meta data ("svg", "svgz", "svg.gz")
+[2026-03-25 12:37:13.373] [DEBUG] QFactoryLoader::QFactoryLoader() checking directory path "D:/_Tools/My_Tools_Project/NetworkConfigManager/bin/iconengines" ...
+[2026-03-25 12:37:13.494] [DEBUG] QFactoryLoader::QFactoryLoader() checking directory path "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats" ...
+[2026-03-25 12:37:13.509] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qgif.dll"
+[2026-03-25 12:37:13.523] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qgif.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "gif"
+        ],
+        "MimeTypes": [
+            "image/gif"
+        ]
+    },
+    "archreq": 0,
+    "className": "QGifPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.523] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qgif.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:13.523] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qgifd.dll"
+[2026-03-25 12:37:13.578] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qgifd.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "gif"
+        ],
+        "MimeTypes": [
+            "image/gif"
+        ]
+    },
+    "archreq": 1,
+    "className": "QGifPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.578] [DEBUG] Got keys from plugin meta data ("gif")
+[2026-03-25 12:37:13.578] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicns.dll"
+[2026-03-25 12:37:13.627] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicns.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "icns"
+        ],
+        "MimeTypes": [
+            "image/x-icns"
+        ]
+    },
+    "archreq": 0,
+    "className": "QICNSPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.627] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicns.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:13.627] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicnsd.dll"
+[2026-03-25 12:37:13.664] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicnsd.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "icns"
+        ],
+        "MimeTypes": [
+            "image/x-icns"
+        ]
+    },
+    "archreq": 1,
+    "className": "QICNSPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.664] [DEBUG] Got keys from plugin meta data ("icns")
+[2026-03-25 12:37:13.665] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qico.dll"
+[2026-03-25 12:37:13.680] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qico.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "ico",
+            "cur"
+        ],
+        "MimeTypes": [
+            "image/vnd.microsoft.icon",
+            "image/vnd.microsoft.icon"
+        ]
+    },
+    "archreq": 0,
+    "className": "QICOPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.680] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qico.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:13.680] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicod.dll"
+[2026-03-25 12:37:13.729] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicod.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "ico",
+            "cur"
+        ],
+        "MimeTypes": [
+            "image/vnd.microsoft.icon",
+            "image/vnd.microsoft.icon"
+        ]
+    },
+    "archreq": 1,
+    "className": "QICOPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.729] [DEBUG] Got keys from plugin meta data ("ico", "cur")
+[2026-03-25 12:37:13.729] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qjpeg.dll"
+[2026-03-25 12:37:13.738] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qjpeg.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "jpg",
+            "jpeg"
+        ],
+        "MimeTypes": [
+            "image/jpeg",
+            "image/jpeg"
+        ]
+    },
+    "archreq": 0,
+    "className": "QJpegPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.738] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qjpeg.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:13.738] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qjpegd.dll"
+[2026-03-25 12:37:13.837] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qjpegd.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "jpg",
+            "jpeg"
+        ],
+        "MimeTypes": [
+            "image/jpeg",
+            "image/jpeg"
+        ]
+    },
+    "archreq": 1,
+    "className": "QJpegPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.837] [DEBUG] Got keys from plugin meta data ("jpg", "jpeg")
+[2026-03-25 12:37:13.837] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qsvg.dll"
+[2026-03-25 12:37:13.853] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qsvg.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "svg",
+            "svgz"
+        ],
+        "MimeTypes": [
+            "image/svg+xml",
+            "image/svg+xml-compressed"
+        ]
+    },
+    "archreq": 0,
+    "className": "QSvgPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.853] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qsvg.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:13.853] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qsvgd.dll"
+[2026-03-25 12:37:13.870] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qsvgd.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "svg",
+            "svgz"
+        ],
+        "MimeTypes": [
+            "image/svg+xml",
+            "image/svg+xml-compressed"
+        ]
+    },
+    "archreq": 1,
+    "className": "QSvgPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.870] [DEBUG] Got keys from plugin meta data ("svg", "svgz")
+[2026-03-25 12:37:13.870] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtga.dll"
+[2026-03-25 12:37:13.870] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtga.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "tga"
+        ],
+        "MimeTypes": [
+            "image/x-tga"
+        ]
+    },
+    "archreq": 0,
+    "className": "QTgaPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.870] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtga.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:13.870] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtgad.dll"
+[2026-03-25 12:37:13.929] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtgad.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "tga"
+        ],
+        "MimeTypes": [
+            "image/x-tga"
+        ]
+    },
+    "archreq": 1,
+    "className": "QTgaPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.929] [DEBUG] Got keys from plugin meta data ("tga")
+[2026-03-25 12:37:13.929] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtiff.dll"
+[2026-03-25 12:37:13.945] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtiff.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "tiff",
+            "tif"
+        ],
+        "MimeTypes": [
+            "image/tiff",
+            "image/tiff"
+        ]
+    },
+    "archreq": 0,
+    "className": "QTiffPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:13.945] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtiff.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:13.945] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtiffd.dll"
+[2026-03-25 12:37:14.049] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtiffd.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "tiff",
+            "tif"
+        ],
+        "MimeTypes": [
+            "image/tiff",
+            "image/tiff"
+        ]
+    },
+    "archreq": 1,
+    "className": "QTiffPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:14.049] [DEBUG] Got keys from plugin meta data ("tiff", "tif")
+[2026-03-25 12:37:14.049] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwbmp.dll"
+[2026-03-25 12:37:14.064] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwbmp.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "wbmp"
+        ],
+        "MimeTypes": [
+            "image/vnd.wap.wbmp"
+        ]
+    },
+    "archreq": 0,
+    "className": "QWbmpPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:14.064] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwbmp.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:14.064] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwbmpd.dll"
+[2026-03-25 12:37:14.108] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwbmpd.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "wbmp"
+        ],
+        "MimeTypes": [
+            "image/vnd.wap.wbmp"
+        ]
+    },
+    "archreq": 1,
+    "className": "QWbmpPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:14.109] [DEBUG] Got keys from plugin meta data ("wbmp")
+[2026-03-25 12:37:14.109] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwebp.dll"
+[2026-03-25 12:37:14.121] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwebp.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "webp"
+        ],
+        "MimeTypes": [
+            "image/webp"
+        ]
+    },
+    "archreq": 0,
+    "className": "QWebpPlugin",
+    "debug": false,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:14.121] [DEBUG] "The plugin 'D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwebp.dll' uses incompatible Qt library. (Cannot mix debug and release libraries.)" 
+         not a plugin
+[2026-03-25 12:37:14.121] [DEBUG] QFactoryLoader::QFactoryLoader() looking at "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwebpd.dll"
+[2026-03-25 12:37:14.274] [WARNING] Found metadata in lib D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwebpd.dll, metadata=
+{
+    "IID": "org.qt-project.Qt.QImageIOHandlerFactoryInterface",
+    "MetaData": {
+        "Keys": [
+            "webp"
+        ],
+        "MimeTypes": [
+            "image/webp"
+        ]
+    },
+    "archreq": 1,
+    "className": "QWebpPlugin",
+    "debug": true,
+    "version": 330752
+}
+
+
+[2026-03-25 12:37:14.274] [DEBUG] Got keys from plugin meta data ("webp")
+[2026-03-25 12:37:14.274] [DEBUG] QFactoryLoader::QFactoryLoader() checking directory path "D:/_Tools/My_Tools_Project/NetworkConfigManager/bin/imageformats" ...
+[2026-03-25 12:37:14.276] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qgifd.dll"
+[2026-03-25 12:37:14.277] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicnsd.dll"
+[2026-03-25 12:37:14.278] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qicod.dll"
+[2026-03-25 12:37:14.292] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qjpegd.dll"
+[2026-03-25 12:37:14.307] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qsvgd.dll"
+[2026-03-25 12:37:14.308] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtgad.dll"
+[2026-03-25 12:37:14.322] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qtiffd.dll"
+[2026-03-25 12:37:14.324] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwbmpd.dll"
+[2026-03-25 12:37:14.338] [DEBUG] loaded library "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/imageformats/qwebpd.dll"
+[2026-03-25 12:37:14.778] [DEBUG] 开始检查单实例运行
+[2026-03-25 12:37:14.778] [DEBUG] 检查程序是否已运行
+[2026-03-25 12:37:14.779] [INFO] 单实例检查通过
+[2026-03-25 12:37:14.820] [INFO] 使用的配置文件路径:D:\_Tools\My_Tools_Project\NetworkConfigManager\bin\config\posConfig.ini
+[2026-03-25 12:37:14.820] [DEBUG] 初始化快速应用配置菜单
+[2026-03-25 12:37:14.820] [INFO] 开始初始化UI组件
+[2026-03-25 12:37:14.820] [DEBUG] 设置UI初始状态
+[2026-03-25 12:37:14.820] [DEBUG] IP方法切换: DHCP
+[2026-03-25 12:37:14.829] [DEBUG] 恢复窗口状态
+[2026-03-25 12:37:14.829] [DEBUG] 恢复窗口状态
+[2026-03-25 12:37:14.829] [INFO] 窗口状态已恢复
+[2026-03-25 12:37:14.830] [WARNING] QPixmap::scaled: Pixmap is a null pixmap
+[2026-03-25 12:37:14.830] [INFO] UI初始化完成
+[2026-03-25 12:37:14.830] [INFO] 开始初始化应用程序配置
+[2026-03-25 12:37:14.830] [INFO] 开始初始化应用程序
+[2026-03-25 12:37:14.845] [INFO] 配置文件加载成功
+[2026-03-25 12:37:14.845] [DEBUG] 更新网络接口列表
+[2026-03-25 12:37:14.845] [DEBUG] 更新网络接口列表
+[2026-03-25 12:37:14.957] [INFO] 找到 2 个网络接口
+[2026-03-25 12:37:14.958] [DEBUG] 更新所有配置列表
+[2026-03-25 12:37:14.958] [INFO] 显示 2 个配置
+[2026-03-25 12:37:14.958] [DEBUG] 更新快速应用菜单
+[2026-03-25 12:37:15.013] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:37:15.013] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-25 12:37:15.066] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:37:15.116] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:37:15.129] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:37:15.129] [INFO] 当前网络配置获取完成
+[2026-03-25 12:37:15.129] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:37:15.129] [DEBUG] 查询接口配置: 以太网
+[2026-03-25 12:37:15.185] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:37:15.240] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:37:15.243] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:37:15.243] [INFO] 当前网络配置获取完成
+[2026-03-25 12:37:15.243] [DEBUG] 比较静态IP配置
+[2026-03-25 12:37:15.243] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-25 12:37:15.243] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-25 12:37:15.244] [INFO] 快速应用菜单更新完成
+[2026-03-25 12:37:15.244] [INFO] 网络接口列表更新完成
+[2026-03-25 12:37:15.244] [DEBUG] 刷新网卡列表
+[2026-03-25 12:37:15.357] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-25 12:37:15.414] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-25 12:37:15.471] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-25 12:37:15.528] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-25 12:37:15.528] [DEBUG] 更新网卡控制状态: WLAN 2, 可启用: 0, 可禁用: 0
+[2026-03-25 12:37:15.697] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-25 12:37:15.754] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-25 12:37:15.754] [DEBUG] 更新网卡控制状态: WLAN 2, 可启用: 0, 可禁用: 0
+[2026-03-25 12:37:15.754] [INFO] 开机自启动状态: 已禁用
+[2026-03-25 12:37:15.754] [DEBUG] 显示浮动窗口
+[2026-03-25 12:37:15.791] [DEBUG] QFactoryLoader::QFactoryLoader() checking directory path "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/accessible" ...
+[2026-03-25 12:37:15.791] [DEBUG] QFactoryLoader::QFactoryLoader() checking directory path "D:/_Tools/My_Tools_Project/NetworkConfigManager/bin/accessible" ...
+[2026-03-25 12:37:15.791] [INFO] 应用程序初始化完成
+[2026-03-25 12:37:15.791] [INFO] 初始化系统托盘和悬浮窗
+[2026-03-25 12:37:15.791] [INFO] 初始化系统托盘图标
+[2026-03-25 12:37:15.796] [DEBUG] 更新快速应用菜单
+[2026-03-25 12:37:15.853] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:37:15.853] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-25 12:37:15.904] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:37:15.954] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:37:15.957] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:37:15.957] [INFO] 当前网络配置获取完成
+[2026-03-25 12:37:15.957] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:37:15.957] [DEBUG] 查询接口配置: 以太网
+[2026-03-25 12:37:16.013] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:37:16.068] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:37:16.071] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:37:16.071] [INFO] 当前网络配置获取完成
+[2026-03-25 12:37:16.071] [DEBUG] 比较静态IP配置
+[2026-03-25 12:37:16.071] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-25 12:37:16.071] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-25 12:37:16.071] [INFO] 快速应用菜单更新完成
+[2026-03-25 12:37:16.184] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-25 12:37:16.252] [INFO] 系统托盘图标初始化完成
+[2026-03-25 12:37:16.252] [DEBUG] 建立信号槽连接
+[2026-03-25 12:37:16.252] [DEBUG] 开始建立信号槽连接
+[2026-03-25 12:37:16.252] [INFO] 信号槽连接建立完成
+[2026-03-25 12:37:16.252] [DEBUG] 显示悬浮窗
+[2026-03-25 12:37:16.268] [INFO] 主窗口初始化完成
+[2026-03-25 12:37:16.371] [INFO] 应用程序正常启动
+[2026-03-25 12:37:16.371] [DEBUG] QFactoryLoader::QFactoryLoader() checking directory path "D:/__Install/Qt/Qt5.12.8/5.12.8/mingw73_64/plugins/accessiblebridge" ...
+[2026-03-25 12:37:16.371] [DEBUG] QFactoryLoader::QFactoryLoader() checking directory path "D:/_Tools/My_Tools_Project/NetworkConfigManager/bin/accessiblebridge" ...
+[2026-03-25 12:37:18.186] [INFO] 主窗口关闭事件
+[2026-03-25 12:37:18.186] [DEBUG] 保存窗口状态
+[2026-03-25 12:37:18.186] [INFO] 窗口状态已保存
+[2026-03-25 12:37:18.193] [DEBUG] 主窗口已隐藏，程序在后台运行
+[2026-03-25 12:37:22.029] [INFO] 设置开机自启动: 启用
+[2026-03-25 12:37:26.281] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-25 12:37:26.388] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:37:26.388] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-25 12:37:26.438] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:37:26.488] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:37:26.491] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:37:26.491] [INFO] 当前网络配置获取完成
+[2026-03-25 12:37:26.550] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-25 12:37:26.550] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:37:26.550] [DEBUG] 查询接口配置: 以太网
+[2026-03-25 12:37:26.605] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:37:26.660] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:37:26.663] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:37:26.663] [INFO] 当前网络配置获取完成
+[2026-03-25 12:37:26.663] [DEBUG] 比较静态IP配置
+[2026-03-25 12:37:26.663] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-25 12:37:26.663] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-25 12:37:30.438] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-25 12:38:15.641] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-25 12:38:15.702] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:38:15.702] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-25 12:38:15.759] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:38:15.811] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:38:15.814] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:38:15.814] [INFO] 当前网络配置获取完成
+[2026-03-25 12:38:15.872] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-25 12:38:15.872] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:38:15.872] [DEBUG] 查询接口配置: 以太网
+[2026-03-25 12:38:15.933] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:38:15.990] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:38:15.993] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:38:15.993] [INFO] 当前网络配置获取完成
+[2026-03-25 12:38:15.993] [DEBUG] 比较静态IP配置
+[2026-03-25 12:38:15.993] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-25 12:38:15.993] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-25 12:38:17.682] [INFO] 从悬浮窗菜单应用配置: 以太网 (专用)
+[2026-03-25 12:38:17.682] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:38:17.682] [DEBUG] 查询接口配置: 以太网
+[2026-03-25 12:38:17.743] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:38:17.800] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:38:17.803] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:38:17.803] [INFO] 当前网络配置获取完成
+[2026-03-25 12:38:17.803] [DEBUG] 比较静态IP配置
+[2026-03-25 12:38:17.803] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-25 12:38:18.369] [INFO] 配置应用成功: 以太网[192.168.4.101]
+[2026-03-25 12:38:18.369] [DEBUG] 更新快速应用菜单
+[2026-03-25 12:38:18.549] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:38:18.549] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-25 12:38:18.691] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:38:18.770] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:38:18.775] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:38:18.775] [INFO] 当前网络配置获取完成
+[2026-03-25 12:38:18.775] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:38:18.776] [DEBUG] 查询接口配置: 以太网
+[2026-03-25 12:38:18.856] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:38:18.930] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:38:18.935] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:38:18.935] [INFO] 当前网络配置获取完成
+[2026-03-25 12:38:18.935] [DEBUG] 比较静态IP配置
+[2026-03-25 12:38:18.935] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-25 12:38:18.935] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-25 12:38:18.935] [INFO] 快速应用菜单更新完成
+[2026-03-25 12:38:18.964] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-25 12:38:19.435] [DEBUG] 更新快速应用菜单
+[2026-03-25 12:38:19.521] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:38:19.521] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-25 12:38:19.610] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:38:19.685] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:38:19.690] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:38:19.690] [INFO] 当前网络配置获取完成
+[2026-03-25 12:38:19.690] [DEBUG] 获取当前网卡的网络配置
+[2026-03-25 12:38:19.690] [DEBUG] 查询接口配置: 以太网
+[2026-03-25 12:38:19.774] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-25 12:38:19.861] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-25 12:38:19.866] [DEBUG] 确定为静态IP模式
+[2026-03-25 12:38:19.866] [INFO] 当前网络配置获取完成
+[2026-03-25 12:38:19.867] [DEBUG] 比较静态IP配置
+[2026-03-25 12:38:19.867] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-25 12:38:19.867] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-25 12:38:19.867] [INFO] 快速应用菜单更新完成
+[2026-03-25 12:38:21.956] [WARNING] QPixmap::scaled: Pixmap is a null pixmap
+[2026-03-27 18:48:59.706] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-27 18:48:59.874] [DEBUG] 获取当前网卡的网络配置
+[2026-03-27 18:48:59.874] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-27 18:48:59.927] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-27 18:48:59.983] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-27 18:48:59.987] [DEBUG] 确定为静态IP模式
+[2026-03-27 18:48:59.987] [INFO] 当前网络配置获取完成
+[2026-03-27 18:49:00.053] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-27 18:49:00.053] [DEBUG] 获取当前网卡的网络配置
+[2026-03-27 18:49:00.053] [DEBUG] 查询接口配置: 以太网
+[2026-03-27 18:49:00.113] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-27 18:49:00.180] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-27 18:49:00.183] [DEBUG] 确定为静态IP模式
+[2026-03-27 18:49:00.183] [INFO] 当前网络配置获取完成
+[2026-03-27 18:49:00.184] [DEBUG] 比较静态IP配置
+[2026-03-27 18:49:00.184] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-27 18:49:00.184] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-27 18:49:04.599] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 09:14:22.337] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 09:14:22.468] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 09:14:22.468] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 09:14:22.520] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 09:14:22.572] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 09:14:22.576] [DEBUG] 确定为静态IP模式
+[2026-03-30 09:14:22.576] [INFO] 当前网络配置获取完成
+[2026-03-30 09:14:22.633] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 09:14:22.633] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 09:14:22.633] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 09:14:22.690] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 09:14:22.745] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 09:14:22.748] [DEBUG] 确定为静态IP模式
+[2026-03-30 09:14:22.748] [INFO] 当前网络配置获取完成
+[2026-03-30 09:14:22.748] [DEBUG] 比较静态IP配置
+[2026-03-30 09:14:22.748] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 09:14:22.748] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 09:14:24.899] [INFO] 从悬浮窗菜单应用配置: 以太网 (专用)
+[2026-03-30 09:14:24.899] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 09:14:24.899] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 09:14:24.958] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 09:14:25.013] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 09:14:25.017] [DEBUG] 确定为静态IP模式
+[2026-03-30 09:14:25.017] [INFO] 当前网络配置获取完成
+[2026-03-30 09:14:25.017] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 09:14:25.327] [INFO] 配置应用成功: 以太网[自动获取IP]
+[2026-03-30 09:14:25.327] [DEBUG] 更新快速应用菜单
+[2026-03-30 09:14:25.412] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 09:14:25.412] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 09:14:25.470] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 09:14:25.535] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 09:14:25.539] [DEBUG] 确定为静态IP模式
+[2026-03-30 09:14:25.539] [INFO] 当前网络配置获取完成
+[2026-03-30 09:14:25.539] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 09:14:25.539] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 09:14:25.607] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 09:14:25.665] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 09:14:25.668] [DEBUG] 确定为静态IP模式
+[2026-03-30 09:14:25.668] [INFO] 当前网络配置获取完成
+[2026-03-30 09:14:25.668] [DEBUG] 比较静态IP配置
+[2026-03-30 09:14:25.668] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 09:14:25.668] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 09:14:25.668] [INFO] 快速应用菜单更新完成
+[2026-03-30 09:14:25.675] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 09:14:26.168] [DEBUG] 更新快速应用菜单
+[2026-03-30 09:14:26.229] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 09:14:26.229] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 09:14:26.281] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 09:14:26.333] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 09:14:26.337] [DEBUG] 确定为静态IP模式
+[2026-03-30 09:14:26.337] [INFO] 当前网络配置获取完成
+[2026-03-30 09:14:26.337] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 09:14:26.337] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 09:14:26.394] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 09:14:26.459] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 09:14:26.462] [DEBUG] 确定为静态IP模式
+[2026-03-30 09:14:26.462] [INFO] 当前网络配置获取完成
+[2026-03-30 09:14:26.462] [DEBUG] 比较静态IP配置
+[2026-03-30 09:14:26.462] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 09:14:26.462] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 09:14:26.462] [INFO] 快速应用菜单更新完成
+[2026-03-30 09:14:28.682] [WARNING] QPixmap::scaled: Pixmap is a null pixmap
+[2026-03-30 10:08:02.975] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 10:08:03.101] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:08:03.102] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:08:03.153] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:08:03.208] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:08:03.212] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:08:03.212] [INFO] 当前网络配置获取完成
+[2026-03-30 10:08:03.271] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:08:03.271] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:08:03.271] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:08:03.326] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:08:03.380] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:08:03.384] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:08:03.384] [INFO] 当前网络配置获取完成
+[2026-03-30 10:08:03.384] [DEBUG] 比较静态IP配置
+[2026-03-30 10:08:03.384] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:08:03.384] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:08:05.529] [INFO] 从悬浮窗菜单应用配置: 以太网 (专用)
+[2026-03-30 10:08:05.529] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:08:05.529] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:08:05.587] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:08:05.644] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:08:05.647] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:08:05.647] [INFO] 当前网络配置获取完成
+[2026-03-30 10:08:05.647] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:08:05.698] [ERROR] 配置管理器错误: 设置DHCP地址失败: 
+[2026-03-30 10:08:06.898] [ERROR] 配置应用失败: 设置DHCP地址失败: 
+[2026-03-30 10:08:09.222] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 10:08:55.242] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 10:08:55.341] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:08:55.341] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:08:55.393] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:08:55.444] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:08:55.448] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:08:55.448] [INFO] 当前网络配置获取完成
+[2026-03-30 10:08:55.506] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:08:55.506] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:08:55.506] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:08:55.562] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:08:55.618] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:08:55.621] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:08:55.621] [INFO] 当前网络配置获取完成
+[2026-03-30 10:08:55.621] [DEBUG] 比较静态IP配置
+[2026-03-30 10:08:55.621] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:08:55.621] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:08:58.826] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:08:59.785] [DEBUG] 刷新网卡列表
+[2026-03-30 10:08:59.880] [DEBUG] 无可用网卡，禁用操作按钮
+[2026-03-30 10:08:59.945] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:09:00.006] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-30 10:09:00.068] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:09:00.122] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-30 10:09:00.122] [DEBUG] 更新网卡控制状态: WLAN 2, 可启用: 0, 可禁用: 0
+[2026-03-30 10:09:00.288] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:09:00.399] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-30 10:09:00.399] [DEBUG] 更新网卡控制状态: WLAN 2, 可启用: 0, 可禁用: 0
+[2026-03-30 10:09:00.399] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 10:18:58.118] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 10:18:58.239] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:18:58.239] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:18:58.291] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:18:58.342] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:18:58.344] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:18:58.344] [INFO] 当前网络配置获取完成
+[2026-03-30 10:18:58.406] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:18:58.406] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:18:58.406] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:18:58.464] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:18:58.516] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:18:58.518] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:18:58.518] [INFO] 当前网络配置获取完成
+[2026-03-30 10:18:58.518] [DEBUG] 比较静态IP配置
+[2026-03-30 10:18:58.518] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:18:58.518] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:19:00.178] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:19:01.538] [DEBUG] 刷新网卡列表
+[2026-03-30 10:19:04.893] [ERROR] Netsh命令执行超时: interface show interface
+[2026-03-30 10:19:04.893] [WARNING] QProcess: Destroyed while process ("netsh") is still running.
+[2026-03-30 10:19:05.597] [WARNING] No network interfaces found in output: ERROR: 命令执行超时
+[2026-03-30 10:19:05.597] [DEBUG] 无可用网卡，禁用操作按钮
+[2026-03-30 10:19:05.598] [DEBUG] 无可用网卡，禁用操作按钮
+[2026-03-30 10:19:05.602] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 10:19:56.963] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 10:19:57.028] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:19:57.028] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:19:57.084] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:19:57.135] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:19:57.138] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:19:57.138] [INFO] 当前网络配置获取完成
+[2026-03-30 10:19:57.198] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:19:57.198] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:19:57.198] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:19:57.254] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:19:57.313] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:19:57.316] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:19:57.316] [INFO] 当前网络配置获取完成
+[2026-03-30 10:19:57.316] [DEBUG] 比较静态IP配置
+[2026-03-30 10:19:57.316] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:19:57.316] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:19:58.898] [INFO] 从悬浮窗菜单应用配置: 以太网 (专用)
+[2026-03-30 10:19:58.898] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:19:58.898] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:19:58.961] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:19:59.020] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:19:59.023] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:19:59.023] [INFO] 当前网络配置获取完成
+[2026-03-30 10:19:59.023] [DEBUG] 比较静态IP配置
+[2026-03-30 10:19:59.023] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:19:59.459] [INFO] 配置应用成功: 以太网[192.168.4.101]
+[2026-03-30 10:19:59.460] [DEBUG] 更新快速应用菜单
+[2026-03-30 10:19:59.621] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:19:59.621] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:19:59.696] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:19:59.772] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:19:59.778] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:19:59.778] [INFO] 当前网络配置获取完成
+[2026-03-30 10:19:59.779] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:19:59.779] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:19:59.853] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:19:59.918] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:19:59.921] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:19:59.921] [INFO] 当前网络配置获取完成
+[2026-03-30 10:19:59.922] [DEBUG] 比较静态IP配置
+[2026-03-30 10:19:59.922] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:19:59.922] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:19:59.922] [INFO] 快速应用菜单更新完成
+[2026-03-30 10:19:59.926] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 10:20:00.423] [DEBUG] 更新快速应用菜单
+[2026-03-30 10:20:00.564] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:20:00.564] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:20:00.729] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:20:00.821] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:20:00.825] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:20:00.825] [INFO] 当前网络配置获取完成
+[2026-03-30 10:20:00.825] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:20:00.825] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:20:00.934] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:20:01.036] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:20:01.041] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:20:01.041] [INFO] 当前网络配置获取完成
+[2026-03-30 10:20:01.043] [DEBUG] 比较静态IP配置
+[2026-03-30 10:20:01.043] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:20:01.043] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:20:01.043] [INFO] 快速应用菜单更新完成
+[2026-03-30 10:20:02.937] [WARNING] QPixmap::scaled: Pixmap is a null pixmap
+[2026-03-30 10:22:06.204] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 10:22:06.267] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:06.267] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:22:06.318] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:06.368] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:06.371] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:06.371] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:06.428] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:22:06.428] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:06.428] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:22:06.485] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:06.541] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:06.544] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:06.544] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:06.544] [DEBUG] 比较静态IP配置
+[2026-03-30 10:22:06.544] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:22:06.544] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:22:08.458] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:22:09.281] [DEBUG] 刷新网卡列表
+[2026-03-30 10:22:09.434] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:22:09.492] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-30 10:22:09.548] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:22:09.602] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-30 10:22:09.603] [DEBUG] 更新网卡控制状态: WLAN 2, 可启用: 0, 可禁用: 0
+[2026-03-30 10:22:09.769] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:22:09.874] [WARNING] 无法获取网卡 WLAN 2 的连接状态
+[2026-03-30 10:22:09.874] [DEBUG] 更新网卡控制状态: WLAN 2, 可启用: 0, 可禁用: 0
+[2026-03-30 10:22:09.874] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 10:22:11.188] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 10:22:11.244] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:11.244] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:22:11.295] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:11.345] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:11.347] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:11.347] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:11.403] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:22:11.403] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:11.403] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:22:11.458] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:11.512] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:11.514] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:11.514] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:11.514] [DEBUG] 比较静态IP配置
+[2026-03-30 10:22:11.514] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:22:11.514] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:22:13.222] [INFO] 从悬浮窗菜单应用配置: 以太网 (专用)
+[2026-03-30 10:22:13.222] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:13.222] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:22:13.280] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:13.335] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:13.337] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:13.337] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:13.337] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:22:13.495] [INFO] 配置应用成功: 以太网[自动获取IP]
+[2026-03-30 10:22:13.496] [DEBUG] 更新快速应用菜单
+[2026-03-30 10:22:13.594] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:13.594] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:22:13.649] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:13.704] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:13.706] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:13.706] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:13.706] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:13.706] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:22:13.772] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:13.829] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:13.831] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:13.831] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:13.832] [DEBUG] 比较静态IP配置
+[2026-03-30 10:22:13.832] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:22:13.832] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:22:13.832] [INFO] 快速应用菜单更新完成
+[2026-03-30 10:22:13.836] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 10:22:14.332] [DEBUG] 更新快速应用菜单
+[2026-03-30 10:22:14.396] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:14.396] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:22:14.454] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:14.507] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:14.509] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:14.509] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:14.510] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:22:14.510] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:22:14.565] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:22:14.621] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:22:14.623] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:22:14.623] [INFO] 当前网络配置获取完成
+[2026-03-30 10:22:14.623] [DEBUG] 比较静态IP配置
+[2026-03-30 10:22:14.624] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:22:14.624] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:22:14.624] [INFO] 快速应用菜单更新完成
+[2026-03-30 10:22:16.832] [WARNING] QPixmap::scaled: Pixmap is a null pixmap
+[2026-03-30 10:30:29.666] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 10:30:29.794] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:29.794] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:30:29.845] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:29.898] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:29.900] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:29.900] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:29.957] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:30:29.957] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:29.957] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:30:30.013] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:30.067] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:30.069] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:30.069] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:30.069] [DEBUG] 比较静态IP配置
+[2026-03-30 10:30:30.069] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:30:30.069] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:30:34.179] [INFO] 从悬浮窗菜单应用配置: 以太网 (专用)
+[2026-03-30 10:30:34.180] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:34.180] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:30:34.236] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:34.290] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:34.292] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:34.292] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:34.292] [DEBUG] 比较静态IP配置
+[2026-03-30 10:30:34.292] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:30:34.527] [INFO] 配置应用成功: 以太网[192.168.4.101]
+[2026-03-30 10:30:34.527] [DEBUG] 更新快速应用菜单
+[2026-03-30 10:30:34.681] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:34.681] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:30:34.740] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:34.801] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:34.804] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:34.804] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:34.804] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:34.804] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:30:34.884] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:34.983] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:34.985] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:34.985] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:34.986] [DEBUG] 比较静态IP配置
+[2026-03-30 10:30:34.986] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:30:34.986] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:30:34.986] [INFO] 快速应用菜单更新完成
+[2026-03-30 10:30:34.991] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 10:30:35.487] [DEBUG] 更新快速应用菜单
+[2026-03-30 10:30:35.627] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:35.627] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:30:35.705] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:35.785] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:35.788] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:35.788] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:35.788] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:35.788] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:30:35.841] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:35.892] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:35.894] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:35.894] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:35.894] [DEBUG] 比较静态IP配置
+[2026-03-30 10:30:35.894] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:30:35.894] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:30:35.894] [INFO] 快速应用菜单更新完成
+[2026-03-30 10:30:37.987] [WARNING] QPixmap::scaled: Pixmap is a null pixmap
+[2026-03-30 10:30:38.481] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 10:30:38.540] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:38.540] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 10:30:38.591] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:38.642] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:38.644] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:38.644] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:38.700] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:30:38.701] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 10:30:38.701] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 10:30:38.760] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 10:30:38.813] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 10:30:38.815] [DEBUG] 确定为静态IP模式
+[2026-03-30 10:30:38.815] [INFO] 当前网络配置获取完成
+[2026-03-30 10:30:38.815] [DEBUG] 比较静态IP配置
+[2026-03-30 10:30:38.816] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 10:30:38.816] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 10:30:40.745] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 10:30:42.130] [DEBUG] 刷新网卡列表
+[2026-03-30 10:30:45.453] [ERROR] Netsh命令执行超时: interface show interface
+[2026-03-30 10:30:45.453] [WARNING] QProcess: Destroyed while process ("netsh") is still running.
+[2026-03-30 10:30:46.230] [WARNING] No network interfaces found in output: ERROR: 命令执行超时
+[2026-03-30 10:30:46.230] [DEBUG] 无可用网卡，禁用操作按钮
+[2026-03-30 10:30:46.230] [DEBUG] 无可用网卡，禁用操作按钮
+[2026-03-30 10:30:46.230] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 11:05:51.918] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 11:05:52.064] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:05:52.064] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 11:05:52.124] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:05:52.183] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:05:52.187] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:05:52.187] [INFO] 当前网络配置获取完成
+[2026-03-30 11:05:52.261] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 11:05:52.261] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:05:52.261] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 11:05:52.329] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:05:52.401] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:05:52.407] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:05:52.407] [INFO] 当前网络配置获取完成
+[2026-03-30 11:05:52.407] [DEBUG] 比较静态IP配置
+[2026-03-30 11:05:52.407] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 11:05:52.408] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 11:05:56.003] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 11:05:56.590] [DEBUG] 显示悬浮窗上下文菜单
+[2026-03-30 11:05:56.748] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:05:56.748] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 11:05:56.824] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:05:56.901] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:05:56.905] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:05:56.905] [INFO] 当前网络配置获取完成
+[2026-03-30 11:05:56.967] [WARNING] 无法获取网卡 WLAN 2 的管理状态
+[2026-03-30 11:05:56.967] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:05:56.968] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 11:05:57.026] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:05:57.086] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:05:57.089] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:05:57.089] [INFO] 当前网络配置获取完成
+[2026-03-30 11:05:57.089] [DEBUG] 比较静态IP配置
+[2026-03-30 11:05:57.090] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 11:05:57.090] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 11:06:02.623] [INFO] 从悬浮窗菜单应用配置: 以太网 (专用)
+[2026-03-30 11:06:02.623] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:06:02.623] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 11:06:02.683] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:06:02.739] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:06:02.742] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:06:02.742] [INFO] 当前网络配置获取完成
+[2026-03-30 11:06:02.743] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 11:06:03.050] [INFO] 配置应用成功: 以太网[自动获取IP]
+[2026-03-30 11:06:03.050] [DEBUG] 更新快速应用菜单
+[2026-03-30 11:06:03.229] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:06:03.229] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 11:06:03.291] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:06:03.343] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:06:03.346] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:06:03.346] [INFO] 当前网络配置获取完成
+[2026-03-30 11:06:03.347] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:06:03.347] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 11:06:03.402] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:06:03.455] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:06:03.458] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:06:03.458] [INFO] 当前网络配置获取完成
+[2026-03-30 11:06:03.459] [DEBUG] 比较静态IP配置
+[2026-03-30 11:06:03.459] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 11:06:03.459] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 11:06:03.459] [INFO] 快速应用菜单更新完成
+[2026-03-30 11:06:03.463] [DEBUG] 悬浮窗上下文菜单已显示
+[2026-03-30 11:06:03.960] [DEBUG] 更新快速应用菜单
+[2026-03-30 11:06:04.029] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:06:04.029] [DEBUG] 查询接口配置: WLAN 2
+[2026-03-30 11:06:04.085] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:06:04.142] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:06:04.145] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:06:04.145] [INFO] 当前网络配置获取完成
+[2026-03-30 11:06:04.146] [DEBUG] 获取当前网卡的网络配置
+[2026-03-30 11:06:04.146] [DEBUG] 查询接口配置: 以太网
+[2026-03-30 11:06:04.204] [DEBUG] 接口 DHCP 状态: 禁用
+[2026-03-30 11:06:04.278] [DEBUG] 尝试通过QNetworkInterface获取子网掩码
+[2026-03-30 11:06:04.284] [DEBUG] 确定为静态IP模式
+[2026-03-30 11:06:04.284] [INFO] 当前网络配置获取完成
+[2026-03-30 11:06:04.284] [DEBUG] 比较静态IP配置
+[2026-03-30 11:06:04.284] [DEBUG] 比较结果 - IP: 不匹配, 子网: 不匹配, 网关: 匹配
+[2026-03-30 11:06:04.284] [DEBUG] 方法不匹配: static != dhcp
+[2026-03-30 11:06:04.284] [INFO] 快速应用菜单更新完成
+[2026-03-30 11:06:06.464] [WARNING] QPixmap::scaled: Pixmap is a null pixmap

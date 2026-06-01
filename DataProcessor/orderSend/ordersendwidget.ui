@@ -173,6 +173,30 @@
             </widget>
            </item>
            <item>
+            <widget class="QLabel" name="labelRoundInterval">
+             <property name="text">
+              <string>轮次间隔(s):</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="spinRoundIntervalSec">
+             <property name="toolTip">
+              <string>设置列表完成一轮后，等待多少秒再开始下一轮。
+只能在停止状态下修改。</string>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>86400</number>
+             </property>
+             <property name="value">
+              <number>60</number>
+             </property>
+            </widget>
+           </item>
+           <item>
             <spacer name="horizontalSpacer_Interval">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>

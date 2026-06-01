@@ -13,6 +13,7 @@
 #include <QStatusBar>
 #include <QVBoxLayout>
 #include "faultAlarmWidget/faultAlarmWidget.h"
+#include "ddSimulator/ddsimulatorwidget.h"
 #include "threadmanager.h"
 
 //定义日志分类
@@ -341,6 +342,10 @@ void MainWindow::onMainTabChanged(int index)
     {
         ensureFaultAlarmPage();
     }
+    else if (name == QLatin1String("tab_DDSimulator"))
+    {
+        ensureDDSimulatorPage();
+    }
 }
 
 /**
@@ -375,6 +380,20 @@ void MainWindow::ensureFaultAlarmPage()
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_faultAlarmWidget);
     qCInfo(mainWindowLog) << "FaultAlarmWidget 构造完成并加入页面。";
+}
+
+void MainWindow::ensureDDSimulatorPage()
+{
+    if (m_ddSimulatorWidget)
+    {
+        return;
+    }
+    qCInfo(mainWindowLog) << "首次进入 DDSimulator 页，正在构造 DDSimulatorWidget...";
+    m_ddSimulatorWidget = new DDSimulatorWidget(ui->tab_DDSimulator);
+    auto *layout = new QVBoxLayout(ui->tab_DDSimulator);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(m_ddSimulatorWidget);
+    qCInfo(mainWindowLog) << "DDSimulatorWidget 构造完成并加入页面。";
 }
 
 /**
