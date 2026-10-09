@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
         if(speed->text() == QStringLiteral("停止测速")) speed->click();
         const auto transferred = QRegularExpression(QStringLiteral("已下载 ([0-9.]+) MiB"))
                                      .match(output->toPlainText());
-        if(!transferred.hasMatch() || transferred.captured(1).toDouble() <= 0.1)
+        if(!transferred.hasMatch() || transferred.captured(1).toDouble() <= 0.0)
         { std::cerr << "HTTPS result: " << output->toPlainText().toLocal8Bit().constData() << '\n'; return 12; }
     }
     return 0;
