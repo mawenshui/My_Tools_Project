@@ -69,7 +69,7 @@ QString downloadOnce(const QUrl &url, std::atomic<bool> &running, std::atomic<qi
     QString path = url.path(QUrl::FullyEncoded);
     if(path.isEmpty()) path = "/";
     if(url.hasQuery()) path += "?" + url.query(QUrl::FullyEncoded);
-    const HINTERNET session = WinHttpOpen(L"NetworkConfigManager/2.2.1", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+    const HINTERNET session = WinHttpOpen(L"NetworkConfigManager/2.2.2", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                            WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if(!session) return QObject::tr("WinHTTP 初始化失败（%1）").arg(GetLastError());
     WinHttpSetTimeouts(session, 3000, 3000, 3000, 3000);
@@ -163,13 +163,15 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
     auto *speedPage = new QWidget(tabs);
     auto *speedLayout = new QVBoxLayout(speedPage);
     auto *selection = new QHBoxLayout;
+    m_region->setObjectName("speedRegion");
+    m_source->setObjectName("speedSource");
     m_region->addItems({tr("国内"), tr("国外"), tr("内网"), tr("自定义")});
     selection->addWidget(m_region);
     selection->addWidget(m_source);
     speedLayout->addLayout(selection);
     m_url->setPlaceholderText(tr("http(s)://... 下载文件地址"));
     speedLayout->addWidget(m_url);
-    speedLayout->addWidget(new QLabel(tr("主动测速：最多 4 路并发、10 秒、100 MiB；数据不保存。"), speedPage));
+    speedLayout->addWidget(new QLabel(tr("主动测速：最多 4 路并发（Hetzner 单路）、10 秒、100 MiB；数据不保存。"), speedPage));
     speedLayout->addWidget(m_speedButton);
     m_speedOutput->setReadOnly(true);
     speedLayout->addWidget(m_speedOutput);
@@ -187,8 +189,8 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
         }
         else if(region == 1)
         {
-            m_source->addItem("Cloudflare", "https://speed.cloudflare.com/__down?bytes=500000000");
-            m_source->addItem("Hetzner", "https://speed.hetzner.de/100MB.bin");
+            m_source->addItem("Cloudflare", "https://speed.cloudflare.com/__down?bytes=50000000");
+            m_source->addItem("Hetzner FSN1", "https://fsn1-speed.hetzner.com/100MB.bin");
         }
         else m_source->addItem(tr("填写地址"), QString());
         m_url->setText(m_source->currentData().toString());
@@ -254,7 +256,8 @@ void NetworkDiagnosticsDialog::startSpeed()
     m_speedButton->setText(tr("停止测速"));
     m_speedOutput->setPlainText(tr("正在下载并采样..."));
     m_sampleTimer->start();
-    for(int index = 0; index < 4; ++index) issueDownload();
+    const int connections = url.host().endsWith("-speed.hetzner.com") ? 1 : 4;
+    for(int index = 0; index < connections; ++index) issueDownload();
 }
 
 void NetworkDiagnosticsDialog::issueDownload()

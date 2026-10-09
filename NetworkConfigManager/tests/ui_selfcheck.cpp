@@ -111,6 +111,13 @@ int main(int argc, char *argv[])
         }
     });
     NetworkDiagnosticsDialog diagnostics(QString(), nullptr, true);
+    auto *region = diagnostics.findChild<QComboBox *>("speedRegion");
+    auto *source = diagnostics.findChild<QComboBox *>("speedSource");
+    if(!region || !source) return 15;
+    region->setCurrentIndex(1);
+    if(source->itemData(0).toString() != QStringLiteral("https://speed.cloudflare.com/__down?bytes=50000000") ||
+       source->itemData(1).toString() != QStringLiteral("https://fsn1-speed.hetzner.com/100MB.bin")) return 16;
+    region->setCurrentIndex(0);
     auto *url = diagnostics.findChild<QLineEdit *>();
     auto *output = diagnostics.findChildren<QTextEdit *>().last();
     QPushButton *speed = nullptr;
@@ -137,7 +144,9 @@ int main(int argc, char *argv[])
     if(!output->toPlainText().contains(QStringLiteral("平均"))) return 14;
     if(qEnvironmentVariableIsSet("NETWORKCONFIGMANAGER_TEST_HTTPS"))
     {
-        url->setText(QStringLiteral("https://mirrors.aliyun.com/ubuntu/ls-lR.gz"));
+        const QString testUrl = qEnvironmentVariable("NETWORKCONFIGMANAGER_TEST_URL",
+            QStringLiteral("https://mirrors.aliyun.com/ubuntu/ls-lR.gz"));
+        url->setText(testUrl);
         speed->click();
         wait.restart();
         while(wait.elapsed() < 7000 && speed->text() == QStringLiteral("停止测速"))

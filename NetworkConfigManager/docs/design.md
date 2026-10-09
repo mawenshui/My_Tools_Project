@@ -1,6 +1,6 @@
 # NetworkConfigManager 设计文档
 
-- **版本号**：v2.2.1
+- **版本号**：v2.2.2
 - **更新日期**：2026-10-09
 
 ---
@@ -516,7 +516,7 @@ main() 入口
   │
   ├─► QApplication 构造
   │   ├─ setApplicationName("NetworkConfigManager")
-  │   ├─ setApplicationVersion("2.2.1")
+  │   ├─ setApplicationVersion("2.2.2")
   │   ├─ setQuitOnLastWindowClosed(false)                   # 关闭最后窗口不退出
   │   └─ qInstallMessageHandler(Qt→Logger)                  # Qt 消息桥接
   │
@@ -822,12 +822,12 @@ pos=@Point(1280 720)
 | "禁用网卡" | `tr("禁用网卡")` |
 | "导出日志" | `tr("导出日志")` |
 
-## 8. v2.2.1 网络工具设计
+## 8. v2.2.2 网络工具设计
 
 - `ConfigManager` 在调用 `netsh` 前通过 `NetworkInterfaceManager::captureConfig()` 读取网卡现状，并用 `QSaveFile` 持久化到 `config/network_backups.json`。备份不可用时停止应用；回滚调用同一配置应用路径，成功后移除该次备份。
 - `NetworkToolsDialog` 按选中网卡依次应用保存的模板或 DHCP；静态 IP 批量应用前确认冲突风险。
 - `NetworkScanDialog` 将 IPv4 区间或 CIDR 展开后，以 `QtConcurrent::mapped` 扫描 ICMP/TCP；进度条按已处理地址更新，同时展示发现设备数、IP、MAC、主机名和开放端口。
-- `NetworkDiagnosticsDialog` 优先选择同时具有网关和 DNS 的网卡，以工作线程执行延迟检测；下载测速使用 Windows WinHTTP/Schannel 并发下载并按时间采样，不保存下载数据。`NetworkTrafficMonitor` 读取所选网卡字节计数，计算实时速率。
+- `NetworkDiagnosticsDialog` 优先选择同时具有网关和 DNS 的网卡，以工作线程执行延迟检测；下载测速使用 Windows WinHTTP/Schannel 并发下载并按时间采样，不保存下载数据。Cloudflare 预设请求 50 MB，Hetzner 预设使用 FSN1 官方主机并限制为单路。`NetworkTrafficMonitor` 读取所选网卡字节计数，计算实时速率。
 - `MainWindow::setupUi()` 在主页面插入网络工具区，复用深色/浅色 QSS。配置历史随新增和修改持久化到 `config/config_history.json`，回滚后原子保存配置。
 
 发布版由 `windeployqt` 收集 Qt/MinGW 运行时，`installer.iss` 打包为当前用户安装版；配置文件在程序首次运行时创建，安装包不包含开发机配置。
