@@ -698,14 +698,15 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
         {
             QString primaryDns = config["primary_dns"].toString();
             QString secondaryDns = config["secondary_dns"].toString();
-            if (useCustomDns && !primaryDns.isEmpty())
+            const QString dnsServer = primaryDns.isEmpty() ? secondaryDns : primaryDns;
+            if (useCustomDns && !dnsServer.isEmpty())
             {
                 //设置自定义DNS
                 QStringList primaryDnsCmd =
                 {
                     "interface", "ipv4", "set", "dns",
                     QString("name=\"%1\"").arg(cleanInterface),
-                    "static", primaryDns
+                    "static", dnsServer
                 };
                 netshProcess.start("netsh", primaryDnsCmd);
                 if(!netshProcess.waitForFinished(5000))
@@ -722,7 +723,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
                     success = false;
                     message = tr("设置主DNS失败: %1").arg(errorOutput);
                 }
-                else if (!secondaryDns.isEmpty())
+                else if (!primaryDns.isEmpty() && !secondaryDns.isEmpty())
                 {
                     //设置备用DNS
                     QStringList secondaryDnsCmd =
@@ -801,13 +802,14 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
             }
         }
         //设置DNS
-        if (success && !primaryDns.isEmpty())
+        const QString dnsServer = primaryDns.isEmpty() ? secondaryDns : primaryDns;
+        if (success && !dnsServer.isEmpty())
         {
             QStringList primaryDnsCmd =
             {
                 "interface", "ip", "set", "dns",
                 QString("name=\"%1\"").arg(cleanInterface),
-                "static", primaryDns
+                "static", dnsServer
             };
             {
                 QProcess proc;
@@ -821,7 +823,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
                 }
             }
             //设置备用DNS
-            if (success && !secondaryDns.isEmpty())
+            if (success && !primaryDns.isEmpty() && !secondaryDns.isEmpty())
             {
                 QStringList secondaryDnsCmd =
                 {
@@ -844,22 +846,22 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
         }
         else if (success)
         {
-            //如果没有指定DNS，则设置为DHCP
-            QStringList dhcpDnsCmd =
+            //未指定DNS时清空静态DNS列表，恢复无DNS的备份
+            QStringList clearDnsCmd =
             {
-                "interface", "ip", "set", "dns",
+                "interface", "ipv4", "set", "dnsservers",
                 QString("name=\"%1\"").arg(cleanInterface),
-                "source=dhcp"
+                "source=static", "address=none"
             };
             {
                 QProcess proc;
-                proc.start("netsh", dhcpDnsCmd);
+                proc.start("netsh", clearDnsCmd);
                 if(!proc.waitForFinished(5000)) { proc.kill(); proc.waitForFinished(3000); }
                 if (proc.error() != QProcess::UnknownError || proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0)
                 {
-                    emit errorOccurred(tr("设置DHCP DNS失败"));
-                    message = tr("设置DHCP DNS失败 (IP地址已设置)");
-                    //不标记为完全失败，因为IP地址已设置
+                    emit errorOccurred(tr("清空DNS失败"));
+                    success = false;
+                    message = tr("清空DNS失败 (IP地址已设置)");
                 }
             }
         }

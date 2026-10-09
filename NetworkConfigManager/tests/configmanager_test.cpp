@@ -1,4 +1,10 @@
 #include <QtTest>
+#include <QDir>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSaveFile>
 
 #include "../configmanager.h"
 
@@ -22,6 +28,8 @@ private slots:
      */
     void keepsOriginalNameWhenNoMatchExists();
     void validatesEveryIpv4FieldAndSubnetMask();
+    void acceptsStaticConfigWithoutGatewayOrDns();
+    void loadsNetworkBackupWithoutGatewayOrDns();
     void savesLoadsAndRollsBackProfiles();
     void rejectsNetworkChangesWithoutAdmin();
 };
@@ -86,6 +94,39 @@ void ConfigManagerTest::validatesEveryIpv4FieldAndSubnetMask()
     }
     config["interface"] = " ";
     QVERIFY(!manager.validateConfig(config));
+}
+
+void ConfigManagerTest::acceptsStaticConfigWithoutGatewayOrDns()
+{
+    ConfigManager manager;
+    QVariantMap config{{"interface", "test-adapter"}, {"method", "static"},
+                       {"ip", "192.0.2.10"}, {"subnet", "255.255.255.0"}};
+    QVERIFY(manager.validateConfig(config));
+    config["gateway"] = "";
+    config["primary_dns"] = "";
+    config["secondary_dns"] = "";
+    QVERIFY(manager.validateConfig(config));
+    config["secondary_dns"] = "9.9.9.9";
+    QVERIFY(manager.validateConfig(config));
+}
+
+void ConfigManagerTest::loadsNetworkBackupWithoutGatewayOrDns()
+{
+    const QString path = QCoreApplication::applicationDirPath() + "/config/network_backups.json";
+    if(QFile::exists(path)) QSKIP("Backup fixture path already exists");
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    const QVariantMap config{{"interface", "backup-optional-adapter"}, {"method", "static"},
+                             {"ip", "192.0.2.10"}, {"subnet", "255.255.255.0"}};
+    QSaveFile file(path);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    const QByteArray data = QJsonDocument(QJsonObject{{"backup-optional-adapter",
+        QJsonArray{QJsonObject::fromVariantMap(config)}}}).toJson();
+    QCOMPARE(file.write(data), static_cast<qint64>(data.size()));
+    QVERIFY(file.commit());
+    ConfigManager reloaded;
+    const int count = reloaded.networkBackupCount("backup-optional-adapter");
+    QVERIFY(QFile::remove(path));
+    QCOMPARE(count, 1);
 }
 
 void ConfigManagerTest::savesLoadsAndRollsBackProfiles()

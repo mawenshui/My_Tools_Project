@@ -392,7 +392,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>默认网关:</string>
+               <string>默认网关（选填）:</string>
               </property>
              </widget>
             </item>
@@ -406,7 +406,7 @@
             <item row="3" column="0">
              <widget class="QLabel" name="label_6">
               <property name="text">
-               <string>DNS服务器:</string>
+               <string>DNS服务器（选填）:</string>
               </property>
              </widget>
             </item>
@@ -420,7 +420,7 @@
             <item row="4" column="0">
              <widget class="QLabel" name="label_7">
               <property name="text">
-               <string>备用DNS:</string>
+               <string>备用DNS服务器（选填）:</string>
               </property>
              </widget>
             </item>

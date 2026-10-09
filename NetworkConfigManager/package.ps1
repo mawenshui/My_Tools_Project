@@ -25,8 +25,8 @@ $env:NETWORKCONFIG_STAGE = $stage
 $env:NETWORKCONFIG_RELEASE = $release
 & $Iscc (Join-Path $project 'installer.iss')
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed: $LASTEXITCODE" }
-$zip = Join-Path $release 'NetworkConfigManager-2.2.2-win64-portable.zip'
+$zip = Join-Path $release 'NetworkConfigManager-2.2.3-win64-portable.zip'
 if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip
-Get-FileHash -Algorithm SHA256 (Join-Path $release 'NetworkConfigManager-Setup-2.2.2-win64.exe'), $zip |
+Get-FileHash -Algorithm SHA256 (Join-Path $release 'NetworkConfigManager-Setup-2.2.3-win64.exe'), $zip |
     Select-Object Path, Hash

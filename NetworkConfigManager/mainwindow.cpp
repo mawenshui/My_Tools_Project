@@ -1289,15 +1289,19 @@ void MainWindow::onApplyConfig()
  */
 QVariantMap MainWindow::getCurrentFormConfig() const
 {
+    const auto optionalAddress = [](QLineEdit *edit) {
+        const QString value = edit->text().trimmed();
+        return value == QStringLiteral("...") ? QString() : value;
+    };
     QVariantMap config;
     config["interface"] = ui->interfaceCombo->currentText();
     config["method"] = ui->dhcpRadio->isChecked() ? "dhcp" : "static";
     config["custom_dns"] = ui->customDnsCheckBox->isChecked();
     config["ip"] = ui->ipEdit->text();
     config["subnet"] = ui->subnetEdit->text();
-    config["gateway"] = ui->gatewayEdit->text();
-    config["primary_dns"] = ui->primaryDnsEdit->text();
-    config["secondary_dns"] = ui->secondaryDnsEdit->text();
+    config["gateway"] = optionalAddress(ui->gatewayEdit);
+    config["primary_dns"] = optionalAddress(ui->primaryDnsEdit);
+    config["secondary_dns"] = optionalAddress(ui->secondaryDnsEdit);
     Logger::debug(tr("获取当前表单配置: 方法=%1, IP=%2").arg(config["method"].toString()).arg(config["ip"].toString()));
     return config;
 }
@@ -1484,7 +1488,7 @@ void MainWindow::onInputTextChanged()
         if(edit->isEnabled())
         {
             QString text = edit->text().trimmed();
-            if(text.isEmpty())
+            if(text.isEmpty() || text == QStringLiteral("..."))
             {
                 edit->setStyleSheet(""); // 恢复默认
                 continue;

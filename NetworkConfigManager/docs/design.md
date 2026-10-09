@@ -1,6 +1,6 @@
 # NetworkConfigManager 设计文档
 
-- **版本号**：v2.2.2
+- **版本号**：v2.2.3
 - **更新日期**：2026-10-09
 
 ---
@@ -516,7 +516,7 @@ main() 入口
   │
   ├─► QApplication 构造
   │   ├─ setApplicationName("NetworkConfigManager")
-  │   ├─ setApplicationVersion("2.2.2")
+  │   ├─ setApplicationVersion("2.2.3")
   │   ├─ setQuitOnLastWindowClosed(false)                   # 关闭最后窗口不退出
   │   └─ qInstallMessageHandler(Qt→Logger)                  # Qt 消息桥接
   │
@@ -831,3 +831,8 @@ pos=@Point(1280 720)
 - `MainWindow::setupUi()` 在主页面插入网络工具区，复用深色/浅色 QSS。配置历史随新增和修改持久化到 `config/config_history.json`，回滚后原子保存配置。
 
 发布版由 `windeployqt` 收集 Qt/MinGW 运行时，`installer.iss` 打包为当前用户安装版；配置文件在程序首次运行时创建，安装包不包含开发机配置。
+
+## 9. v2.2.3 可选网关与 DNS
+
+- 主页面保留 IPv4 输入掩码；读取表单时将未输入的 `...` 转为空字符串。实时提示对空值不标红。
+- 静态配置只验证 IP 和子网掩码必填，网关与两个 DNS 地址仅在有值时验证格式。无网关时 `netsh` 默认不设置网关；无 DNS 时以 `source=static address=none` 清空 DNS，保证回滚无 DNS 的备份与原状态一致。

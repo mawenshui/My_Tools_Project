@@ -1,6 +1,6 @@
 # NetworkConfigManager 项目规范文档
 
-> **版本**：2.2.2
+> **版本**：2.2.3
 > **更新日期**：2026-10-09  
 > **状态**：现行规范
 
@@ -563,7 +563,7 @@ fix(ui): 修复悬浮窗在多显示器环境下的位置异常
 MAJOR.MINOR.PATCH
 ```
 
-**当前版本**：**2.2.2**
+**当前版本**：**2.2.3**
 
 ### 8.2 版本号递增规则
 
@@ -578,7 +578,7 @@ MAJOR.MINOR.PATCH
 版本号在 [main.cpp](../main.cpp) 中定义：
 
 ```cpp
-a.setApplicationVersion("2.2.2");
+a.setApplicationVersion("2.2.3");
 ```
 
 发布新版本时，应同步更新此处的版本号字符串。
@@ -587,10 +587,11 @@ a.setApplicationVersion("2.2.2");
 
 > **文档维护说明**：本文档应随着项目的发展持续更新。当编码规范、目录结构或构建流程发生变更时，请同步修改本文档。对于源码中暂时未体现但希望在后续项目中采用的规范，建议通过团队讨论后明确加入本文档。
 
-## 九、v2.2.2 发布检查
+## 九、v2.2.3 发布检查
 
 1. 在 Qt 5.12.12 MinGW 64 位环境以 Release 配置构建，保留隔离目录 `build_auto/app/bin/NetworkConfigManager.exe`。
 2. 运行 `tests/configmanager_test.pro`、`tests/networkscan_selfcheck.pro`、`tests/ui_selfcheck.pro` 的可执行检查，设置 `QT_QPA_PLATFORM=offscreen`；在可访问公网环境设置 `NETWORKCONFIGMANAGER_TEST_HTTPS=1` 并用 `NETWORKCONFIGMANAGER_TEST_URL` 分别验证 Cloudflare 和 Hetzner 预设。网络修改类操作在隔离管理员环境单独验收。
 3. 执行 `package.ps1 -QtBin <Qt bin目录> -Iscc <Inno Setup 6 ISCC.exe>`；脚本收集运行库、生成安装包和免安装 ZIP，输出 SHA-256。
 4. 安装版默认放在当前用户目录，并提供卸载；不打包 `bin/config/`、日志或开发机历史。校验安装后可启动、卸载后用户数据处理符合预期。
-5. GitHub 发布使用 `networkconfigmanager-v2.2.2` 标签，上传安装包和 ZIP；代码、文档、测试与打包脚本保持同一提交。
+5. GitHub 发布使用 `networkconfigmanager-v2.2.3` 标签，上传安装包和 ZIP；代码、文档、测试与打包脚本保持同一提交。
+6. 静态 IP 表单留空网关与 DNS 后可通过校验；无 DNS 备份的回滚命令清空 DNS 列表。真实网卡回滚在隔离管理员环境验收。

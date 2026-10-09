@@ -1,3 +1,4 @@
+#include "../configmanager.h"
 #include "../mainwindow.h"
 #include "../networkdiagnosticsdialog.h"
 #include "../networkinterfacemanager.h"
@@ -12,6 +13,7 @@
 #include <QHostAddress>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QRegularExpression>
 #include <QTabWidget>
 #include <QTcpServer>
@@ -25,6 +27,25 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     app.setApplicationName("NetworkConfigManagerSelfcheck");
     MainWindow window;
+    auto *gateway = window.findChild<QLineEdit *>("gatewayEdit");
+    auto *primaryDns = window.findChild<QLineEdit *>("primaryDnsEdit");
+    auto *secondaryDns = window.findChild<QLineEdit *>("secondaryDnsEdit");
+    if(!gateway || !primaryDns || !secondaryDns) return 17;
+    if(gateway->text() != QStringLiteral("...") ||
+       primaryDns->text() != QStringLiteral("...") ||
+       secondaryDns->text() != QStringLiteral("...")) return 18;
+    window.findChild<QRadioButton *>("staticRadio")->click();
+    auto *interfaceCombo = window.findChild<QComboBox *>("interfaceCombo");
+    if(interfaceCombo->currentText().isEmpty()) interfaceCombo->addItem(QStringLiteral("test-adapter"));
+    window.findChild<QLineEdit *>("ipEdit")->setText(QStringLiteral("192.168.100.200"));
+    window.findChild<QLineEdit *>("subnetEdit")->setText(QStringLiteral("255.255.255.128"));
+    QVariantMap form;
+    if(!QMetaObject::invokeMethod(&window, "getCurrentFormConfig", Q_RETURN_ARG(QVariantMap, form))) return 19;
+    if(!form.value("gateway").toString().isEmpty() ||
+       !form.value("primary_dns").toString().isEmpty() ||
+       !form.value("secondary_dns").toString().isEmpty()) return 20;
+    ConfigManager profileManager;
+    if(!profileManager.validateConfig(form)) return 21;
     if(window.styleSheet().isEmpty()) return 1;
     const QStringList buttons{"batchNetworkButton", "restoreNetworkButton", "scanNetworkButton",
                               "networkConnectionsButton", "latencyTestButton", "speedTestButton"};
