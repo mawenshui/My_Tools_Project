@@ -1,5 +1,5 @@
 /* 全局样式 */
-QMainWindow {
+QMainWindow, QDialog {
     background-color: #2E3440;
     color: #ECEFF4;
     font-family: "Microsoft YaHei UI", sans-serif;
@@ -521,4 +521,9 @@ QToolTip {
     padding: 3px;
     border-radius: 3px;
     opacity: 230;
+}
+
+QLabel#networkTrafficMonitor {
+    color: #88C0D0;
+    font-weight: bold;
 }

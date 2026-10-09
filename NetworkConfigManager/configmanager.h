@@ -76,7 +76,9 @@ public:
      * @param config 配置数据(QVariantMap格式)
      * @return 应用是否成功
      */
-    bool applyConfig(const QVariantMap &config);
+    bool applyConfig(const QVariantMap &config, bool createBackup = true);
+    int networkBackupCount(const QString &interfaceName) const;
+    bool restoreLastNetworkBackup(const QString &interfaceName);
 
     //线程安全的配置访问方法组 -------------------------------------
 
@@ -120,11 +122,43 @@ public:
     static QString cleanInterfaceName(const QString &rawName);
 
     /**
+     * @brief 将菜单显示名解析为系统可操作的真实网卡名
+     * @param requestedName 传入的网卡名称，可能是显示名或真实名称
+     * @param availableNames 当前系统可用的真实网卡名列表
+     * @return 解析后的真实网卡名；无法匹配时返回原始输入
+     */
+    static QString resolveInterfaceName(const QString &requestedName, const QStringList &availableNames);
+
+    /**
      * @brief 验证配置数据有效性
      * @param config 要验证的配置
      * @return 配置是否有效
      */
     bool validateConfig(const QVariantMap &config) const;
+
+    //版本管理方法组 ------------------------------------------------
+
+    /**
+     * @brief 获取配置的历史版本列表
+     * @param configName 配置名称
+     * @return 版本列表(时间戳->配置数据)
+     */
+    QMap<QDateTime, QVariantMap> getConfigHistory(const QString &configName) const;
+
+    /**
+     * @brief 回滚配置到指定版本
+     * @param configName 配置名称
+     * @param timestamp 版本时间戳
+     * @return 回滚是否成功
+     */
+    bool rollbackConfig(const QString &configName, const QDateTime &timestamp);
+
+    /**
+     * @brief 获取配置版本数量
+     * @param configName 配置名称
+     * @return 版本数量
+     */
+    int getConfigVersionCount(const QString &configName) const;
 
 signals:
     /**
@@ -148,14 +182,19 @@ signals:
 
 private:
     //成员变量 -----------------------------------------------------
-    mutable QMutex m_mutex;                //互斥锁(保证线程安全)
-    QMap<QString, QVariantMap> m_configs;  //配置存储(配置名->配置数据)
-    QString m_configFile;                  //配置文件路径
-    QStringList m_cachedInterfaces;        //缓存的网络接口列表
-    QDateTime m_lastInterfaceUpdate;       //最后更新接口列表的时间
+    mutable QMutex m_mutex;                              //互斥锁(保证线程安全)
+    QMap<QString, QVariantMap> m_configs;                //配置存储(配置名->配置数据)
+    QString m_configFile;                                //配置文件路径
+    QString m_historyFile;                               //历史版本文件路径
+    QString m_networkBackupFile;
+    QStringList m_cachedInterfaces;                      //缓存的网络接口列表
+    QDateTime m_lastInterfaceUpdate;                     //最后更新接口列表的时间
+    QMap<QString, QMap<QDateTime, QVariantMap>> m_configHistory; //配置历史(配置名->(时间戳->配置))
+    QMap<QString, QList<QVariantMap>> m_networkBackups;
 
     bool m_isAdmin;                        //当前是否管理员权限
     bool m_isSaving;                       //是否正在保存配置(防止重入)
+    const int m_maxHistoryVersions = 10;   //每个配置保留的最大版本数
 
     //私有方法 -----------------------------------------------------
 
@@ -170,6 +209,27 @@ private:
      * @return 保存是否成功
      */
     bool internalSaveConfigs();
+
+    /**
+     * @brief 加载配置历史
+     * @return 加载是否成功
+     */
+    bool loadHistory();
+
+    /**
+     * @brief 保存配置历史
+     * @return 保存是否成功
+     */
+    bool saveHistory();
+    void loadNetworkBackups();
+    bool saveNetworkBackups() const;
+
+    /**
+     * @brief 保存配置版本到历史记录
+     * @param configName 配置名称
+     * @param config 配置数据
+     */
+    void saveConfigVersion(const QString &configName, const QVariantMap &config);
 
     /**
      * @brief 执行netsh命令并获取输出

@@ -4,6 +4,9 @@
 #include <QWidget>
 #include <QPoint>
 #include <QColor>
+#include <QScopedPointer>
+
+class QTimer;
 
 /**
  * @brief 浮动窗口类，实现可拖动、可自定义的悬浮窗口
@@ -21,6 +24,11 @@ public:
      * @param parent 父窗口指针
      */
     explicit FloatWindow(QWidget *parent = nullptr);
+    
+    /**
+     * @brief 析构函数
+     */
+    ~FloatWindow();
 
     //外观设置方法组 -----------------------------------------------
 
@@ -37,13 +45,18 @@ public:
      * @return pixmap 背景图标
      */
     QPixmap getBackgroundPixmap();
-
+public:
     /**
      * @brief 清除背景图标
      *
      * 清除后恢复自绘制的背景
      */
     void clearBackgroundPixmap();
+
+    void showProgress(int percentage, const QString &statusText);
+    void hideProgress();
+    void startLoading();
+    void stopLoading();
 
     /**
      * @brief 检查是否有背景图标
@@ -181,6 +194,15 @@ private:
     bool m_hovered;             //鼠标是否悬停在窗口上
     QPixmap m_backgroundPixmap;  //背景图标
     bool m_hasBackgroundPixmap;   //是否有背景图标
+    bool m_hiddenAtEdge;          //是否贴边隐藏
+    QRect m_fullGeometry;         //隐藏前的完整位置
+    Qt::Edge m_hiddenEdge;         //隐藏的边缘方向
+    bool m_showProgress;                    //是否显示进度条
+    int m_progressPercentage;                //进度百分比
+    QString m_progressText;                  //进度状态文本
+    bool m_isLoading;                       //是否正在加载
+    int m_loadingAngle;                     //加载动画旋转角度
+    QScopedPointer<QTimer> m_loadingTimer;  //加载动画定时器（智能指针管理）
 
     /**
      * @brief 更新悬停状态
@@ -189,6 +211,20 @@ private:
      * 用于处理鼠标进入/离开时的视觉效果变化
      */
     void updateHoverState(bool hovered);
+
+    /**
+     * @brief 屏幕边缘吸附
+     *
+     * 当窗口靠近屏幕边缘(20px内)时，自动吸附到最近的边缘
+     */
+    void snapToScreenEdge();
+    
+    /**
+     * @brief 检查并贴边隐藏
+     *
+     * 当窗口贴边且鼠标离开时，只显示10px边缘
+     */
+    void checkAndHideAtEdge();
 };
 
 #endif //FLOATWINDOW_H

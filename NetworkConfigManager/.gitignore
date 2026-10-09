@@ -1,0 +1,8 @@
+build_auto/
+releases/
+tests/debug/
+tests/release/
+tests/Makefile*
+tests/.qmake.stash
+tests/*.moc
+tests/test-results.txt

@@ -1,8 +1,8 @@
-QT       += core gui network
+QT       += core gui network concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++14
 
 QMAKE_CXXFLAGS += -Wall -Wextra -Werror=return-type #函数应有返回值而没有时报编译错误
 
@@ -30,14 +30,24 @@ SOURCES += \
     floatwindow.cpp \
     main.cpp \
     mainwindow.cpp \
-    networkinterfacemanager.cpp
+    networkinterfacemanager.cpp \
+    networkinfocollector.cpp \
+    networktoolsdialog.cpp \
+    networkscandialog.cpp \
+    networktrafficmonitor.cpp \
+    networkdiagnosticsdialog.cpp
 
 HEADERS += \
     configmanager.h \
     floatwindow.h \
     logger.h \
     mainwindow.h \
-    networkinterfacemanager.h
+    networkinterfacemanager.h \
+    networkinfocollector.h \
+    networktoolsdialog.h \
+    networkscandialog.h \
+    networktrafficmonitor.h \
+    networkdiagnosticsdialog.h
 
 FORMS += \
     mainwindow.ui
@@ -51,3 +61,4 @@ RESOURCES += \
     resources.qrc
 
 LIBS += -lDbgHelp
+LIBS += -lIphlpapi -lWs2_32

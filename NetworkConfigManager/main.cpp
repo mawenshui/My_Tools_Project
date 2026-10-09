@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <DbgHelp.h>
 #include <QMessageBox>
+#include <QDir>
+#include <QStandardPaths>
 #include <exception>
 #include <QSharedMemory>
 #include "Logger.h"
@@ -10,8 +12,10 @@
 // 全局异常处理器
 LONG WINAPI GlobalExceptionHandler(PEXCEPTION_POINTERS pExceptionInfo)
 {
-    // 生成minidump文件
-    HANDLE hDumpFile = CreateFile(L"crash.dmp", GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    QString dumpPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QDir().mkpath(dumpPath);
+    dumpPath += "/crash.dmp";
+    HANDLE hDumpFile = CreateFile(reinterpret_cast<LPCWSTR>(dumpPath.utf16()), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
     if(hDumpFile != INVALID_HANDLE_VALUE)
     {
         MINIDUMP_EXCEPTION_INFORMATION dumpInfo;
@@ -22,14 +26,13 @@ LONG WINAPI GlobalExceptionHandler(PEXCEPTION_POINTERS pExceptionInfo)
                           MiniDumpNormal, &dumpInfo, nullptr, nullptr);
         CloseHandle(hDumpFile);
     }
-    // 记录异常信息
     QString errorMsg = QString("程序发生严重错误，错误代码: 0x%1").arg(pExceptionInfo->ExceptionRecord->ExceptionCode, 8, 16, QLatin1Char('0'));
     Logger::critical(errorMsg);
-    // 显示错误对话框
     QMessageBox::critical(nullptr, "程序崩溃",
-                          "程序发生严重错误，即将退出。\n"
-                          "错误信息已记录到日志文件。\n"
-                          "请将crash.dmp文件发送给开发者。");
+                          QString("程序发生严重错误，即将退出。\n"
+                                  "错误信息已记录到日志文件。\n"
+                                  "崩溃转储已保存到:\n%1\n"
+                                  "请将crash.dmp文件发送给开发者。").arg(dumpPath));
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -85,7 +88,7 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     // 配置应用程序属性
     a.setApplicationName("NetworkConfigManager");
-    a.setApplicationVersion("2.1.0");
+    a.setApplicationVersion("2.2.0");
     a.setQuitOnLastWindowClosed(false);
     // 设置Qt消息处理
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext & context, const QString & msg)
@@ -111,9 +114,25 @@ int main(int argc, char* argv[])
         }
     });
     // 配置日志系统
-    Logger::instance()->init();
+    Logger::instance().init();
     Logger::setMaxSizeMB(10);  // 设置日志文件最大10MB
     Logger::setBackupCount(5); // 保留5个备份文件
+    // 单实例检查（在创建主窗口之前，锁需要在整个程序生命周期保持存活）
+    QSharedMemory singleInstanceLock(APP_NAME);
+    if(singleInstanceLock.attach())
+    {
+        Logger::warning("检测到程序已经在运行中");
+        QMessageBox::critical(nullptr, "错误", "程序已经在运行中");
+        return 0;
+    }
+    if(!singleInstanceLock.create(1))
+    {
+        Logger::critical("无法创建单实例锁");
+        QMessageBox::critical(nullptr, "错误", "无法创建单实例锁");
+        return -1;
+    }
+    Logger::info("单实例检查通过");
+
     try
     {
         //创建主窗口实例

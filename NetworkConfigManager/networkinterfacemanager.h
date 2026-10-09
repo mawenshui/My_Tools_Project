@@ -4,6 +4,14 @@
 #include <QObject>
 #include <QStringList>
 #include <QProcess>
+#include <QList>
+#include <QVariantMap>
+
+struct InterfaceDetail {
+    QString name;
+    QString adminStatus;
+    QString connStatus;
+};
 
 class NetworkInterfaceManager : public QObject
 {
@@ -11,27 +19,42 @@ class NetworkInterfaceManager : public QObject
 public:
     explicit NetworkInterfaceManager(QObject *parent = nullptr);
     
-    // 获取所有网络接口列表
     static QStringList getNetworkInterfaces();
-    
-    // 启用网络接口
     static bool enableInterface(const QString &interfaceName);
-    
-    // 禁用网络接口
     static bool disableInterface(const QString &interfaceName);
-    
-    // 获取接口状态
     static QString getInterfaceStatus(const QString &interfaceName);
-    
-    // 获取接口管理状态(已启用/已禁用)
     static QString getInterfaceAdminStatus(const QString &interfaceName);
-    
-    // 获取接口连接状态(已连接/已断开连接) 
     static QString getInterfaceConnStatus(const QString &interfaceName);
-    
+    static QList<InterfaceDetail> getAllInterfaceDetails();
+    static QVariantMap captureConfig(const QString &interfaceName);
+
 private:
-    // 执行netsh命令
     static QString executeNetshCommand(const QString &command);
+    static QString executePowerShellCommand(const QString &command);
+
+    static QString getPrimaryBackend();
+
+    static QList<InterfaceDetail> getInterfaceDetailsViaNetsh();
+    static QList<InterfaceDetail> getInterfaceDetailsViaPowerShell();
+
+    static QString execProcess(const QString &program, const QStringList &args, int timeoutMs);
 };
 
-#endif // NETWORKINTERFACEMANAGER_H
+struct IpHelperAdapterInfo {
+    QString name;
+    QString ipAddress;
+    QString subnetMask;
+    QString gateway;
+    QString primaryDns;
+    QString dhcpEnabled;
+    quint64 adapterIndex;
+    QByteArray macAddress;
+};
+
+class IpHelperWrapper {
+public:
+    static bool getAdaptersInfo(QList<IpHelperAdapterInfo> &adapters);
+    static QString formatMacAddress(const unsigned char *mac, int len);
+};
+
+#endif

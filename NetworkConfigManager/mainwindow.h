@@ -16,16 +16,31 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QPropertyAnimation>
+#include <QShortcut>
+#include <QProgressBar>
+#include <QScopedPointer>
+#include <QFileDialog>
 
 #include "Logger.h"
 #include "configmanager.h"
 #include "floatwindow.h"
 #include "networkinterfacemanager.h"
+#include "networkinfocollector.h"
 
-//常量定义
-const QString MAIN_WINDOW_TITLE = "IP配置管理器(by:mws)";  //主窗口标题
-const QString APP_NAME = "NetworkConfigManager";   //应用名称
-const QString posConfigPath = "config/posConfig.ini";
+constexpr const char* MAIN_WINDOW_TITLE = "IP配置管理器(by:mws)";
+constexpr const char* APP_NAME = "NetworkConfigManager";
+constexpr const char* posConfigPath = "config/posConfig.ini";
+
+enum class ConfigResult { Success, Failure, Unchanged };
+
+struct HistoryItem {
+    QDateTime timestamp;
+    QString configName;
+    ConfigResult result;
+    QString message;
+    QVariantMap beforeConfig;  // 配置变更前的内容
+    QVariantMap afterConfig;   // 配置变更后的内容
+};
 
 namespace Ui
 {
@@ -76,6 +91,7 @@ private slots:
 
     //IP方法相关槽函数
     void onIpMethodToggled(bool checked);  //IP获取方式切换(DHCP/静态)
+    void onCustomDnsToggled(bool checked); //自定义DNS复选框切换
 
     //浮动窗口相关槽函数
     void toggleFloatWindow(bool visible);  //切换浮动窗口显示状态
@@ -91,13 +107,17 @@ private slots:
 
     void on_networkInterfaceCombo_currentTextChanged(const QString &arg1);
 
+private slots:
+    void onEnableCompleted(bool success, const QString &interface, const QString &message);
+    void onDisableCompleted(bool success, const QString &interface, const QString &message);
+
 private:
     Ui::MainWindow* ui;              //UI界面指针
     ConfigManager* m_configManager;  //配置管理器
+    NetworkInfoCollector* m_networkInfoCollector;  //网络信息收集器
     QMenu* m_quickMenu;              //快速菜单
     FloatWindow* m_floatWindow;      //浮动窗口
     QSystemTrayIcon* m_trayIcon;     //系统托盘图标
-    QSharedMemory m_singleInstanceLock;  //共享内存锁(用于单实例检查)
 
     //网卡管理控件
     QComboBox* m_networkInterfaceCombo;
@@ -112,6 +132,29 @@ private:
     QString m_currentInterface; //当前选中的网络接口
     bool m_lastConfigSuccess;  //上次配置是否成功
     QLabel* m_statusIndicator; //状态指示灯
+    QPixmap m_defaultIndicator;  //默认灰色指示灯图像
+
+    //加载遮罩
+    QWidget* m_loadingOverlay;             //加载遮罩层
+    QLabel* m_loadingIcon;                 //加载图标
+    QLabel* m_loadingText;                 //加载文字
+    QProgressBar* m_progressBar;           //进度条
+    QLabel* m_stepIndicator;               //步骤指示器
+    QScopedPointer<QTimer> m_loadingTimer; //加载动画定时器（智能指针管理）
+    int m_loadingAngle;                    //加载动画角度
+    
+    //网络配置监控
+    QScopedPointer<QTimer> m_networkMonitorTimer; //网络配置监控定时器
+    QString m_lastIPAddress;                  //上次记录的IP地址
+
+    //菜单缓存
+    QVariantMap m_menuCache;                  //菜单配置缓存
+    QDateTime m_menuCacheTime;                //缓存时间戳
+    const int m_menuCacheTimeout = 30000;     //缓存超时时间(毫秒)
+
+    //历史记录
+    QList<HistoryItem> m_configHistory;
+    QListWidget* m_historyListWidget;
 
     //UI初始化相关方法
     void setupUi();            //初始化UI组件
@@ -121,10 +164,7 @@ private:
 
     //配置操作相关方法
     void clearFields();        //清空表单字段
-    bool validateIpConfig(const QVariantMap &config);  //验证IP配置有效性
-    QVariantMap getCurrentNetworkConfig(const QString &InterfaceName);  //获取当前网络配置
-    QVariantList getAllNetworkConfigs();  //获取所有网络配置
-    bool compareConfigs(const QVariantMap &current, const QVariantMap &saved);  //比较两个配置
+    void buildInterfaceConfigMenu(QMenu *menu, bool includeManageActions);  //构建接口配置菜单（公共方法）
 
     //工具方法
     QString getActiveConfigName() const;  //获取活动配置名称
@@ -135,7 +175,24 @@ private:
     QVariantMap getCurrentFormConfig() const;  //获取当前表单配置
     bool isDhcpEnabled(const QString &dhcpOutput);  //检查DHCP是否启用
     void restoreWindowState();
-    bool checkSingleInstance();
+    void addHistoryItem(const QString &configName, ConfigResult result, const QString &message);
+    void addHistoryItem(const QString &configName, ConfigResult result, const QString &message, 
+                        const QVariantMap &beforeConfig, const QVariantMap &afterConfig);
+    void updateHistoryDisplay();
+    QString formatConfigDiff(const QVariantMap &before, const QVariantMap &after);
+    void updateLoadingIcon();
+    void showLoading(const QString &text);
+    void showLoading(const QString &text, int progress, int currentStep, int totalSteps);
+    void hideLoading();
+    void resizeEvent(QResizeEvent *event) override;
+    void checkNetworkChanges();
+    void onExportLogs();
+    
+    //菜单缓存相关
+    bool isMenuCacheValid() const;
+    void invalidateMenuCache();
+    void updateMenuCache();
+    QVariantMap getCachedInterfaceConfig(const QString &interfaceName);
 
     //保存悬浮窗坐标
     void saveFloatWindowPosition();
@@ -150,7 +207,13 @@ private:
     void onDisableInterface(const QString &interfaceName);
     void updateInterfaceControls();
 
-    void showConfigResult(bool success, const QString &message);
+    void showConfigResult(ConfigResult result, const QString &message);
+
+    //实时验证槽函数
+    void onInputTextChanged();
+    //导入导出槽函数
+    void onImportConfig();
+    void onExportConfig();
 
 
     QSettings* m_settings = nullptr; // 改为指针以便灵活控制

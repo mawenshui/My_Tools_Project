@@ -36,13 +36,13 @@ public:
 
     /**
      * @brief 获取Logger单例实例
-     * @return Logger单例指针
+     * @return Logger单例引用
      *
-     * 使用双重检查锁定模式实现线程安全的单例
+     * 使用局部静态变量实现线程安全的单例，避免内存泄漏
      */
-    static Logger* instance()
+    static Logger& instance()
     {
-        static Logger* instance = new Logger();
+        static Logger instance;
         return instance;
     }
 
@@ -119,8 +119,8 @@ public:
      */
     static void setMaxSizeMB(qint64 maxSizeMB)
     {
-        QMutexLocker locker(&instance()->m_mutex);
-        instance()->m_maxSizeBytes = maxSizeMB * 1024 * 1024;
+        QMutexLocker locker(&instance().m_mutex);
+        instance().m_maxSizeBytes = maxSizeMB * 1024 * 1024;
     }
 
     /**
@@ -129,8 +129,8 @@ public:
      */
     static void setBackupCount(int count)
     {
-        QMutexLocker locker(&instance()->m_mutex);
-        instance()->m_backupCount = qMax(1, count);
+        QMutexLocker locker(&instance().m_mutex);
+        instance().m_backupCount = qMax(1, count);
     }
 
     /**
@@ -232,7 +232,7 @@ public:
      */
     static void debug(const QString& message)
     {
-        instance()->log(DEBUG, message);
+        instance().log(DEBUG, message);
     }
 
     /**
@@ -241,7 +241,7 @@ public:
      */
     static void info(const QString& message)
     {
-        instance()->log(INFO, message);
+        instance().log(INFO, message);
     }
 
     /**
@@ -250,7 +250,7 @@ public:
      */
     static void warning(const QString& message)
     {
-        instance()->log(WARNING, message);
+        instance().log(WARNING, message);
     }
 
     /**
@@ -259,7 +259,7 @@ public:
      */
     static void error(const QString& message)
     {
-        instance()->log(ERROR, message);
+        instance().log(ERROR, message);
     }
 
     /**
@@ -268,7 +268,7 @@ public:
      */
     static void critical(const QString& message)
     {
-        instance()->log(CRITICAL, message);
+        instance().log(CRITICAL, message);
     }
 
     /**
@@ -286,7 +286,165 @@ public:
         }
     }
 
+    /**
+     * @brief 获取当前日志文件路径
+     * @return 日志文件路径
+     */
+    static QString getLogFilePath()
+    {
+        return instance().m_logFile.fileName();
+    }
+
+    /**
+     * @brief 获取日志目录路径
+     * @return 日志目录路径
+     */
+    static QString getLogDirectory()
+    {
+        QString filePath = instance().m_logFile.fileName();
+        if(filePath.isEmpty())
+        {
+            return QDir::currentPath() + "/logs";
+        }
+        return QFileInfo(filePath).dir().absolutePath();
+    }
+
+    /**
+     * @brief 导出日志文件到指定位置
+     * @param targetDir 目标目录
+     * @return 是否导出成功
+     */
+    static bool exportLogs(const QString& targetDir)
+    {
+        QMutexLocker locker(&instance().m_mutex);
+        
+        QDir target(targetDir);
+        if(!target.exists())
+        {
+            if(!target.mkpath(targetDir))
+            {
+                return false;
+            }
+        }
+        
+        QString logDir = getLogDirectory();
+        QDir sourceDir(logDir);
+        QStringList filters;
+        filters << "*.log" << "*.log.*";
+        QStringList logFiles = sourceDir.entryList(filters, QDir::Files);
+        
+        bool success = true;
+        foreach(const QString& fileName, logFiles)
+        {
+            QString sourcePath = logDir + "/" + fileName;
+            QString targetPath = targetDir + "/" + fileName;
+            
+            if(QFile::exists(targetPath))
+            {
+                QFile::remove(targetPath);
+            }
+            
+            if(!QFile::copy(sourcePath, targetPath))
+            {
+                success = false;
+            }
+        }
+        
+        return success;
+    }
+
+    //性能监控方法组 ------------------------------------------------
+    
+    /**
+     * @brief 记录操作开始时间
+     * @param operationName 操作名称
+     */
+    static void startOperation(const QString& operationName)
+    {
+        instance().m_operationStartTimes[operationName] = QDateTime::currentMSecsSinceEpoch();
+    }
+
+    /**
+     * @brief 记录操作结束时间并记录日志
+     * @param operationName 操作名称
+     */
+    static void endOperation(const QString& operationName)
+    {
+        QMutexLocker locker(&instance().m_mutex);
+        auto it = instance().m_operationStartTimes.find(operationName);
+        if (it != instance().m_operationStartTimes.end()) {
+            qint64 startTime = it.value();
+            qint64 endTime = QDateTime::currentMSecsSinceEpoch();
+            qint64 duration = endTime - startTime;
+            instance().m_operationStartTimes.erase(it);
+            
+            // 记录到日志
+            Logger::info(tr("操作完成: %1, 耗时: %2 ms").arg(operationName).arg(duration));
+            
+            // 更新统计信息
+            auto statIt = instance().m_operationStats.find(operationName);
+            if (statIt == instance().m_operationStats.end()) {
+                OperationStats stats;
+                stats.count = 1;
+                stats.totalTime = duration;
+                stats.minTime = duration;
+                stats.maxTime = duration;
+                instance().m_operationStats[operationName] = stats;
+            } else {
+                OperationStats& stats = statIt.value();
+                stats.count++;
+                stats.totalTime += duration;
+                stats.minTime = qMin(stats.minTime, duration);
+                stats.maxTime = qMax(stats.maxTime, duration);
+            }
+        }
+    }
+
+    /**
+     * @brief 获取操作统计信息
+     * @param operationName 操作名称
+     * @return 统计信息字符串
+     */
+    static QString getOperationStats(const QString& operationName)
+    {
+        QMutexLocker locker(&instance().m_mutex);
+        auto it = instance().m_operationStats.find(operationName);
+        if (it == instance().m_operationStats.end()) {
+            return tr("未找到操作: %1").arg(operationName);
+        }
+        const OperationStats& stats = it.value();
+        double avgTime = stats.count > 0 ? (double)stats.totalTime / stats.count : 0;
+        return tr("操作: %1\n调用次数: %2\n总耗时: %3 ms\n平均耗时: %4 ms\n最小耗时: %5 ms\n最大耗时: %6 ms")
+            .arg(operationName)
+            .arg(stats.count)
+            .arg(stats.totalTime)
+            .arg(QString::number(avgTime, 'f', 2))
+            .arg(stats.minTime)
+            .arg(stats.maxTime);
+    }
+
+    /**
+     * @brief 重置所有操作统计信息
+     */
+    static void resetOperationStats()
+    {
+        QMutexLocker locker(&instance().m_mutex);
+        instance().m_operationStats.clear();
+        instance().m_operationStartTimes.clear();
+        Logger::info(tr("操作统计信息已重置"));
+    }
+
 private:
+    /**
+     * @brief 操作统计结构体
+     */
+    struct OperationStats {
+        int count = 0;
+        qint64 totalTime = 0;
+        qint64 minTime = 0;
+        qint64 maxTime = 0;
+    };
+
     /**
      * @brief 私有构造函数
      * @param parent 父对象
@@ -307,13 +465,17 @@ private:
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 
-    //成员变量 --------------------------------------------------------
+        //成员变量 --------------------------------------------------------
     QFile m_logFile;        //日志文件对象
     QFile m_consoleFile;    //控制台文件对象
     QTextStream m_logStream; //日志文本流
     QMutex m_mutex;         //互斥锁，保证线程安全
     qint64 m_maxSizeBytes = 5 * 1024 * 1024; // 默认5MB
     int m_backupCount = 3;  // 默认保留3个备份
+    
+    //性能监控成员变量
+    QMap<QString, qint64> m_operationStartTimes;  //操作开始时间
+    QMap<QString, OperationStats> m_operationStats; //操作统计信息
 };
 
 #endif //LOGGER_H
