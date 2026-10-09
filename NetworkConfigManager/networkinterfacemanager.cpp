@@ -82,8 +82,11 @@ QVariantMap NetworkInterfaceManager::captureConfig(const QString &interfaceName)
             const QStringList manualDns = settings.value("NameServer").toString()
                                       .split(QRegularExpression("[,\\s]+"), QString::SkipEmptyParts);
             config["custom_dns"] = !manualDns.isEmpty();
-            config["primary_dns"] = manualDns.value(0);
-            config["secondary_dns"] = manualDns.value(1);
+            if(!manualDns.isEmpty())
+            {
+                config["primary_dns"] = manualDns.value(0);
+                config["secondary_dns"] = manualDns.value(1);
+            }
         }
         break;
     }

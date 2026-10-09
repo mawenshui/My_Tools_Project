@@ -1,14 +1,18 @@
 #include "../mainwindow.h"
 #include "../networkdiagnosticsdialog.h"
+#include "../networkinterfacemanager.h"
 #include "../networkscandialog.h"
 #include "../networktoolsdialog.h"
 
 #include <QApplication>
+#include <QComboBox>
 #include <QDialog>
+#include <iostream>
 #include <QElapsedTimer>
 #include <QHostAddress>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QTabWidget>
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -52,6 +56,42 @@ int main(int argc, char *argv[])
     if(!checkDialog("latencyTestButton", "NetworkDiagnosticsDialog", 0)) return 6;
     if(!checkDialog("speedTestButton", "NetworkDiagnosticsDialog", 1)) return 7;
 
+    QString routed, unrouted;
+    for(const InterfaceDetail &detail : NetworkInterfaceManager::getAllInterfaceDetails())
+    {
+        const QVariantMap config = NetworkInterfaceManager::captureConfig(detail.name);
+        if(!config.value("ip").toString().isEmpty() &&
+           !config.value("gateway").toString().isEmpty() &&
+           !config.value("primary_dns").toString().isEmpty()) routed = detail.name;
+        else if(!config.value("ip").toString().isEmpty()) unrouted = detail.name;
+    }
+    if(!routed.isEmpty() && !unrouted.isEmpty())
+    {
+        NetworkDiagnosticsDialog fallback(unrouted);
+        const QVariantMap selectedConfig = NetworkInterfaceManager::captureConfig(
+            fallback.findChild<QComboBox *>("latencyInterface")->currentText());
+        if(selectedConfig.value("gateway").toString().isEmpty() ||
+           selectedConfig.value("primary_dns").toString().isEmpty())
+        { std::cerr << "Route fallback: source=" << unrouted.toLocal8Bit().constData()
+                    << " selected=" << fallback.findChild<QComboBox *>("latencyInterface")->currentText().toLocal8Bit().constData()
+                    << " routed=" << routed.toLocal8Bit().constData() << '\n'; return 11; }
+        if(qEnvironmentVariableIsSet("NETWORKCONFIGMANAGER_TEST_LATENCY"))
+        {
+            QPushButton *detect = nullptr;
+            for(QPushButton *button : fallback.findChildren<QPushButton *>())
+                if(button->text() == QStringLiteral("开始检测")) detect = button;
+            if(!detect) return 13;
+            detect->click();
+            QElapsedTimer latencyWait;
+            latencyWait.start();
+            while(latencyWait.elapsed() < 12000 && !detect->isEnabled())
+            { app.processEvents(); QThread::msleep(10); }
+            const QString result = fallback.findChild<QTextEdit *>("latencyOutput")->toPlainText();
+            if(!detect->isEnabled() || result.contains(QStringLiteral("未提供地址")))
+            { std::cerr << "Latency result: " << result.toLocal8Bit().constData() << '\n'; return 13; }
+        }
+    }
+
     QTcpServer server;
     if(!server.listen(QHostAddress::LocalHost)) return 8;
     QObject::connect(&server, &QTcpServer::newConnection, &server, [&]() {
@@ -88,6 +128,25 @@ int main(int argc, char *argv[])
     }
     if(speed->text() == QStringLiteral("停止测速")) speed->click();
     if(!output->toPlainText().contains(QStringLiteral("平均")) ||
-       !output->toPlainText().contains(QStringLiteral("已下载"))) return 10;
+       !output->toPlainText().contains(QStringLiteral("已下载")))
+    { std::cerr << "Speed result: " << output->toPlainText().toLocal8Bit().constData() << '\n'; return 10; }
+    speed->click();
+    wait.restart();
+    while(wait.elapsed() < 1000) { app.processEvents(); QThread::msleep(10); }
+    if(speed->text() == QStringLiteral("停止测速")) speed->click();
+    if(!output->toPlainText().contains(QStringLiteral("平均"))) return 14;
+    if(qEnvironmentVariableIsSet("NETWORKCONFIGMANAGER_TEST_HTTPS"))
+    {
+        url->setText(QStringLiteral("https://mirrors.aliyun.com/ubuntu/ls-lR.gz"));
+        speed->click();
+        wait.restart();
+        while(wait.elapsed() < 7000 && speed->text() == QStringLiteral("停止测速"))
+        { app.processEvents(); QThread::msleep(10); }
+        if(speed->text() == QStringLiteral("停止测速")) speed->click();
+        const auto transferred = QRegularExpression(QStringLiteral("已下载 ([0-9.]+) MiB"))
+                                     .match(output->toPlainText());
+        if(!transferred.hasMatch() || transferred.captured(1).toDouble() <= 0.1)
+        { std::cerr << "HTTPS result: " << output->toPlainText().toLocal8Bit().constData() << '\n'; return 12; }
+    }
     return 0;
 }

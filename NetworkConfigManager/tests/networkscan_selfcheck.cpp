@@ -3,6 +3,7 @@
 #include <QHostAddress>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QProgressBar>
 #include <QTableWidget>
 #include <QTcpServer>
 #include <QThread>
@@ -26,9 +27,11 @@ int main(int argc, char *argv[])
     inputs[0]->setText("127.0.0.1");
     inputs[1]->setText(QString::number(server.serverPort()));
     const auto start = dialog.findChild<QPushButton *>();
+    const auto progress = dialog.findChild<QProgressBar *>("scanProgress");
     const auto results = dialog.findChild<QTableWidget *>();
-    if(!start || !results) return 9;
+    if(!start || !results || !progress) return 9;
     start->click();
+    if(progress->isHidden() || progress->maximum() != 1) return 11;
     QElapsedTimer wait;
     wait.start();
     while(wait.elapsed() < 6000 && results->rowCount() == 0)
@@ -38,5 +41,6 @@ int main(int argc, char *argv[])
     }
     if(results->rowCount() != 1 || results->item(0, 0)->text() != "127.0.0.1" ||
        results->item(0, 3)->text() != QString::number(server.serverPort())) return 10;
+    if(progress->value() != 1) return 12;
     return 0;
 }

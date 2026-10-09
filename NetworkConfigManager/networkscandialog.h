@@ -10,6 +10,7 @@ class QLineEdit;
 class QTableWidget;
 class QPushButton;
 class QLabel;
+class QProgressBar;
 
 struct ScanResult
 {
@@ -37,6 +38,8 @@ private:
     QTableWidget *m_results;
     QPushButton *m_start;
     QLabel *m_status;
+    QProgressBar *m_progress;
+    int m_completed = 0;
     QFutureWatcher<ScanResult> m_watcher;
 };
 

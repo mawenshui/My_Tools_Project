@@ -7,9 +7,6 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
 #include <QProcess>
 #include <QPushButton>
 #include <QTabWidget>
@@ -21,6 +18,10 @@
 #include <QVBoxLayout>
 #include <QMetaObject>
 #include <algorithm>
+#ifdef _WIN32
+#include <windows.h>
+#include <winhttp.h>
+#endif
 
 namespace {
 QString probe(const QString &label, const QString &target, const QString &source, quint16 fallbackPort)
@@ -59,6 +60,52 @@ QString probe(const QString &label, const QString &target, const QString &source
             .arg(label, target).arg(*minmax.first).arg(total / times.size())
             .arg(*minmax.second).arg(lost * 100 / 3);
 }
+
+#ifdef _WIN32
+QString downloadOnce(const QUrl &url, std::atomic<bool> &running, std::atomic<qint64> &bytes,
+                     const std::atomic<int> &runId, int currentRun)
+{
+    const QString host = QString::fromLatin1(QUrl::toAce(url.host()));
+    QString path = url.path(QUrl::FullyEncoded);
+    if(path.isEmpty()) path = "/";
+    if(url.hasQuery()) path += "?" + url.query(QUrl::FullyEncoded);
+    const HINTERNET session = WinHttpOpen(L"NetworkConfigManager/2.2.1", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+                                           WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+    if(!session) return QObject::tr("WinHTTP 初始化失败（%1）").arg(GetLastError());
+    WinHttpSetTimeouts(session, 3000, 3000, 3000, 3000);
+    const HINTERNET connection = WinHttpConnect(session, reinterpret_cast<LPCWSTR>(host.utf16()),
+                                                 static_cast<INTERNET_PORT>(url.port(url.scheme() == "https" ? 443 : 80)), 0);
+    if(!connection) { const DWORD error = GetLastError(); WinHttpCloseHandle(session); return QObject::tr("连接失败（%1）").arg(error); }
+    const HINTERNET request = WinHttpOpenRequest(connection, L"GET", reinterpret_cast<LPCWSTR>(path.utf16()),
+                                                nullptr, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
+                                                url.scheme() == "https" ? WINHTTP_FLAG_SECURE : 0);
+    if(!request) { const DWORD error = GetLastError(); WinHttpCloseHandle(connection); WinHttpCloseHandle(session); return QObject::tr("请求失败（%1）").arg(error); }
+    QString error;
+    if(!WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0) ||
+       !WinHttpReceiveResponse(request, nullptr))
+        error = QObject::tr("下载连接失败（%1）").arg(GetLastError());
+    else
+    {
+        DWORD status = 0, size = sizeof(status);
+        if(WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                               WINHTTP_HEADER_NAME_BY_INDEX, &status, &size, WINHTTP_NO_HEADER_INDEX) && status >= 400)
+            error = QObject::tr("HTTP %1").arg(status);
+        char buffer[64 * 1024];
+        while(error.isEmpty() && running && runId == currentRun && bytes < 100ll * 1024 * 1024)
+        {
+            DWORD received = 0;
+            if(!WinHttpReadData(request, buffer, sizeof(buffer), &received))
+            { error = QObject::tr("下载中断（%1）").arg(GetLastError()); break; }
+            if(!received) break;
+            if(runId == currentRun) bytes += received;
+        }
+    }
+    WinHttpCloseHandle(request);
+    WinHttpCloseHandle(connection);
+    WinHttpCloseHandle(session);
+    return error;
+}
+#endif
 }
 
 NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName, QWidget *parent,
@@ -68,7 +115,7 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
       m_latencyOutput(new QTextEdit(this)), m_speedOutput(new QTextEdit(this)),
       m_latencyButton(new QPushButton(tr("开始检测"), this)),
       m_speedButton(new QPushButton(tr("开始测速"), this)),
-      m_network(new QNetworkAccessManager(this)), m_sampleTimer(new QTimer(this))
+      m_sampleTimer(new QTimer(this))
 {
     setWindowTitle(tr("网络诊断"));
     resize(650, 450);
@@ -78,13 +125,37 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
 
     auto *latencyPage = new QWidget(tabs);
     auto *latencyLayout = new QVBoxLayout(latencyPage);
+    m_interface->setObjectName("latencyInterface");
     for(const InterfaceDetail &detail : NetworkInterfaceManager::getAllInterfaceDetails())
         if(!detail.name.isEmpty()) m_interface->addItem(detail.name);
     const int selected = m_interface->findText(interfaceName);
     if(selected >= 0) m_interface->setCurrentIndex(selected);
     latencyLayout->addWidget(new QLabel(tr("目标来自当前选中网卡的网关、DNS，并检测公网 DNS。"), latencyPage));
     latencyLayout->addWidget(m_interface);
+    const QVariantMap selectedConfig = NetworkInterfaceManager::captureConfig(m_interface->currentText());
+    auto *interfaceHint = new QLabel(latencyPage);
+    if(selectedConfig.value("gateway").toString().isEmpty() ||
+       selectedConfig.value("primary_dns").toString().isEmpty())
+    {
+        for(int index = 0; index < m_interface->count(); ++index)
+        {
+            const QVariantMap candidate = NetworkInterfaceManager::captureConfig(m_interface->itemText(index));
+            if(candidate.value("ip").toString().isEmpty() ||
+               candidate.value("gateway").toString().isEmpty() ||
+               candidate.value("primary_dns").toString().isEmpty()) continue;
+            m_interface->setCurrentIndex(index);
+            if(selected >= 0 && index != selected)
+                interfaceHint->setText(tr("已自动选择有网关和 DNS 的网卡：%1（原选中：%2）")
+                                       .arg(m_interface->currentText(), interfaceName));
+            break;
+        }
+    }
+    interfaceHint->setVisible(!interfaceHint->text().isEmpty());
+    latencyLayout->addWidget(interfaceHint);
+    connect(m_interface, QOverload<int>::of(&QComboBox::currentIndexChanged), interfaceHint,
+            [interfaceHint](int) { interfaceHint->hide(); });
     latencyLayout->addWidget(m_latencyButton);
+    m_latencyOutput->setObjectName("latencyOutput");
     m_latencyOutput->setReadOnly(true);
     latencyLayout->addWidget(m_latencyOutput);
     tabs->addTab(latencyPage, tr("延迟检测"));
@@ -137,6 +208,7 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
 NetworkDiagnosticsDialog::~NetworkDiagnosticsDialog()
 {
     stopSpeed();
+    for(QThread *download : m_downloads) { download->wait(); delete download; }
     if(m_latencyThread) m_latencyThread->wait();
 }
 
@@ -174,6 +246,7 @@ void NetworkDiagnosticsDialog::startSpeed()
     if(!url.isValid() || (url.scheme() != "http" && url.scheme() != "https") || url.host().isEmpty())
     { QMessageBox::warning(this, tr("下载测速"), tr("请输入有效的 HTTP 或 HTTPS 地址。")); return; }
     m_running = true;
+    ++m_runId;
     m_speedError.clear();
     m_bytes = m_lastSampleBytes = m_lastSampleMs = 0;
     m_samples.clear();
@@ -187,29 +260,38 @@ void NetworkDiagnosticsDialog::startSpeed()
 void NetworkDiagnosticsDialog::issueDownload()
 {
     if(!m_running) return;
-    QNetworkRequest request(QUrl::fromUserInput(m_url->text().trimmed()));
-    request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
-    request.setRawHeader("Cache-Control", "no-cache");
-    QNetworkReply *reply = m_network->get(request);
-    m_replies << reply;
-    connect(reply, &QIODevice::readyRead, this, [this, reply]() {
-        m_bytes += reply->readAll().size();
-        if(m_bytes >= 100ll * 1024 * 1024) stopSpeed();
+    const QUrl url = QUrl::fromUserInput(m_url->text().trimmed());
+    const int currentRun = m_runId;
+    auto *download = QThread::create([this, url, currentRun]() {
+#ifdef _WIN32
+        while(m_running && m_runId == currentRun && m_speedClock.elapsed() < 10000 &&
+              m_bytes < 100ll * 1024 * 1024)
+        {
+            const QString error = downloadOnce(url, m_running, m_bytes, m_runId, currentRun);
+            if(error.isEmpty()) continue;
+            QMetaObject::invokeMethod(this, [this, error, currentRun]() {
+                if(!m_running || m_runId != currentRun) return;
+                m_speedError = error;
+                stopSpeed();
+            }, Qt::QueuedConnection);
+            break;
+        }
+#else
+        Q_UNUSED(url);
+#endif
     });
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        const bool failed = reply->error() != QNetworkReply::NoError;
-        if(failed && m_running) m_speedError = reply->errorString();
-        m_replies.removeOne(reply);
-        reply->deleteLater();
-        if(!m_running) return;
-        if(failed) { stopSpeed(); return; }
-        if(m_speedClock.elapsed() < 10000) issueDownload();
+    m_downloads << download;
+    connect(download, &QThread::finished, this, [this, download]() {
+        m_downloads.removeOne(download);
+        download->deleteLater();
     });
+    download->start();
 }
 
 void NetworkDiagnosticsDialog::sampleSpeed()
 {
     const qint64 elapsed = m_speedClock.elapsed();
+    if(m_bytes >= 100ll * 1024 * 1024) { stopSpeed(); return; }
     if(elapsed >= 10000) { stopSpeed(); return; }
     if(elapsed < 3000) { m_lastSampleBytes = m_bytes; m_lastSampleMs = elapsed; return; }
     const qint64 duration = elapsed - m_lastSampleMs;
@@ -229,13 +311,20 @@ void NetworkDiagnosticsDialog::stopSpeed()
 {
     if(!m_running) return;
     m_running = false;
+    ++m_runId;
     m_sampleTimer->stop();
     m_speedButton->setText(tr("开始测速"));
-    const auto replies = m_replies;
-    for(QNetworkReply *reply : replies) reply->abort();
     if(m_samples.isEmpty())
     {
-        m_speedOutput->setPlainText(m_speedError.isEmpty() ? tr("测速已停止，采样不足 3 秒。") : m_speedError);
+        if(m_bytes > 0)
+        {
+            const double mibPerSec = m_bytes * 1000.0 / std::max<qint64>(1, m_speedClock.elapsed()) / (1024.0 * 1024.0);
+            m_speedOutput->setPlainText(tr("平均 %1 MiB/s (%2 Mbps)\n已下载 %3 MiB%4")
+                .arg(mibPerSec, 0, 'f', 2).arg(mibPerSec * 8.388608, 0, 'f', 1)
+                .arg(m_bytes / (1024.0 * 1024.0), 0, 'f', 1)
+                .arg(m_speedError.isEmpty() ? QString() : "\n" + m_speedError));
+        }
+        else m_speedOutput->setPlainText(m_speedError.isEmpty() ? tr("测速已停止，未收到下载数据。") : m_speedError);
         return;
     }
     std::sort(m_samples.begin(), m_samples.end());

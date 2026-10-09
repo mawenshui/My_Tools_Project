@@ -62,3 +62,4 @@ RESOURCES += \
 
 LIBS += -lDbgHelp
 LIBS += -lIphlpapi -lWs2_32
+LIBS += -lwinhttp

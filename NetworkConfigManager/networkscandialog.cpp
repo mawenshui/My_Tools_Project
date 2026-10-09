@@ -10,6 +10,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QProcess>
+#include <QProgressBar>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSet>
@@ -159,7 +160,7 @@ QList<int> NetworkScanDialog::parsePorts(const QString &input, QString *error)
 NetworkScanDialog::NetworkScanDialog(QWidget *parent)
     : QDialog(parent), m_range(new QLineEdit(this)), m_ports(new QLineEdit(this)),
       m_results(new QTableWidget(this)), m_start(new QPushButton(tr("开始扫描"), this)),
-      m_status(new QLabel(this))
+      m_status(new QLabel(this)), m_progress(new QProgressBar(this))
 {
     setWindowTitle(tr("网段扫描"));
     resize(800, 520);
@@ -178,13 +179,26 @@ NetworkScanDialog::NetworkScanDialog(QWidget *parent)
     connect(m_results, &QTableWidget::customContextMenuRequested, this, [this](const QPoint &) {
         if(auto *item = m_results->currentItem()) QGuiApplication::clipboard()->setText(item->text());
     });
-    layout->addWidget(m_results);
     layout->addWidget(m_status);
+    m_progress->setObjectName("scanProgress");
+    m_progress->setTextVisible(true);
+    m_progress->setFormat(tr("扫描进度 %p%"));
+    m_progress->setStyleSheet("QProgressBar { border: 1px solid #3ddbff; border-radius: 4px; "
+                              "background: rgba(255, 255, 255, 0.1); text-align: center; } "
+                              "QProgressBar::chunk { background: #3ddbff; border-radius: 4px; }");
+    m_progress->hide();
+    layout->addWidget(m_progress);
+    layout->addWidget(m_results);
     connect(m_start, &QPushButton::clicked, this, &NetworkScanDialog::startScan);
     connect(&m_watcher, &QFutureWatcher<ScanResult>::resultReadyAt, this, &NetworkScanDialog::addResult);
     connect(&m_watcher, &QFutureWatcher<ScanResult>::finished, this, [this]() {
         m_start->setText(tr("开始扫描"));
-        m_status->setText(tr("扫描完成：%1 台设备").arg(m_results->rowCount()));
+        const bool cancelled = m_watcher.isCanceled();
+        m_status->setText(cancelled ? tr("扫描已停止：完成 %1/%2，发现 %3 台设备")
+                                         .arg(m_completed).arg(m_progress->maximum()).arg(m_results->rowCount())
+                                    : tr("扫描完成：发现 %1 台设备").arg(m_results->rowCount()));
+        m_progress->setValue(cancelled ? m_completed : m_progress->maximum());
+        m_status->setStyleSheet(QString());
     });
 }
 
@@ -196,21 +210,31 @@ NetworkScanDialog::~NetworkScanDialog()
 
 void NetworkScanDialog::startScan()
 {
-    if(m_watcher.isRunning()) { m_watcher.cancel(); return; }
+    if(m_watcher.isRunning()) { m_watcher.cancel(); m_status->setText(tr("正在停止扫描...")); return; }
     QString error;
     const QStringList hosts = parseHosts(m_range->text(), &error);
     if(hosts.isEmpty()) { QMessageBox::warning(this, tr("网段扫描"), error); return; }
     const QList<int> ports = parsePorts(m_ports->text(), &error);
     if(ports.isEmpty()) { QMessageBox::warning(this, tr("网段扫描"), error); return; }
     m_results->setRowCount(0);
+    m_completed = 0;
     m_start->setText(tr("停止扫描"));
-    m_status->setText(tr("扫描中：%1 个地址").arg(hosts.size()));
+    m_status->setText(tr("● 正在扫描：0/%1，发现 0 台设备").arg(hosts.size()));
+    m_status->setStyleSheet("color: #3ddbff; font-weight: 600;");
+    m_progress->setRange(0, hosts.size());
+    m_progress->setValue(0);
+    m_progress->show();
     m_watcher.setFuture(QtConcurrent::mapped(hosts, HostScanner(ports)));
 }
 
 void NetworkScanDialog::addResult(int index)
 {
     const ScanResult result = m_watcher.resultAt(index);
+    ++m_completed;
+    m_progress->setValue(m_completed);
+    m_status->setText(tr("● 正在扫描：%1/%2，发现 %3 台设备")
+                      .arg(m_completed).arg(m_progress->maximum())
+                      .arg(m_results->rowCount() + (result.responds || !result.ports.isEmpty() ? 1 : 0)));
     if(!result.responds && result.ports.isEmpty()) return;
     m_results->setSortingEnabled(false);
     const int row = m_results->rowCount();
