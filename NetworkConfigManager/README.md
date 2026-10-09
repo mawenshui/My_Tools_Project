@@ -69,15 +69,18 @@ bin/NetworkConfigManager.exe --minimized
 在 Qt 5.12.12 MinGW 64 位环境执行：
 
 ```powershell
-qmake tests/configmanager_test.pro
-mingw32-make -C tests release
-tests/release/configmanager_test.exe -txt
-qmake tests/networkscan_selfcheck.pro
-mingw32-make -C tests release
-tests/bin/networkscan_selfcheck.exe
-qmake tests/ui_selfcheck.pro
-mingw32-make -C tests release
-tests/bin/ui_selfcheck.exe
+Push-Location tests
+$env:QT_QPA_PLATFORM = 'offscreen'
+qmake configmanager_test.pro
+mingw32-make release
+.\release\configmanager_test.exe -txt
+qmake networkscan_selfcheck.pro
+mingw32-make release
+.\release\networkscan_selfcheck.exe
+qmake ui_selfcheck.pro
+mingw32-make release
+.\bin\ui_selfcheck.exe
+Pop-Location
 ```
 
 `tests/networkscan_selfcheck.pro` 验证网段/端口解析及本地 TCP 扫描；`tests/ui_selfcheck.pro` 验证主页入口、对话框默认页和本地 HTTP 下载测速。两个自检程序使用 `QT_QPA_PLATFORM=offscreen` 运行。自动化验证不修改真实网卡；IP/DNS 应用、网卡启停和备份恢复需要在隔离的管理员测试机验收。
