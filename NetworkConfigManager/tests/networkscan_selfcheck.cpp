@@ -46,5 +46,13 @@ int main(int argc, char *argv[])
     if(results->rowCount() != 1 || results->item(0, 0)->text() != "127.0.0.1" ||
        results->item(0, 3)->text() != QString::number(server.serverPort())) return 10;
     if(progress->value() != 1) return 12;
+    while(wait.elapsed() < 6000 && start->text() != QStringLiteral("开始扫描")) app.processEvents();
+    inputs[0]->setText("127.0.0.1");
+    start->click();
+    if(progress->maximum() != 1 || results->rowCount() != 0) return 19;
+    wait.restart();
+    while(wait.elapsed() < 6000 && results->rowCount() == 0)
+    { app.processEvents(); QThread::msleep(10); }
+    if(results->rowCount() != 1 || results->item(0, 3)->text() != QString::number(server.serverPort())) return 20;
     return 0;
 }
