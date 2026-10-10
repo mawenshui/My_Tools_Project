@@ -38,7 +38,7 @@ NetworkToolsDialog::NetworkToolsDialog(ConfigManager *manager, QWidget *parent)
     auto *systemButtons = new QHBoxLayout;
     auto *refresh = new QPushButton(tr("刷新网卡"), this);
     auto *connections = new QPushButton(tr("打开网络连接"), this);
-    auto *scan = new QPushButton(tr("扫描网段"), this);
+    auto *scan = new QPushButton(tr("扫描所选网段"), this);
     auto *diagnostics = new QPushButton(tr("延迟与测速"), this);
     systemButtons->addWidget(refresh);
     systemButtons->addWidget(scan);
@@ -52,6 +52,12 @@ NetworkToolsDialog::NetworkToolsDialog(ConfigManager *manager, QWidget *parent)
     connect(refresh, &QPushButton::clicked, this, &NetworkToolsDialog::refreshInterfaces);
     connect(scan, &QPushButton::clicked, this, [this]() {
         NetworkScanDialog dialog(this);
+        const QString name = checkedInterfaces().value(0);
+        if(!name.isEmpty())
+        {
+            const QVariantMap config = NetworkInterfaceManager::captureConfig(name);
+            dialog.autoScan(config.value("ip").toString(), config.value("subnet").toString());
+        }
         dialog.exec();
     });
     connect(diagnostics, &QPushButton::clicked, this, [this]() {

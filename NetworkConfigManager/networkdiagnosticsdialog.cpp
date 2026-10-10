@@ -69,7 +69,7 @@ QString downloadOnce(const QUrl &url, std::atomic<bool> &running, std::atomic<qi
     QString path = url.path(QUrl::FullyEncoded);
     if(path.isEmpty()) path = "/";
     if(url.hasQuery()) path += "?" + url.query(QUrl::FullyEncoded);
-    const HINTERNET session = WinHttpOpen(L"NetworkConfigManager/2.2.3", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+    const HINTERNET session = WinHttpOpen(L"NetworkConfigManager/2.3.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                            WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if(!session) return QObject::tr("WinHTTP 初始化失败（%1）").arg(GetLastError());
     WinHttpSetTimeouts(session, 3000, 3000, 3000, 3000);

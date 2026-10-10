@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>980</width>
-    <height>600</height>
+    <width>1120</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>900</width>
-    <height>550</height>
+    <width>980</width>
+    <height>690</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -26,24 +26,24 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_3">
     <property name="spacing">
-     <number>8</number>
+     <number>14</number>
     </property>
     <property name="leftMargin">
-     <number>12</number>
+     <number>18</number>
     </property>
     <property name="topMargin">
-     <number>12</number>
+     <number>18</number>
     </property>
     <property name="rightMargin">
-     <number>12</number>
+     <number>18</number>
     </property>
     <property name="bottomMargin">
-     <number>12</number>
+     <number>18</number>
     </property>
     <item row="0" column="0">
      <layout class="QVBoxLayout" name="verticalLayout">
       <property name="spacing">
-       <number>8</number>
+       <number>12</number>
       </property>
       <item>
        <widget class="QGroupBox" name="groupBox_Interface">

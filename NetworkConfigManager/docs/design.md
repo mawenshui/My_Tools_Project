@@ -1,6 +1,6 @@
 # NetworkConfigManager 设计文档
 
-- **版本号**：v2.2.3
+- **版本号**：v2.3.0
 - **更新日期**：2026-10-09
 
 ---
@@ -65,7 +65,7 @@
 │              │    │  - 窗口状态持久化             │    │  - 配置验证 (正则)          │
 │              │    │  - 单实例检查                 │    │  - netsh 命令执行           │
 │              │    │  - 配置比较 + 视觉反馈        │    │  - 接口缓存 (30s TTL)       │
-│              │    │  - QSS 暗色主题              │    │  - 线程安全 (QMutex)        │
+│              │    │  - QSS 深浅主题              │    │  - 线程安全 (QMutex)        │
 │              │    │                              │    │                             │
 │              │    │  持有:                        │    │  信号:                      │
 │              │    │  - ConfigManager*             │    │  - configApplied()          │
@@ -116,7 +116,7 @@
 | **单实例检查** | QSharedMemory | Qt 原生 IPC 机制，轻量，无需额外依赖 |
 | **崩溃处理** | Windows SEH + MiniDumpWriteDump | 生成 minidump 文件供开发者诊断，记录崩溃日志 |
 | **依赖库** | DbgHelp.lib | Windows SDK 自带，仅用于 minidump 生成 |
-| **样式主题** | QSS (Qt Style Sheet) | Qt 原生样式表，支持暗色主题等自定义外观 |
+| **样式主题** | QSS (Qt Style Sheet) | Qt 原生样式表，默认浅色渐变，可切换暗色主题 |
 
 ---
 
@@ -232,7 +232,7 @@
 - 悬浮窗可见性与位置：通过 `QSettings(posConfig.ini)` 保存 `FloatWindow/pos`
 - 恢复悬浮窗位置时包含屏幕边界检查（`screenGeo.contains`）
 
-**暗色主题**：通过 QSS 文件 `:/styles/styles/drak_theme.qss` 加载并应用暗色主题样式。
+**界面主题**：默认加载 `:/styles/styles/light_theme.qss`；托盘菜单可切换到 `:/styles/styles/drak_theme.qss`。
 
 **权限控制**：当 `adminStatusChanged(false)` 时，禁用"添加/更新/删除/应用配置"四个按钮（`disableAdminFunctions()`）；恢复管理员后重新启用。
 
@@ -516,7 +516,7 @@ main() 入口
   │
   ├─► QApplication 构造
   │   ├─ setApplicationName("NetworkConfigManager")
-  │   ├─ setApplicationVersion("2.2.3")
+  │   ├─ setApplicationVersion("2.3.0")
   │   ├─ setQuitOnLastWindowClosed(false)                   # 关闭最后窗口不退出
   │   └─ qInstallMessageHandler(Qt→Logger)                  # Qt 消息桥接
   │
@@ -549,7 +549,7 @@ main() 入口
       │
       ├─► loadFloatWindowPosition()                         # 恢复悬浮窗位置
       │
-      ├─► loadAndApplyStyleSheet("drak_theme.qss")          # 加载暗色主题
+      ├─► loadAndApplyStyleSheet("light_theme.qss")         # 加载默认浅色主题
       │
       └─► show()                                            # 显示主窗口
   │
@@ -836,3 +836,14 @@ pos=@Point(1280 720)
 
 - 主页面保留 IPv4 输入掩码；读取表单时将未输入的 `...` 转为空字符串。实时提示对空值不标红。
 - 静态配置只验证 IP 和子网掩码必填，网关与两个 DNS 地址仅在有值时验证格式。无网关时 `netsh` 默认不设置网关；无 DNS 时以 `source=static address=none` 清空 DNS，保证回滚无 DNS 的备份与原状态一致。
+
+## 10. v2.3.0 浅色主界面
+
+- `MainWindow` 默认加载 `light_theme.qss`；主窗口、卡片、按钮、输入框、列表、菜单与进度条使用浅色渐变，正文保持深色对比度。托盘菜单继续提供 Nord 暗色主题切换。
+- 网络工具区改为两行三列，流量状态占右侧两行；配置列表和详情的分隔比例为 1:2，详情标签保留足够宽度。默认窗口 1120×700，最小 980×690。
+- 网段扫描进度条继承主题样式；主窗口操作遮罩使用浅色半透明渐变和深色进度文案。下拉箭头使用内置图片资源，避免自定义下拉区域失去方向提示。
+
+## 11. 同网段一键扫描
+
+- 主页扫描入口读取所选网卡的实时 IPv4 地址和掩码，换算 CIDR 后调用原有扫描器；批量工具页勾选网卡时使用同一路径。无有效地址或网段超过 2048 个地址时在扫描窗提示，保留手动输入。
+- 默认检测 22、80、443、445、3389、8080 六个 TCP 端口；用户可在扫描窗修改端口列表或范围，结果列仅表示已检测端口中开放的 TCP 端口。

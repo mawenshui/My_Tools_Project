@@ -1,6 +1,6 @@
 # NetworkConfigManager
 
-> Windows 桌面网络配置管理工具 | v2.2.3 | 2026-10-09
+> Windows 桌面网络配置管理工具 | v2.3.0 | 2026-10-10
 
 ## 项目简介
 
@@ -13,14 +13,14 @@ NetworkConfigManager 是一个 Windows 桌面应用程序，用于便捷管理�
 - **快捷切换**：系统托盘右键菜单、桌面悬浮球，无需打开主窗口即可切换配置
 - **系统集成**：支持开机自启动、最小化到系统托盘
 - **视觉反馈**：配置应用成功/失败的动画反馈、托盘图标状态变化
-- **暗色主题**：内置 Nord 风格暗色界面主题
+- **浅色主题**：默认使用浅色渐变界面，保留 Nord 暗色主题供托盘菜单切换
 - **配置版本管理**：支持配置历史记录和回滚功能
 - **日志导出**：支持导出运行日志文件
 - **操作进度反馈**：显示操作进度和步骤指示
 - **性能监控**：记录关键操作耗时统计
 - **网卡备份与回滚**：应用配置前保存当前网卡设置，支持恢复最近备份；无网关、无 DNS 的静态配置也可恢复
 - **批量配置**：对多块网卡批量应用保存的配置或恢复 DHCP
-- **网段扫描**：扫描 IPv4 区间/CIDR 和指定端口，以进度条和状态提示显示扫描进度，查看主机名、MAC 与开放端口
+- **网段扫描**：主页一键扫描所选网卡同网段设备及常用 TCP 端口；也可手动指定 IPv4 区间/CIDR 和端口，查看主机名、MAC、开放端口与扫描进度
 - **网络诊断**：自动选择有网关和 DNS 的网卡进行延迟与丢包检测；使用 Windows WinHTTP 按地区或自定义 HTTP(S) 地址下载测速
 
 国外测速预设使用 Cloudflare 50 MB 下载接口和 Hetzner FSN1 官方测试文件。Hetzner 使用单路下载，避免多路并发触发服务端限流；也可输入自定义 HTTP(S) 地址。
@@ -64,7 +64,7 @@ bin/NetworkConfigManager.exe
 bin/NetworkConfigManager.exe --minimized
 ```
 
-主页面「网络工具」区可直接打开批量配置、备份回滚、网段扫描、延迟检测、下载测速和系统网络连接；所选网卡的实时流量显示在同一区域。批量静态配置可能产生 IP 冲突，操作前会提示。配置和备份存于程序目录的 `config/`；安装版默认安装到当前用户可写目录。实际修改网卡仍需管理员权限。
+主页面「网络工具」区以两行按钮直接打开批量配置、备份回滚、网段扫描、延迟检测、下载测速和系统网络连接；所选网卡的实时流量显示在右侧。点击「一键扫描同网段」会读取所选网卡的实际 IPv4 地址与掩码并立即扫描，默认检测 `22,80,443,445,3389,8080` 六个 TCP 端口；弹窗内可修改端口或手动输入范围。单次扫描上限为 2048 个地址，较大网段需手动缩小范围。浅色主题使用柔和渐变、深色文字与清晰的焦点边框；托盘菜单仍可切换暗色主题。批量静态配置可能产生 IP 冲突，操作前会提示。配置和备份存于程序目录的 `config/`；安装版默认安装到当前用户可写目录。实际修改网卡仍需管理员权限。
 
 ### 自动化验证与打包
 
@@ -85,9 +85,9 @@ mingw32-make release
 Pop-Location
 ```
 
-`tests/networkscan_selfcheck.pro` 验证网段/端口解析、扫描进度及本地 TCP 扫描；`tests/ui_selfcheck.pro` 验证主页入口、网卡自动选择、测速预设和本地 HTTP 下载测速。两个自检程序使用 `QT_QPA_PLATFORM=offscreen` 运行；设置 `NETWORKCONFIGMANAGER_TEST_HTTPS=1` 可额外测试公网 HTTPS 数据传输，`NETWORKCONFIGMANAGER_TEST_URL` 可指定测试地址。自动化验证不修改真实网卡；IP/DNS 应用、网卡启停和备份恢复需要在隔离的管理员测试机验收。
+`tests/networkscan_selfcheck.pro` 验证网段/端口解析、同网段自动换算、扫描进度及本地 TCP 扫描；`tests/ui_selfcheck.pro` 验证浅色主题、主页布局与入口、网卡自动选择、测速预设和本地 HTTP 下载测速。两个自检程序使用 `QT_QPA_PLATFORM=offscreen` 运行；设置 `NETWORKCONFIGMANAGER_SCREENSHOT=<绝对路径>` 并使用 `QT_QPA_PLATFORM=windows` 可保存主页面截图。设置 `NETWORKCONFIGMANAGER_TEST_HTTPS=1` 可额外测试公网 HTTPS 数据传输，`NETWORKCONFIGMANAGER_TEST_URL` 可指定测试地址。自动化验证不修改真实网卡；IP/DNS 应用、网卡启停和备份恢复需要在隔离的管理员测试机验收。
 
-发布时先将已验证的 Release 可执行文件构建到 `build_auto/app/bin/`，再执行 `package.ps1 -QtBin <Qt的bin目录> -Iscc <ISCC.exe路径>`。脚本调用 `windeployqt`，生成 `releases/NetworkConfigManager-Setup-2.2.3-win64.exe` 与免安装 ZIP，并输出 SHA-256。安装版支持开始菜单、可选桌面快捷方式和卸载。
+发布时先将已验证的 Release 可执行文件构建到 `build_auto/app/bin/`，再执行 `package.ps1 -QtBin <Qt的bin目录> -Iscc <ISCC.exe路径>`。脚本调用 `windeployqt`，生成 `releases/NetworkConfigManager-Setup-2.3.0-win64.exe` 与免安装 ZIP，并输出 SHA-256。安装版支持开始菜单、可选桌面快捷方式和卸载。
 
 ## 项目结构
 
