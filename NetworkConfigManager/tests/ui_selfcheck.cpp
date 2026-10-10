@@ -47,6 +47,14 @@ int main(int argc, char *argv[])
     ConfigManager profileManager;
     if(!profileManager.validateConfig(form)) return 21;
     if(window.styleSheet().isEmpty()) return 1;
+    if(!window.styleSheet().contains("qlineargradient") ||
+       !window.styleSheet().contains("#fbfdff")) return 23;
+    app.processEvents();
+    if(window.findChild<QPushButton *>("latencyTestButton")->y() <=
+       window.findChild<QPushButton *>("batchNetworkButton")->y()) return 24;
+    if(window.minimumWidth() < 980 || window.minimumHeight() < 690) return 26;
+    const QString screenshot = qEnvironmentVariable("NETWORKCONFIGMANAGER_SCREENSHOT");
+    if(!screenshot.isEmpty() && !window.grab().save(screenshot)) return 25;
     const QStringList buttons{"batchNetworkButton", "restoreNetworkButton", "scanNetworkButton",
                               "networkConnectionsButton", "latencyTestButton", "speedTestButton"};
     for(const QString &name : buttons)

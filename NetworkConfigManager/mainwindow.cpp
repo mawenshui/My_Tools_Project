@@ -81,7 +81,7 @@ MainWindow::MainWindow(QWidget *parent) :
         m_floatWindow->setBackgroundPixmap(QPixmap(":/images/images/float_icon.png"));
         m_floatWindow->show();
     }
-    loadAndApplyStyleSheet(":/styles/styles/drak_theme.qss");
+    loadAndApplyStyleSheet(":/styles/styles/light_theme.qss");
     Logger::info("主窗口初始化完成");
     show(); // 确保主窗口显示
 }
@@ -245,6 +245,17 @@ void MainWindow::setupUi()
     //恢复窗口状态
     Logger::debug("恢复窗口状态");
     restoreWindowState();
+    resize(qMax(width(), minimumWidth()), qMax(height(), minimumHeight()));
+    ui->splitter->setChildrenCollapsible(false);
+    ui->splitter->setHandleWidth(10);
+    ui->splitter->setStretchFactor(0, 1);
+    ui->splitter->setStretchFactor(1, 2);
+    ui->splitter->setSizes({300, 700});
+    for(QLabel *label : {ui->label_3, ui->label_4, ui->label_5, ui->label_6, ui->label_7})
+        label->setMinimumWidth(150);
+    for(QLineEdit *edit : {ui->ipEdit, ui->subnetEdit, ui->gatewayEdit,
+                           ui->primaryDnsEdit, ui->secondaryDnsEdit})
+        edit->setMinimumHeight(28);
     m_statusIndicator = new QLabel(this);
     m_statusIndicator->setFixedSize(16, 16);
     m_historyListWidget = ui->historyListWidget;
@@ -266,6 +277,9 @@ void MainWindow::setupUi()
     toolsGroup->setObjectName("networkToolsGroup");
     toolsGroup->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     auto *toolsLayout = new QGridLayout(toolsGroup);
+    toolsLayout->setContentsMargins(16, 22, 16, 14);
+    toolsLayout->setHorizontalSpacing(10);
+    toolsLayout->setVerticalSpacing(8);
     auto *batchButton = new QPushButton(tr("批量配置"), toolsGroup);
     auto *restoreButton = new QPushButton(toolsGroup);
     auto *scanButton = new QPushButton(tr("网段扫描"), toolsGroup);
@@ -281,15 +295,22 @@ void MainWindow::setupUi()
     speedButton->setObjectName("speedTestButton");
     trafficMonitor->setObjectName("networkTrafficMonitor");
     batchButton->setToolTip(tr("批量应用已保存配置或恢复 DHCP"));
+    for(QPushButton *button : {batchButton, restoreButton, scanButton, latencyButton, speedButton, connectionsButton})
+    {
+        button->setMinimumHeight(34);
+        button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    }
+    trafficMonitor->setMinimumHeight(76);
+    trafficMonitor->setAlignment(Qt::AlignCenter);
     toolsLayout->addWidget(batchButton, 0, 0);
     toolsLayout->addWidget(restoreButton, 0, 1);
     toolsLayout->addWidget(scanButton, 0, 2);
-    toolsLayout->addWidget(latencyButton, 0, 3);
-    toolsLayout->addWidget(speedButton, 0, 4);
-    toolsLayout->addWidget(connectionsButton, 0, 5);
-    toolsLayout->addWidget(trafficMonitor, 0, 6);
-    for(int column = 0; column < 6; ++column) toolsLayout->setColumnStretch(column, 1);
-    toolsLayout->setColumnStretch(6, 2);
+    toolsLayout->addWidget(latencyButton, 1, 0);
+    toolsLayout->addWidget(speedButton, 1, 1);
+    toolsLayout->addWidget(connectionsButton, 1, 2);
+    toolsLayout->addWidget(trafficMonitor, 0, 3, 2, 1);
+    for(int column = 0; column < 3; ++column) toolsLayout->setColumnStretch(column, 1);
+    toolsLayout->setColumnStretch(3, 2);
     ui->verticalLayout->insertWidget(1, toolsGroup);
 
     const auto updateBackupButton = [this, restoreButton]() {
@@ -340,7 +361,10 @@ void MainWindow::setupUi()
 
     //初始化加载遮罩
     m_loadingOverlay = new QWidget(this);
-    m_loadingOverlay->setStyleSheet("background-color: rgba(0, 0, 0, 0.6);");
+    m_loadingOverlay->setObjectName("loadingOverlay");
+    m_loadingOverlay->setStyleSheet(
+        "QWidget#loadingOverlay { background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
+        "stop:0 rgba(232, 246, 250, 245), stop:1 rgba(210, 232, 240, 245)); }");
     m_loadingOverlay->setGeometry(rect());
     m_loadingOverlay->setVisible(false);
     m_loadingOverlay->setAttribute(Qt::WA_TransparentForMouseEvents, false);
@@ -354,7 +378,7 @@ void MainWindow::setupUi()
     loadingLayout->addWidget(m_loadingIcon, 0, Qt::AlignCenter);
 
     m_loadingText = new QLabel("正在执行操作...", m_loadingOverlay);
-    m_loadingText->setStyleSheet("color: white; font-size: 14px;");
+    m_loadingText->setStyleSheet("color: #194d65; font-size: 15px; font-weight: 600;");
     m_loadingText->setAlignment(Qt::AlignCenter);
     loadingLayout->addWidget(m_loadingText);
 
@@ -362,20 +386,20 @@ void MainWindow::setupUi()
     m_progressBar->setFixedWidth(200);
     m_progressBar->setStyleSheet(
         "QProgressBar {"
-        "    border: 1px solid #3ddbff;"
-        "    border-radius: 4px;"
-        "    background-color: rgba(255, 255, 255, 0.1);"
+        "    border: 1px solid #a5cdd9;"
+        "    border-radius: 6px;"
+        "    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #f6fcfe, stop:1 #dceef3);"
         "}"
         "QProgressBar::chunk {"
-        "    background-color: #3ddbff;"
-        "    border-radius: 4px;"
+        "    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #168796, stop:1 #2e80b0);"
+        "    border-radius: 5px;"
         "}"
     );
     m_progressBar->setVisible(false);
     loadingLayout->addWidget(m_progressBar);
 
     m_stepIndicator = new QLabel("", m_loadingOverlay);
-    m_stepIndicator->setStyleSheet("color: #888888; font-size: 12px;");
+    m_stepIndicator->setStyleSheet("color: #506f80; font-size: 12px;");
     m_stepIndicator->setAlignment(Qt::AlignCenter);
     loadingLayout->addWidget(m_stepIndicator);
 
@@ -583,14 +607,14 @@ void MainWindow::updateLoadingIcon()
     //绘制旋转圆环
     int radius = 24;
     QRectF ringRect(-radius, -radius, radius * 2, radius * 2);
-    QPen pen(QColor(61, 219, 255), 4);
+    QPen pen(QColor(24, 121, 150), 4);
     pen.setCapStyle(Qt::RoundCap);
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
     painter.drawArc(ringRect, 90 * 16, -m_loadingAngle * 16);
 
     //绘制中心圆点
-    painter.setBrush(QColor(61, 219, 255));
+    painter.setBrush(QColor(24, 121, 150));
     painter.drawEllipse(-4, -4, 8, 8);
 
     m_loadingIcon->setPixmap(pixmap);
@@ -1403,7 +1427,7 @@ void MainWindow::setupTrayIcon()
     {
         loadAndApplyStyleSheet(":/styles/styles/drak_theme.qss");
     });
-    QAction *lightThemeAction = themeMenu->addAction(tr("亮色主题"));
+    QAction *lightThemeAction = themeMenu->addAction(tr("浅色主题"));
     connect(lightThemeAction, &QAction::triggered, this, [this]()
     {
         // 尝试从资源加载亮色主题，否则从文件加载
@@ -1498,12 +1522,12 @@ void MainWindow::onInputTextChanged()
             if(match.hasMatch())
             {
                 // 简单的颜色边框
-                edit->setStyleSheet("QLineEdit { border: 2px solid #2ecc71; }");
+                edit->setStyleSheet("QLineEdit { border: 2px solid #168264; }");
             }
             else
             {
                 // 红色边框
-                edit->setStyleSheet("QLineEdit { border: 2px solid #e74c3c; }");
+                edit->setStyleSheet("QLineEdit { border: 2px solid #b44451; }");
             }
         }
     }

@@ -10,7 +10,7 @@
 [Setup]
 AppId={{4B654431-9B84-49CA-A31A-6508D8629B03}
 AppName=NetworkConfigManager
-AppVersion=2.2.3
+AppVersion=2.3.0
 AppPublisher=mawenshui
 DefaultDirName={localappdata}\Programs\NetworkConfigManager
 DefaultGroupName=NetworkConfigManager
@@ -18,7 +18,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir={#ReleaseDir}
-OutputBaseFilename=NetworkConfigManager-Setup-2.2.3-win64
+OutputBaseFilename=NetworkConfigManager-Setup-2.3.0-win64
 UninstallDisplayIcon={app}\NetworkConfigManager.exe
 Compression=lzma2
 SolidCompression=yes

@@ -183,9 +183,6 @@ NetworkScanDialog::NetworkScanDialog(QWidget *parent)
     m_progress->setObjectName("scanProgress");
     m_progress->setTextVisible(true);
     m_progress->setFormat(tr("扫描进度 %p%"));
-    m_progress->setStyleSheet("QProgressBar { border: 1px solid #3ddbff; border-radius: 4px; "
-                              "background: rgba(255, 255, 255, 0.1); text-align: center; } "
-                              "QProgressBar::chunk { background: #3ddbff; border-radius: 4px; }");
     m_progress->hide();
     layout->addWidget(m_progress);
     layout->addWidget(m_results);
@@ -220,7 +217,7 @@ void NetworkScanDialog::startScan()
     m_completed = 0;
     m_start->setText(tr("停止扫描"));
     m_status->setText(tr("● 正在扫描：0/%1，发现 0 台设备").arg(hosts.size()));
-    m_status->setStyleSheet("color: #3ddbff; font-weight: 600;");
+    m_status->setStyleSheet("font-weight: 600;");
     m_progress->setRange(0, hosts.size());
     m_progress->setValue(0);
     m_progress->show();

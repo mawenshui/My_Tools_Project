@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     // 配置应用程序属性
     a.setApplicationName("NetworkConfigManager");
-    a.setApplicationVersion("2.2.3");
+    a.setApplicationVersion("2.3.0");
     a.setQuitOnLastWindowClosed(false);
     // 设置Qt消息处理
     qInstallMessageHandler([](QtMsgType type, const QMessageLogContext & context, const QString & msg)
