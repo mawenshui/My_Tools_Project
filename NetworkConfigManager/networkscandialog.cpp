@@ -157,6 +157,29 @@ QList<int> NetworkScanDialog::parsePorts(const QString &input, QString *error)
     return ports;
 }
 
+QString NetworkScanDialog::subnetCidr(const QString &ip, const QString &mask, QString *error)
+{
+    quint32 address = 0, netmask = 0;
+    if(!ipv4Number(ip, &address) || !ipv4Number(mask, &netmask) || !netmask ||
+       ((~netmask & (~netmask + 1)) != 0))
+    { if(error) *error = QObject::tr("当前网卡未提供有效的 IPv4 地址和子网掩码"); return {}; }
+    int prefix = 0;
+    for(quint32 bits = netmask; bits & 0x80000000u; bits <<= 1) ++prefix;
+    if(prefix < 21)
+    { if(error) *error = QObject::tr("当前网段超过 2048 个地址，请手动输入较小范围"); return {}; }
+    return QHostAddress(address & netmask).toString() + "/" + QString::number(prefix);
+}
+
+bool NetworkScanDialog::autoScan(const QString &ip, const QString &mask)
+{
+    QString error;
+    const QString range = subnetCidr(ip, mask, &error);
+    if(range.isEmpty()) { m_status->setText(error); return false; }
+    m_range->setText(range);
+    startScan();
+    return true;
+}
+
 NetworkScanDialog::NetworkScanDialog(QWidget *parent)
     : QDialog(parent), m_range(new QLineEdit(this)), m_ports(new QLineEdit(this)),
       m_results(new QTableWidget(this)), m_start(new QPushButton(tr("开始扫描"), this)),
@@ -168,12 +191,13 @@ NetworkScanDialog::NetworkScanDialog(QWidget *parent)
     auto *inputs = new QHBoxLayout;
     m_range->setPlaceholderText(tr("192.168.1.0/24 或 192.168.1.1-100"));
     m_ports->setText("22,80,443,445,3389,8080");
+    m_ports->setToolTip(tr("仅检测此处列出的 TCP 端口；可用逗号或范围指定，最多 1024 个"));
     inputs->addWidget(m_range, 2);
     inputs->addWidget(m_ports, 1);
     inputs->addWidget(m_start);
     layout->addLayout(inputs);
     m_results->setColumnCount(4);
-    m_results->setHorizontalHeaderLabels({tr("IP"), tr("MAC"), tr("主机名"), tr("开放端口")});
+    m_results->setHorizontalHeaderLabels({tr("IP"), tr("MAC"), tr("主机名"), tr("开放 TCP 端口")});
     m_results->setSortingEnabled(true);
     m_results->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(m_results, &QTableWidget::customContextMenuRequested, this, [this](const QPoint &) {

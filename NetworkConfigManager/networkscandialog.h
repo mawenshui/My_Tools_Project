@@ -29,6 +29,8 @@ public:
     ~NetworkScanDialog() override;
     static QStringList parseHosts(const QString &range, QString *error);
     static QList<int> parsePorts(const QString &input, QString *error);
+    static QString subnetCidr(const QString &ip, const QString &mask, QString *error);
+    bool autoScan(const QString &ip, const QString &mask);
 
 private:
     void startScan();

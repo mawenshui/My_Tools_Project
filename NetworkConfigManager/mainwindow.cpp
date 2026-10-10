@@ -282,7 +282,7 @@ void MainWindow::setupUi()
     toolsLayout->setVerticalSpacing(8);
     auto *batchButton = new QPushButton(tr("批量配置"), toolsGroup);
     auto *restoreButton = new QPushButton(toolsGroup);
-    auto *scanButton = new QPushButton(tr("网段扫描"), toolsGroup);
+    auto *scanButton = new QPushButton(tr("一键扫描同网段"), toolsGroup);
     auto *connectionsButton = new QPushButton(tr("网络连接"), toolsGroup);
     auto *latencyButton = new QPushButton(tr("延迟检测"), toolsGroup);
     auto *speedButton = new QPushButton(tr("下载测速"), toolsGroup);
@@ -295,6 +295,7 @@ void MainWindow::setupUi()
     speedButton->setObjectName("speedTestButton");
     trafficMonitor->setObjectName("networkTrafficMonitor");
     batchButton->setToolTip(tr("批量应用已保存配置或恢复 DHCP"));
+    scanButton->setToolTip(tr("自动扫描所选网卡所在网段及常用 TCP 端口；弹窗中可修改端口范围"));
     for(QPushButton *button : {batchButton, restoreButton, scanButton, latencyButton, speedButton, connectionsButton})
     {
         button->setMinimumHeight(34);
@@ -339,6 +340,8 @@ void MainWindow::setupUi()
     connect(scanButton, &QPushButton::clicked, this, [this]() {
         NetworkScanDialog dialog(this);
         dialog.setStyleSheet(styleSheet());
+        const QVariantMap config = NetworkInterfaceManager::captureConfig(ui->interfaceCombo->currentText());
+        dialog.autoScan(config.value("ip").toString(), config.value("subnet").toString());
         dialog.exec();
     });
     const auto showDiagnostics = [this](bool speed) {

@@ -599,3 +599,4 @@ a.setApplicationVersion("2.3.0");
 5. GitHub 发布使用 `networkconfigmanager-v2.3.0` 标签，上传安装包和 ZIP；代码、文档、测试与打包脚本保持同一提交。
 6. 静态 IP 表单留空网关与 DNS 后可通过校验；无 DNS 备份的回滚命令清空 DNS 列表。真实网卡回滚在隔离管理员环境验收。
 7. Windows 平台目视检查默认浅色界面的按钮、输入框、进度条和下拉箭头；`ui_selfcheck` 验证工具区双行布局和最小窗口尺寸。
+8. `networkscan_selfcheck` 验证同网段 CIDR 换算、2048 地址上限和一键扫描本地 TCP 端口；未取得网卡地址时仍可手动输入范围。
