@@ -33,6 +33,7 @@ SOURCES += \
     networkinterfacemanager.cpp \
     networkinfocollector.cpp \
     networktoolsdialog.cpp \
+    networkadapterdialog.cpp \
     networkscandialog.cpp \
     networktrafficmonitor.cpp \
     networkdiagnosticsdialog.cpp
@@ -45,6 +46,7 @@ HEADERS += \
     networkinterfacemanager.h \
     networkinfocollector.h \
     networktoolsdialog.h \
+    networkadapterdialog.h \
     networkscandialog.h \
     networktrafficmonitor.h \
     networkdiagnosticsdialog.h

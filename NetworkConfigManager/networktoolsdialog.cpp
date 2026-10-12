@@ -3,6 +3,7 @@
 #include "networkinterfacemanager.h"
 #include "networkscandialog.h"
 #include "networkdiagnosticsdialog.h"
+#include "networkadapterdialog.h"
 
 #include <QComboBox>
 #include <QCoreApplication>
@@ -40,9 +41,11 @@ NetworkToolsDialog::NetworkToolsDialog(ConfigManager *manager, QWidget *parent)
     auto *connections = new QPushButton(tr("打开网络连接"), this);
     auto *scan = new QPushButton(tr("扫描所选网段"), this);
     auto *diagnostics = new QPushButton(tr("延迟与测速"), this);
+    auto *adapterTools = new QPushButton(tr("网卡、地址与路由"), this);
     systemButtons->addWidget(refresh);
     systemButtons->addWidget(scan);
     systemButtons->addWidget(diagnostics);
+    systemButtons->addWidget(adapterTools);
     systemButtons->addWidget(connections);
     layout->addLayout(systemButtons);
 
@@ -62,6 +65,10 @@ NetworkToolsDialog::NetworkToolsDialog(ConfigManager *manager, QWidget *parent)
     });
     connect(diagnostics, &QPushButton::clicked, this, [this]() {
         NetworkDiagnosticsDialog dialog(checkedInterfaces().value(0), this);
+        dialog.exec();
+    });
+    connect(adapterTools, &QPushButton::clicked, this, [this]() {
+        NetworkAdapterDialog dialog(m_manager, this);
         dialog.exec();
     });
     connect(connections, &QPushButton::clicked, this, [this]() {

@@ -5,6 +5,7 @@
 #include "../networkinfocollector.h"
 #include "../networkscandialog.h"
 #include "../networktoolsdialog.h"
+#include "../networkadapterdialog.h"
 
 #include <QApplication>
 #include <QComboBox>
@@ -46,6 +47,9 @@ int main(int argc, char *argv[])
        !form.value("primary_dns").toString().isEmpty() ||
        !form.value("secondary_dns").toString().isEmpty()) return 20;
     ConfigManager profileManager;
+    NetworkAdapterDialog adapterDialog(&profileManager);
+    auto *adapterTabs = adapterDialog.findChild<QTabWidget *>();
+    if(!adapterTabs || adapterTabs->count() != 6) return 29;
     if(!profileManager.validateConfig(form)) return 21;
     if(window.styleSheet().isEmpty()) return 1;
     if(!window.styleSheet().contains("qlineargradient") ||
