@@ -2,6 +2,7 @@
 #include "../mainwindow.h"
 #include "../networkdiagnosticsdialog.h"
 #include "../networkinterfacemanager.h"
+#include "../networkinfocollector.h"
 #include "../networkscandialog.h"
 #include "../networktoolsdialog.h"
 
@@ -86,9 +87,23 @@ int main(int argc, char *argv[])
     if(!checkDialog("speedTestButton", "NetworkDiagnosticsDialog", 1)) return 7;
 
     QString routed, unrouted;
+    NetworkInfoCollector collector;
     for(const InterfaceDetail &detail : NetworkInterfaceManager::getAllInterfaceDetails())
     {
         const QVariantMap config = NetworkInterfaceManager::captureConfig(detail.name);
+        if(!config.isEmpty())
+        {
+            for(const QString &separator : {QStringLiteral("\n"), QStringLiteral("\r")})
+            {
+                const QString displayName = detail.name + separator + QStringLiteral(" (专用)");
+                const QVariantMap observed = collector.getCurrentNetworkConfig(displayName, &profileManager);
+                if(observed.value("method") != config.value("method") ||
+                   observed.value("interface") != config.value("interface")) return 27;
+                if(config.value("method") == "dhcp" &&
+                   !collector.compareConfigs(observed, {{"interface", displayName}, {"method", "dhcp"}}))
+                    return 28;
+            }
+        }
         if(!config.value("ip").toString().isEmpty() &&
            !config.value("gateway").toString().isEmpty() &&
            !config.value("primary_dns").toString().isEmpty()) routed = detail.name;

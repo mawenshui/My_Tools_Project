@@ -122,6 +122,7 @@ NetworkConfigManager/
 | [设计文档](docs/design.md) | 系统架构、模块设计、核心流程 |
 | [项目规范](docs/specification.md) | 编码规范、命名约定、构建发布流程 |
 | [可优化项分析](docs/optimization.md) | 底层调用、实现方式、界面、悬浮球优化建议 |
+| [离线网络工具箱扩展清单](docs/feature-backlog.md) | GitHub 同类项目调研、功能优先级与验收要点 |
 
 ## 许可证
 

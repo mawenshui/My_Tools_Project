@@ -419,7 +419,7 @@ void MainWindow::setupUi()
 
     m_loadingOverlay->raise();
 
-    //初始化网络配置监控定时器（每30秒检查一次）
+    //初始化网络配置监控定时器
     m_networkMonitorTimer.reset(new QTimer(this));
     connect(m_networkMonitorTimer.data(), &QTimer::timeout, this, &MainWindow::checkNetworkChanges);
     m_networkMonitorTimer->setInterval(30000);
@@ -737,6 +737,7 @@ void MainWindow::setupConnections()
         {
             Logger::info(tr("%1").arg(message));
             ui->statusBar->showMessage(tr("%1").arg(message), 2000);
+            invalidateMenuCache();
             updateQuickMenu();
             m_floatWindow->update();
         }
@@ -955,6 +956,7 @@ void MainWindow::onInterfaceChanged(int index)
     if(index >= 0)
     {
         m_currentInterface = ui->interfaceCombo->itemText(index);
+        m_lastNetworkConfig.clear();
         Logger::debug(tr("选择网络接口: %1").arg(m_currentInterface));
         ui->statusBar->showMessage("已选择接口: " + m_currentInterface, 2000);
     }
@@ -1396,6 +1398,7 @@ void MainWindow::setupTrayIcon()
     connect(floatAction, &QAction::toggled, this, &MainWindow::toggleFloatWindow);
     //初始化快速配置子菜单
     m_quickMenu = trayMenu->addMenu("快速应用配置");
+    connect(trayMenu, &QMenu::aboutToShow, this, &MainWindow::updateQuickMenu);
     updateQuickMenu();
     //添加网卡管理子菜单
     QMenu *interfaceMenu = trayMenu->addMenu("网卡管理");
@@ -1648,18 +1651,21 @@ void MainWindow::onExportConfig()
  */
 void MainWindow::buildInterfaceConfigMenu(QMenu *menu, bool includeManageActions)
 {
+    invalidateMenuCache();
     // 一次调用获取全部接口详情，并使用缓存获取网络配置，避免多次netsh阻塞
     QList<InterfaceDetail> allDetails = NetworkInterfaceManager::getAllInterfaceDetails();
     QMap<QString, QVariantMap> configs = m_configManager->configs();
+    QStringList availableNames;
+    for(const InterfaceDetail &detail : allDetails)
+        if(!detail.name.isEmpty()) availableNames << detail.name;
 
     for(const InterfaceDetail &detail : allDetails)
     {
         if(detail.name.isEmpty()) continue;
         const QString rawInterface = detail.name;
-        const QString cleanInterface = m_configManager->cleanInterfaceName(rawInterface);
         // 使用缓存获取当前配置（缓存有效时直接返回，无效时自动刷新一次）
-        QVariantMap currentConfig = getCachedInterfaceConfig(cleanInterface);
-        QMenu *interfaceMenu = menu->addMenu(cleanInterface);
+        QVariantMap currentConfig = getCachedInterfaceConfig(rawInterface);
+        QMenu *interfaceMenu = menu->addMenu(rawInterface);
 
         QString configTitle = (currentConfig["method"].toString() == "dhcp")
             ? "DHCP自动获取"
@@ -1673,8 +1679,9 @@ void MainWindow::buildInterfaceConfigMenu(QMenu *menu, bool includeManageActions
         bool hasConfigs = false;
         for(auto it = configs.begin(); it != configs.end(); ++it)
         {
-            QString configInterface = m_configManager->cleanInterfaceName(it.value()["interface"].toString());
-            if(configInterface == cleanInterface)
+            QString configInterface = ConfigManager::resolveInterfaceName(
+                it.value()["interface"].toString(), availableNames);
+            if(configInterface == rawInterface)
             {
                 QAction *action = interfaceMenu->addAction(it.key());
                 action->setCheckable(true);
@@ -1845,7 +1852,7 @@ void MainWindow::refreshNetworkInterfaces()
         if(!detail.name.isEmpty())
             interfaces << detail.name;
     }
-    QString current = ui->networkInterfaceCombo->currentText();
+    QString current = ui->networkInterfaceCombo->currentData().toString();
     ui->networkInterfaceCombo->clear();
     foreach(const InterfaceDetail &detail, allDetails)
     {
@@ -2034,17 +2041,19 @@ void MainWindow::checkNetworkChanges()
 
     QString cleanInterface = m_configManager->cleanInterfaceName(m_currentInterface);
     QVariantMap config = m_networkInfoCollector->getCurrentNetworkConfig(m_currentInterface, cleanInterface, m_configManager);
-    QString currentIP = config["ip"].toString();
-    
-    if (currentIP.isEmpty()) {
-        currentIP = "无IP";
+    if(config.isEmpty()) return;
+    if(m_lastNetworkConfig.isEmpty())
+    {
+        m_lastNetworkConfig = config;
+        return;
     }
-
-    if (currentIP != m_lastIPAddress) {
-        Logger::info(tr("检测到网络配置变化: %1 -> %2").arg(m_lastIPAddress).arg(currentIP));
-        m_lastIPAddress = currentIP;
-        
+    if(config != m_lastNetworkConfig) {
+        Logger::info(tr("检测到网络配置变化: %1 -> %2")
+                     .arg(m_lastNetworkConfig.value("method").toString(), config.value("method").toString()));
+        m_lastNetworkConfig = config;
+        invalidateMenuCache();
         refreshNetworkInterfaces();
+        updateQuickMenu();
         
         if (isVisible()) {
             ui->statusBar->showMessage(tr("网络配置已更新"), 3000);
@@ -2096,9 +2105,8 @@ void MainWindow::updateMenuCache()
     QStringList interfaces = manager.getNetworkInterfaces();
     
     for (const QString &interfaceName : interfaces) {
-        QString cleanInterface = m_configManager->cleanInterfaceName(interfaceName);
-        QVariantMap config = m_networkInfoCollector->getCurrentNetworkConfig(interfaceName, cleanInterface, m_configManager);
-        cache[cleanInterface] = config;
+        QVariantMap config = m_networkInfoCollector->getCurrentNetworkConfig(interfaceName, m_configManager);
+        cache[interfaceName] = config;
     }
     
     m_menuCache = cache;

@@ -431,6 +431,15 @@ QString ConfigManager::resolveInterfaceName(const QString &requestedName, const 
         }
     }
 
+    const QString displayName = normalizedRequested.section('\r', 0, 0).section('\n', 0, 0).trimmed();
+    for(const QString &candidate : availableNames)
+    {
+        if(candidate.compare(displayName, Qt::CaseInsensitive) == 0)
+        {
+            return candidate;
+        }
+    }
+
     const QString cleanedRequested = cleanInterfaceName(normalizedRequested);
     for(const QString &candidate : availableNames)
     {
@@ -629,9 +638,10 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
         return false;
     }
     //处理网络接口名称
-    QString rawInterface = config["interface"].toString();
-    QString cleanInterface = cleanInterfaceName(rawInterface);
-    if (cleanInterface.isEmpty())
+    NetworkInterfaceManager interfaceManager;
+    const QString rawInterface = resolveInterfaceName(
+        config["interface"].toString(), interfaceManager.getNetworkInterfaces());
+    if (rawInterface.isEmpty())
     {
         emit errorOccurred(tr("无效的网络接口名称"));
         emit configApplied(false, tr("无效的网络接口"));
@@ -674,12 +684,12 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
         QStringList dhcpAddressCmd =
         {
             "interface", "ipv4", "set", "address",
-            QString("name=\"%1\"").arg(cleanInterface),
+            QString("name=\"%1\"").arg(rawInterface),
             "source=dhcp"
         };
         QProcess netshProcess;
         netshProcess.start("netsh", dhcpAddressCmd);
-        if(!netshProcess.waitForFinished(5000))
+        if(!netshProcess.waitForFinished(15000))
         {
             netshProcess.kill();
             netshProcess.waitForFinished(3000);
@@ -689,7 +699,11 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
             // 使用 GBK 编码处理 netsh 输出，兼容中文 Windows
             QTextCodec *gbkCodec = QTextCodec::codecForName("GBK");
             if(!gbkCodec) gbkCodec = QTextCodec::codecForLocale();
-            QString errorOutput = gbkCodec->toUnicode(netshProcess.readAllStandardError());
+            QString errorOutput = gbkCodec->toUnicode(netshProcess.readAllStandardError()).trimmed();
+            if(errorOutput.isEmpty())
+                errorOutput = gbkCodec->toUnicode(netshProcess.readAllStandardOutput()).trimmed();
+            if(errorOutput.isEmpty())
+                errorOutput = tr("%1 (退出码 %2)").arg(netshProcess.errorString()).arg(netshProcess.exitCode());
             emit errorOccurred(tr("设置DHCP地址失败: %1").arg(errorOutput));
             success = false;
             message = tr("设置DHCP地址失败: %1").arg(errorOutput);
@@ -705,7 +719,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
                 QStringList primaryDnsCmd =
                 {
                     "interface", "ipv4", "set", "dns",
-                    QString("name=\"%1\"").arg(cleanInterface),
+                    QString("name=\"%1\"").arg(rawInterface),
                     "static", dnsServer
                 };
                 netshProcess.start("netsh", primaryDnsCmd);
@@ -729,7 +743,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
                     QStringList secondaryDnsCmd =
                     {
                         "interface", "ipv4", "add", "dns",
-                        QString("name=\"%1\"").arg(cleanInterface),
+                        QString("name=\"%1\"").arg(rawInterface),
                         secondaryDns, "index=2"
                     };
                     {
@@ -750,7 +764,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
                 QStringList dhcpDnsCmd =
                 {
                     "interface", "ipv4", "set", "dns",
-                    QString("name=\"%1\"").arg(cleanInterface),
+                    QString("name=\"%1\"").arg(rawInterface),
                     "source=dhcp"
                 };
                 netshProcess.start("netsh", dhcpDnsCmd);
@@ -783,7 +797,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
         QStringList addressCmd =
         {
             "interface", "ip", "set", "address",
-            QString("name=\"%1\"").arg(cleanInterface),
+            QString("name=\"%1\"").arg(rawInterface),
             "static", ip, subnet
         };
         if (!gateway.isEmpty())
@@ -808,7 +822,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
             QStringList primaryDnsCmd =
             {
                 "interface", "ip", "set", "dns",
-                QString("name=\"%1\"").arg(cleanInterface),
+                QString("name=\"%1\"").arg(rawInterface),
                 "static", dnsServer
             };
             {
@@ -828,7 +842,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
                 QStringList secondaryDnsCmd =
                 {
                     "interface", "ip", "add", "dns",
-                    QString("name=\"%1\"").arg(cleanInterface),
+                    QString("name=\"%1\"").arg(rawInterface),
                     secondaryDns, "index=2"
                 };
                 {
@@ -850,7 +864,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
             QStringList clearDnsCmd =
             {
                 "interface", "ipv4", "set", "dnsservers",
-                QString("name=\"%1\"").arg(cleanInterface),
+                QString("name=\"%1\"").arg(rawInterface),
                 "source=static", "address=none"
             };
             {
@@ -867,7 +881,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
         }
     }
     //发送配置应用结果信号
-    emit configApplied(success, success ? QString(tr("配置应用成功: %1")).arg(config["method"].toString() == "dhcp" ? cleanInterface + "[自动获取IP]" : cleanInterface + QString("[%1]").arg(config["ip"].toString())) : message);
+    emit configApplied(success, success ? QString(tr("配置应用成功: %1")).arg(config["method"].toString() == "dhcp" ? rawInterface + "[自动获取IP]" : rawInterface + QString("[%1]").arg(config["ip"].toString())) : message);
     if (success)
     {
         //更新接口缓存

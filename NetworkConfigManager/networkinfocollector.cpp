@@ -193,6 +193,20 @@ QVariantMap NetworkInfoCollector::getCurrentNetworkConfig(const QString &interfa
 QVariantMap NetworkInfoCollector::getCurrentNetworkConfig(const QString &rawInterfaceName, const QString &cleanInterfaceName, ConfigManager *configManager)
 {
     Logger::debug("获取当前网卡的网络配置");
+    QString systemName = rawInterfaceName;
+    QVariantMap captured = NetworkInterfaceManager::captureConfig(systemName);
+    if(captured.isEmpty())
+    {
+        NetworkInterfaceManager manager;
+        systemName = ConfigManager::resolveInterfaceName(rawInterfaceName, manager.getNetworkInterfaces());
+        captured = NetworkInterfaceManager::captureConfig(systemName);
+    }
+    if(!captured.isEmpty())
+    {
+        Logger::info("通过系统网卡API获取当前网络配置");
+        return captured;
+    }
+
     QVariantMap currentConfig;
     currentConfig["interface"] = cleanInterfaceName;
     Logger::debug(tr("查询接口配置: raw=%1, clean=%2").arg(rawInterfaceName).arg(cleanInterfaceName));
@@ -243,7 +257,7 @@ QVariantMap NetworkInfoCollector::getCurrentNetworkConfig(const QString &rawInte
     {
         // 跳过PowerShell，直接使用netsh获取DHCP状态（PowerShell后端在当前环境下持续超时）
         QProcess dhcpProcess;
-        dhcpProcess.start("netsh", QStringList() << "interface" << "ip" << "show" << "config" << QString("name=\"%1\"").arg(rawInterfaceName));
+        dhcpProcess.start("netsh", QStringList() << "interface" << "ip" << "show" << "config" << QString("name=\"%1\"").arg(systemName));
         if(!dhcpProcess.waitForFinished(2000))
         {
             dhcpProcess.kill();
@@ -262,7 +276,7 @@ QVariantMap NetworkInfoCollector::getCurrentNetworkConfig(const QString &rawInte
     // 如果 QNetworkInterface 没有获取到IP，尝试使用PowerShell
     if(!foundQNetworkInterface || !currentConfig.contains("ip"))
     {
-        if(getNetworkConfigViaPowerShell(rawInterfaceName, currentConfig))
+        if(getNetworkConfigViaPowerShell(systemName, currentConfig))
         {
             Logger::info("当前网络配置获取完成");
             return currentConfig;
@@ -271,7 +285,7 @@ QVariantMap NetworkInfoCollector::getCurrentNetworkConfig(const QString &rawInte
         // 如果PowerShell也失败，尝试用netsh作为最后的备选方案
         Logger::debug("PowerShell也失败，尝试使用netsh");
         QProcess dhcpProcess;
-        dhcpProcess.start("netsh", QStringList() << "interface" << "ip" << "show" << "config" << QString("name=\"%1\"").arg(rawInterfaceName));
+        dhcpProcess.start("netsh", QStringList() << "interface" << "ip" << "show" << "config" << QString("name=\"%1\"").arg(systemName));
         if(!dhcpProcess.waitForFinished(2000))
         {
             dhcpProcess.kill();
@@ -284,7 +298,7 @@ QVariantMap NetworkInfoCollector::getCurrentNetworkConfig(const QString &rawInte
         Logger::debug(tr("接口 DHCP 状态: %1").arg(isDhcp ? "启用" : "禁用"));
 
         QProcess ipProcess;
-        ipProcess.start("netsh", QStringList() << "interface" << "ip" << "show" << "addresses" << QString("name=\"%1\"").arg(rawInterfaceName));
+        ipProcess.start("netsh", QStringList() << "interface" << "ip" << "show" << "addresses" << QString("name=\"%1\"").arg(systemName));
         if(!ipProcess.waitForFinished(2000))
         {
             ipProcess.kill();

@@ -145,7 +145,7 @@ private:
     
     //网络配置监控
     QScopedPointer<QTimer> m_networkMonitorTimer; //网络配置监控定时器
-    QString m_lastIPAddress;                  //上次记录的IP地址
+    QVariantMap m_lastNetworkConfig;           //上次记录的网卡配置
 
     //菜单缓存
     QVariantMap m_menuCache;                  //菜单配置缓存

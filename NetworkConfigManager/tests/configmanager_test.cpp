@@ -22,6 +22,7 @@ private slots:
      * @brief 精确匹配优先于清洗后的模糊匹配
      */
     void prefersExactMatchOverCleanNameMatch();
+    void resolvesDecoratedInterfaceName();
 
     /**
      * @brief 无匹配时应保留原始输入
@@ -57,6 +58,27 @@ void ConfigManagerTest::prefersExactMatchOverCleanNameMatch()
     QCOMPARE(
         ConfigManager::resolveInterfaceName(QStringLiteral("以太网"), availableNames),
         QStringLiteral("以太网")
+    );
+}
+
+void ConfigManagerTest::resolvesDecoratedInterfaceName()
+{
+    const QStringList availableNames = {
+        QStringLiteral("以太网 2"),
+        QStringLiteral("以太网")
+    };
+
+    QCOMPARE(
+        ConfigManager::resolveInterfaceName(QStringLiteral("以太网\n (专用)"), availableNames),
+        QStringLiteral("以太网")
+    );
+    QCOMPARE(
+        ConfigManager::resolveInterfaceName(QStringLiteral("以太网 2\n (专用)"), availableNames),
+        QStringLiteral("以太网 2")
+    );
+    QCOMPARE(
+        ConfigManager::resolveInterfaceName(QStringLiteral("以太网 2\r (专用)"), availableNames),
+        QStringLiteral("以太网 2")
     );
 }
 
