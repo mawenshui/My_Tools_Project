@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QList>
 #include <QVariantMap>
+#include <QMap>
 
 struct InterfaceDetail {
     QString name;
@@ -27,6 +28,7 @@ public:
     static QString getInterfaceConnStatus(const QString &interfaceName);
     static QList<InterfaceDetail> getAllInterfaceDetails();
     static QVariantMap captureConfig(const QString &interfaceName);
+    static QMap<QString, QString> adapterNamesById();
 
 private:
     static QString executeNetshCommand(const QString &command);

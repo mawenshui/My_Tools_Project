@@ -16,7 +16,7 @@ private slots:
     /**
      * @brief 显示名应能还原为真实网卡名
      */
-    void resolvesCleanDisplayNameToRawInterfaceName();
+    void requiresExactLegacyInterfaceName();
 
     /**
      * @brief 精确匹配优先于清洗后的模糊匹配
@@ -27,7 +27,11 @@ private slots:
     /**
      * @brief 无匹配时应保留原始输入
      */
-    void keepsOriginalNameWhenNoMatchExists();
+    void rejectsMissingOrAmbiguousAdapter();
+    void bindsAdapterByStableId();
+    void reportsPartialApplication();
+    void reportsCommandFailure();
+    void rejectsUnsafeInterfaceName();
     void validatesEveryIpv4FieldAndSubnetMask();
     void acceptsStaticConfigWithoutGatewayOrDns();
     void loadsNetworkBackupWithoutGatewayOrDns();
@@ -35,17 +39,14 @@ private slots:
     void rejectsNetworkChangesWithoutAdmin();
 };
 
-void ConfigManagerTest::resolvesCleanDisplayNameToRawInterfaceName()
+void ConfigManagerTest::requiresExactLegacyInterfaceName()
 {
     const QStringList availableNames = {
         QStringLiteral("WLAN 3"),
         QStringLiteral("蓝牙网络连接")
     };
 
-    QCOMPARE(
-        ConfigManager::resolveInterfaceName(QStringLiteral("WLAN"), availableNames),
-        QStringLiteral("WLAN 3")
-    );
+    QVERIFY(ConfigManager::resolveInterfaceName(QStringLiteral("WLAN"), availableNames).isEmpty());
 }
 
 void ConfigManagerTest::prefersExactMatchOverCleanNameMatch()
@@ -82,17 +83,60 @@ void ConfigManagerTest::resolvesDecoratedInterfaceName()
     );
 }
 
-void ConfigManagerTest::keepsOriginalNameWhenNoMatchExists()
+void ConfigManagerTest::rejectsMissingOrAmbiguousAdapter()
 {
     const QStringList availableNames = {
         QStringLiteral("本地连接"),
         QStringLiteral("WLAN 3")
     };
 
-    QCOMPARE(
-        ConfigManager::resolveInterfaceName(QStringLiteral("未知网卡"), availableNames),
-        QStringLiteral("未知网卡")
-    );
+    QVERIFY(ConfigManager::resolveInterfaceName(QStringLiteral("未知网卡"), availableNames).isEmpty());
+    QVERIFY(ConfigManager::resolveInterfaceName(QStringLiteral("WLAN"),
+        {QStringLiteral("WLAN 2"), QStringLiteral("WLAN 3")}).isEmpty());
+}
+
+void ConfigManagerTest::bindsAdapterByStableId()
+{
+    const QMap<QString, QString> adapters{{"{A}", "以太网（新名称）"}, {"{B}", "以太网"}};
+    QCOMPARE(ConfigManager::resolvedInterface({{"interface", "以太网"}, {"adapter_id", "{A}"}}, adapters),
+             QStringLiteral("以太网（新名称）"));
+    QVERIFY(ConfigManager::resolvedInterface({{"interface", "以太网"}, {"adapter_id", "{C}"}}, adapters).isEmpty());
+}
+
+void ConfigManagerTest::reportsPartialApplication()
+{
+    const QVariantMap target{{"method", "static"}, {"ip", "192.0.2.8"},
+                             {"subnet", "255.255.255.0"}, {"gateway", "192.0.2.1"},
+                             {"primary_dns", "1.1.1.1"}};
+    QVariantMap actual = target;
+    actual["gateway"] = "";
+    actual["primary_dns"] = "8.8.8.8";
+    const QStringList differences = ConfigManager::configDifferences(actual, target);
+    QVERIFY(differences.contains("gateway"));
+    QVERIFY(differences.contains(QStringLiteral("首选 DNS")));
+    QVERIFY(ConfigManager::configDifferences({}, target).contains(QStringLiteral("网卡离线或无法读取系统配置")));
+}
+
+void ConfigManagerTest::reportsCommandFailure()
+{
+    ConfigManager manager;
+    QSignalSpy steps(&manager, &ConfigManager::applyStep);
+    QString error;
+    QVERIFY(!manager.runNetshStep("模拟失败", {"/c", "exit", "7"}, 3000, &error, "cmd.exe"));
+    QVERIFY(error.contains("7"));
+    QCOMPARE(steps.size(), 1);
+    QCOMPARE(steps.takeFirst().at(1).toInt(), 7);
+}
+
+void ConfigManagerTest::rejectsUnsafeInterfaceName()
+{
+    ConfigManager manager;
+    QVERIFY(!manager.validateConfig({{"interface", "Ethernet\" & echo bad"}, {"method", "dhcp"}}));
+    QVERIFY(!manager.validateConfig({{"interface", "Ethernet\nother"}, {"method", "dhcp"}}));
+    QVERIFY(!manager.validateConfig({{"interface", "Ethernet"}, {"method", "dhcp"},
+                                     {"custom_dns", true}}));
+    QVERIFY(!manager.validateConfig({{"interface", "Ethernet"}, {"method", "dhcp"},
+                                     {"custom_dns", true}, {"primary_dns", "bad;name"}}));
 }
 
 void ConfigManagerTest::validatesEveryIpv4FieldAndSubnetMask()
@@ -147,8 +191,10 @@ void ConfigManagerTest::loadsNetworkBackupWithoutGatewayOrDns()
     QVERIFY(file.commit());
     ConfigManager reloaded;
     const int count = reloaded.networkBackupCount("backup-optional-adapter");
+    const QList<QVariantMap> entries = reloaded.networkBackups("backup-optional-adapter");
     QVERIFY(QFile::remove(path));
     QCOMPARE(count, 1);
+    QCOMPARE(entries.size(), 1);
 }
 
 void ConfigManagerTest::savesLoadsAndRollsBackProfiles()

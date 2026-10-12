@@ -115,6 +115,25 @@ void NetworkToolsDialog::runBatch(bool dhcp)
         QMessageBox::information(this, tr("批量操作"), tr("请先选择已保存的配置。"));
         return;
     }
+    QStringList previews;
+    for(const QString &name : interfaces)
+    {
+        QVariantMap proposed = templateConfig;
+        proposed["interface"] = name;
+        proposed["adapter_id"] = NetworkInterfaceManager::captureConfig(name).value("adapter_id");
+        previews << ConfigManager::previewText(proposed);
+    }
+    if(QMessageBox::warning(this, tr("批量应用前预览"), previews.join("\n\n"),
+                            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes)
+        return;
+    if(!m_manager->isAdmin())
+    {
+        if(QMessageBox::question(this, tr("管理员权限"),
+            tr("修改网卡需要管理员权限。现在以管理员身份重新启动应用？"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+            m_manager->requestAdminPrivileges();
+        return;
+    }
     if(interfaces.size() > 1 && templateConfig.value("method").toString() == "static" &&
        QMessageBox::warning(this, tr("IP 冲突风险"),
                             tr("相同静态 IP 将应用到 %1 块网卡，可能造成地址冲突。继续？").arg(interfaces.size()),
@@ -132,6 +151,7 @@ void NetworkToolsDialog::runBatch(bool dhcp)
         if(progress.wasCanceled()) break;
         QVariantMap config = templateConfig;
         config["interface"] = interfaces.at(index);
+        config["adapter_id"] = NetworkInterfaceManager::captureConfig(interfaces.at(index)).value("adapter_id");
         if(!m_manager->applyConfig(config)) failed << interfaces.at(index);
         ++processed;
     }
@@ -165,6 +185,11 @@ void NetworkToolsDialog::restoreSelected()
     }
     if(QMessageBox::question(this, tr("回滚"), tr("恢复所选网卡的最近备份？")) != QMessageBox::Yes)
         return;
+    if(!m_manager->isAdmin())
+    {
+        m_manager->requestAdminPrivileges();
+        return;
+    }
     QStringList failed;
     for(const QString &name : interfaces)
         if(!m_manager->restoreLastNetworkBackup(name)) failed << name;

@@ -17,12 +17,15 @@
 #include <QTextCodec>
 #include <QFileDialog>
 #include <QFile>
+#include <QSaveFile>
+#include <QSignalBlocker>
 #include <QThread>
 #include <QMetaObject>
 #include <QMenuBar>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QProcess>
+#include <QCheckBox>
 #include "networktoolsdialog.h"
 #include "networkscandialog.h"
 #include "networkdiagnosticsdialog.h"
@@ -318,7 +321,7 @@ void MainWindow::setupUi()
         const int count = m_configManager->networkBackupCount(ui->interfaceCombo->currentText());
         restoreButton->setText(tr("回滚备份 (%1)").arg(count));
         restoreButton->setEnabled(count > 0);
-        restoreButton->setToolTip(tr("应用配置前自动备份；恢复当前网卡的最近一次备份"));
+        restoreButton->setToolTip(tr("应用配置前自动备份；选择一条历史快照恢复"));
     };
     connect(ui->interfaceCombo, &QComboBox::currentTextChanged, this, updateBackupButton);
     connect(m_configManager, &ConfigManager::configApplied, this, updateBackupButton);
@@ -330,9 +333,22 @@ void MainWindow::setupUi()
     });
     connect(restoreButton, &QPushButton::clicked, this, [this, updateBackupButton]() {
         const QString name = ui->interfaceCombo->currentText();
-        if(QMessageBox::question(this, tr("回滚备份"), tr("恢复 %1 的最近一次网络配置备份？").arg(name)) != QMessageBox::Yes)
-            return;
-        if(m_configManager->restoreLastNetworkBackup(name))
+        const QList<QVariantMap> backups = m_configManager->networkBackups(name);
+        QStringList labels;
+        for(int index = 0; index < backups.size(); ++index)
+        {
+            const QVariantMap backup = backups.at(index);
+            labels << tr("#%1　%2　%3　%4　%5").arg(index + 1)
+                .arg(backup.value("saved_at").toString(), backup.value("interface").toString(),
+                     backup.value("method").toString(), backup.value("ip").toString());
+        }
+        bool accepted = false;
+        const QString selected = QInputDialog::getItem(this, tr("选择回滚快照"),
+            tr("时间 / 地址模式 / IP"), labels, labels.size() - 1, false, &accepted);
+        if(!accepted || !ensureAdminForChange()) return;
+        QVariantMap target = backups.at(labels.indexOf(selected));
+        if(!confirmApply(target)) return;
+        if(m_configManager->restoreNetworkBackup(name, labels.indexOf(selected)))
             ui->statusBar->showMessage(tr("已恢复 %1 的网络配置").arg(name), 3000);
         else QMessageBox::warning(this, tr("回滚备份"), tr("无法恢复 %1 的最近备份。").arg(name));
         updateBackupButton();
@@ -743,21 +759,25 @@ void MainWindow::setupConnections()
         }
         else
         {
-            Logger::error(tr("配置应用失败: %1").arg(message));
-            QMessageBox::warning(this, "应用失败", message);
+            Logger::error(tr("配置应用失败；详情已在界面显示"));
+            ui->statusBar->showMessage(message, 8000);
         }
+    });
+    connect(m_configManager, &ConfigManager::applyStep, this,
+            [this](const QString &step, int exitCode, const QString &detail) {
+        const QString result = tr("%1（退出码 %2）：%3").arg(step).arg(exitCode).arg(detail);
+        Logger::info(tr("%1：退出码 %2").arg(step).arg(exitCode));
+        ui->statusBar->showMessage(result, 5000);
+        if(m_loadingOverlay && m_loadingOverlay->isVisible()) showLoading(result.left(120));
     });
     connect(m_configManager, &ConfigManager::errorOccurred, this, [this](const QString & error)
     {
-        Logger::error(tr("配置管理器错误: %1").arg(error));
+        Logger::error(tr("配置管理器错误；详情已在界面显示"));
         QMessageBox::critical(this, "错误", error);
     });
     connect(m_configManager, &ConfigManager::adminStatusChanged, this, [this](bool isAdmin)
     {
-        ui->applyButton->setEnabled(isAdmin);
-        ui->addButton->setEnabled(isAdmin);
-        ui->updateButton->setEnabled(isAdmin);
-        ui->deleteButton->setEnabled(isAdmin);
+        ui->applyButton->setEnabled(true);
         if(isAdmin)
         {
             Logger::info("已获取管理员权限");
@@ -888,12 +908,67 @@ void MainWindow::showAdminWarning()
  */
 void MainWindow::disableAdminFunctions()
 {
-    Logger::warning("禁用管理员功能");
-    ui->applyButton->setEnabled(false);
-    ui->addButton->setEnabled(false);
-    ui->updateButton->setEnabled(false);
-    ui->deleteButton->setEnabled(false);
-    ui->statusBar->showMessage("无管理员权限，部分功能受限", 2000);
+    ui->statusBar->showMessage(tr("只读和配置文件操作可用；修改网卡时会请求管理员权限"), 3000);
+}
+
+bool MainWindow::ensureAdminForChange()
+{
+    if(m_configManager->isAdmin()) return true;
+    if(QMessageBox::question(this, tr("管理员权限"),
+        tr("修改网卡需要管理员权限。现在以管理员身份重新启动应用？"),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes)
+        m_configManager->requestAdminPrivileges();
+    return false;
+}
+
+bool MainWindow::confirmApply(QVariantMap &config, bool *timedRollback)
+{
+    if(config.value("adapter_id").toString().isEmpty() &&
+       ConfigManager::resolvedInterface(config, NetworkInterfaceManager::adapterNamesById()).isEmpty())
+    {
+        const QStringList names = NetworkInterfaceManager::adapterNamesById().values();
+        bool accepted = false;
+        const QString selected = QInputDialog::getItem(this, tr("选择旧配置的网卡"),
+            tr("旧配置中的网卡名称无法唯一匹配。请选择实际目标网卡："), names, 0, false, &accepted);
+        if(!accepted || selected.isEmpty()) return false;
+        const QVariantMap adapter = NetworkInterfaceManager::captureConfig(selected);
+        if(adapter.isEmpty()) return false;
+        config["interface"] = selected;
+        config["adapter_id"] = adapter.value("adapter_id");
+    }
+    const QString preview = ConfigManager::previewText(config);
+    const QString resolved = ConfigManager::resolvedInterface(config, NetworkInterfaceManager::adapterNamesById());
+    if(resolved.isEmpty() || NetworkInterfaceManager::captureConfig(resolved).isEmpty())
+    {
+        QMessageBox::warning(this, tr("无法应用配置"), preview);
+        return false;
+    }
+    QMessageBox box(QMessageBox::Warning, tr("应用前预览"), preview,
+                    QMessageBox::Yes | QMessageBox::No, this);
+    box.setDefaultButton(QMessageBox::No);
+    bool accepted = false;
+    if(timedRollback)
+    {
+        auto *check = new QCheckBox(tr("应用后 60 秒内未确认可用则自动恢复快照"), &box);
+        box.setCheckBox(check);
+        accepted = box.exec() == QMessageBox::Yes;
+        *timedRollback = accepted && check->isChecked();
+    }
+    else accepted = box.exec() == QMessageBox::Yes;
+    if(accepted)
+        config["interface"] = ConfigManager::resolvedInterface(config, NetworkInterfaceManager::adapterNamesById());
+    return accepted;
+}
+
+void MainWindow::confirmTimedRollback(const QString &interfaceName)
+{
+    QMessageBox box(QMessageBox::Question, tr("确认新配置可用"),
+                    tr("请在 60 秒内确认新配置可用；超时将恢复刚才的快照。"),
+                    QMessageBox::Yes | QMessageBox::No, this);
+    box.setDefaultButton(QMessageBox::No);
+    QTimer::singleShot(60000, &box, [&box]() { box.done(QMessageBox::No); });
+    if(box.exec() != QMessageBox::Yes && !m_configManager->restoreLastNetworkBackup(interfaceName))
+        QMessageBox::critical(this, tr("自动回滚失败"), tr("无法恢复上一快照，请手动检查网卡配置。"));
 }
 
 /**
@@ -920,11 +995,14 @@ void MainWindow::onConfigSelected(QListWidgetItem *item)
         return;
     }
     //更新界面显示
-    int index = ui->interfaceCombo->findText(config["interface"].toString());
+    const QString boundName = ConfigManager::resolvedInterface(config, NetworkInterfaceManager::adapterNamesById());
+    int index = ui->interfaceCombo->findText(boundName);
     if(index >= 0)
     {
         ui->interfaceCombo->setCurrentIndex(index);
     }
+    else if(!config.value("adapter_id").toString().isEmpty())
+        ui->statusBar->showMessage(tr("此配置绑定的网卡已离线或拔出：%1").arg(config.value("interface").toString()), 8000);
     if(config["method"].toString() == "dhcp")
     {
         ui->dhcpRadio->setChecked(true);
@@ -941,7 +1019,7 @@ void MainWindow::onConfigSelected(QListWidgetItem *item)
     ui->gatewayEdit->setText(config["gateway"].toString());
     ui->primaryDnsEdit->setText(config["primary_dns"].toString());
     ui->secondaryDnsEdit->setText(config["secondary_dns"].toString());
-    ui->statusBar->showMessage("已选择配置: " + name, 2000);
+    if(index >= 0) ui->statusBar->showMessage("已选择配置: " + name, 2000);
     Logger::info(tr("已加载配置: %1").arg(name));
 }
 
@@ -1245,9 +1323,19 @@ void MainWindow::onApplyConfig()
             showConfigResult(ConfigResult::Failure, "无效的配置");
             return;
         }
+        const QVariantMap original = config;
+        bool timedRollback = false;
+        if(!confirmApply(config, &timedRollback) || !ensureAdminForChange()) return;
+        if(config != original &&
+           (!m_configManager->updateConfig(m_currentConfig, m_currentConfig, config) ||
+            !m_configManager->saveConfigs()))
+        {
+            showConfigResult(ConfigResult::Failure, tr("无法保存网卡绑定信息，未应用配置"));
+            return;
+        }
         showLoading("正在应用配置...");
 
-        QThread *thread = QThread::create([this, config]() {
+        QThread *thread = QThread::create([this, config, timedRollback]() {
             QString interfaceName = config["interface"].toString();
             QString adminStatus = NetworkInterfaceManager::getInterfaceAdminStatus(interfaceName);
             if(adminStatus == "已禁用")
@@ -1272,13 +1360,15 @@ void MainWindow::onApplyConfig()
 
             bool success = m_configManager->applyConfig(config);
 
-            QMetaObject::invokeMethod(this, [this, success]() {
+            QMetaObject::invokeMethod(this, [this, success, timedRollback, config]() {
                 hideLoading();
 
                 if(success)
                 {
                     Logger::info("配置应用成功");
                     showConfigResult(ConfigResult::Success, "配置应用成功");
+                    if(timedRollback)
+                        confirmTimedRollback(ConfigManager::resolvedInterface(config, NetworkInterfaceManager::adapterNamesById()));
                     QTimer::singleShot(500, this, [this]()
                     {
                         updateQuickMenu();
@@ -1324,6 +1414,7 @@ QVariantMap MainWindow::getCurrentFormConfig() const
     };
     QVariantMap config;
     config["interface"] = ui->interfaceCombo->currentText();
+    config["adapter_id"] = NetworkInterfaceManager::captureConfig(config.value("interface").toString()).value("adapter_id");
     config["method"] = ui->dhcpRadio->isChecked() ? "dhcp" : "static";
     config["custom_dns"] = ui->customDnsCheckBox->isChecked();
     config["ip"] = ui->ipEdit->text();
@@ -1546,65 +1637,101 @@ void MainWindow::onInputTextChanged()
  */
 void MainWindow::onImportConfig()
 {
-    Logger::info("开始导入配置");
-    QString filePath = QFileDialog::getOpenFileName(this, "选择配置文件", "", "JSON Files (*.json);;All Files (*)");
-    if(filePath.isEmpty())
+    const QString path = QFileDialog::getOpenFileName(this, tr("选择配置文件"), QString(),
+                                                      tr("JSON 文件 (*.json)"));
+    if(path.isEmpty()) return;
+    QFile file(path);
+    if(!file.open(QIODevice::ReadOnly))
     {
-        Logger::debug("用户取消导入");
+        QMessageBox::critical(this, tr("导入失败"), file.errorString());
         return;
     }
-
-    QFile file(filePath);
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(file.readAll(), &parseError);
+    if(parseError.error != QJsonParseError::NoError || !document.isObject())
     {
-        Logger::error("无法打开导入文件: " + filePath);
-        QMessageBox::critical(this, "错误", "无法打开文件！");
+        QMessageBox::critical(this, tr("导入失败"), tr("JSON 格式无效：%1").arg(parseError.errorString()));
         return;
     }
-
-    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-    file.close();
-
-    if(doc.isNull() || !doc.isObject())
+    QJsonObject root = document.object();
+    QJsonObject profiles;
+    if(root.contains("format_version"))
     {
-        Logger::error("无效的JSON文件: " + filePath);
-        QMessageBox::critical(this, "错误", "无效的配置文件！");
+        if(root.value("format_version").toInt() != 1 || !root.value("profiles").isObject())
+        {
+            QMessageBox::critical(this, tr("导入失败"), tr("不支持的配置文件版本或结构。"));
+            return;
+        }
+        profiles = root.value("profiles").toObject();
+    }
+    else profiles = root; // 兼容旧版直接以配置名为键的 JSON。
+
+    QMap<QString, QVariantMap> valid;
+    QStringList invalid;
+    QStringList conflicts;
+    const auto existing = m_configManager->configs();
+    {
+        QSignalBlocker block(m_configManager);
+        for(auto it = profiles.constBegin(); it != profiles.constEnd(); ++it)
+        {
+            QVariantMap config = it.value().toObject().toVariantMap();
+            const QString name = config.value("interface").toString();
+            if(name.contains('\r') || name.contains('\n'))
+                config["interface"] = name.section('\r', 0, 0).section('\n', 0, 0).trimmed();
+            if(!it.value().isObject() || it.key().trimmed().isEmpty() ||
+               !m_configManager->validateConfig(config))
+            {
+                invalid << it.key();
+                continue;
+            }
+            valid.insert(it.key(), config);
+            if(existing.contains(it.key())) conflicts << it.key();
+        }
+    }
+    if(valid.isEmpty())
+    {
+        QMessageBox::warning(this, tr("导入失败"), tr("没有有效配置。无效项：%1").arg(invalid.join("、")));
         return;
     }
-
-    QJsonObject json = doc.object();
-    int importedCount = 0;
-    int skippedCount = 0;
-
-    for(auto it = json.begin(); it != json.end(); ++it)
+    const QString preview = tr("有效：%1\n同名：%2\n无效：%3\n\n涉及条目：%4")
+        .arg(valid.size()).arg(conflicts.size()).arg(invalid.size())
+        .arg((conflicts + invalid).join("、"));
+    if(QMessageBox::question(this, tr("导入预览"), preview,
+                             QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes)
+        return;
+    bool accepted = false;
+    const QString policy = QInputDialog::getItem(this, tr("导入冲突处理"),
+        tr("同名配置处理方式："), {tr("跳过"), tr("改名"), tr("覆盖")}, 0, false, &accepted);
+    if(!accepted) return;
+    int imported = 0;
+    int skipped = 0;
+    for(auto it = valid.cbegin(); it != valid.cend(); ++it)
     {
-        QString key = it.key();
-        QVariantMap config = it.value().toObject().toVariantMap();
-
-        if(m_configManager->configs().contains(key))
+        QString name = it.key();
+        if(m_configManager->configs().contains(name))
         {
-            skippedCount++;
-            continue;
+            if(policy == tr("跳过")) { ++skipped; continue; }
+            if(policy == tr("改名"))
+            {
+                int suffix = 2;
+                while(m_configManager->configs().contains(name))
+                    name = tr("%1（导入 %2）").arg(it.key()).arg(suffix++);
+            }
         }
-        else
-        {
-            m_configManager->addConfig(key, config);
-            importedCount++;
-        }
+        const bool overwrite = name == it.key() && m_configManager->configs().contains(name);
+        if(overwrite ? m_configManager->updateConfig(name, name, it.value())
+                     : m_configManager->addConfig(name, it.value())) ++imported;
+        else ++skipped;
     }
-
-    if(m_configManager->saveConfigs())
+    if(!m_configManager->saveConfigs())
     {
-        updateConfigList();
-        QString msg = tr("导入成功！已导入 %1 个配置").arg(importedCount);
-        if(skippedCount > 0)
-        {
-            msg += tr("，%1 个已存在的配置被跳过").arg(skippedCount);
-        }
-        Logger::info(msg);
-        ui->statusBar->showMessage(msg, 3000);
-        QMessageBox::information(this, "成功", msg);
+        m_configManager->loadConfigs();
+        QMessageBox::critical(this, tr("导入失败"), tr("配置文件写入失败，未保存导入结果。"));
+        return;
     }
+    updateConfigList();
+    QMessageBox::information(this, tr("导入完成"),
+        tr("导入 %1 项，跳过 %2 项，无效 %3 项。").arg(imported).arg(skipped).arg(invalid.size()));
 }
 
 /**
@@ -1614,34 +1741,35 @@ void MainWindow::onImportConfig()
  */
 void MainWindow::onExportConfig()
 {
-    Logger::info("开始导出配置");
-    QString filePath = QFileDialog::getSaveFileName(this, "保存配置文件", "", "JSON Files (*.json);;All Files (*)");
-    if(filePath.isEmpty())
+    QString path = QFileDialog::getSaveFileName(this, tr("导出配置文件"), QString(),
+                                                 tr("JSON 文件 (*.json)"));
+    if(path.isEmpty()) return;
+    if(!path.endsWith(".json", Qt::CaseInsensitive)) path += ".json";
+    const bool includeIds = QMessageBox::question(this, tr("导出网卡标识"),
+        tr("是否在导出文件中包含本机网卡 GUID？默认不包含；跨机器导入通常不需要。"),
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::Yes;
+    QJsonObject profiles;
+    const auto saved = m_configManager->configs();
+    for(auto it = saved.cbegin(); it != saved.cend(); ++it)
     {
-        Logger::debug("用户取消导出");
+        QVariantMap config = it.value();
+        if(!includeIds) config.remove("adapter_id");
+        profiles.insert(it.key(), QJsonObject::fromVariantMap(config));
+    }
+    const QJsonDocument document(QJsonObject{{"format_version", 1}, {"profiles", profiles}});
+    QSaveFile file(path);
+    if(!file.open(QIODevice::WriteOnly))
+    {
+        QMessageBox::critical(this, tr("导出失败"), file.errorString());
         return;
     }
-
-    if(!filePath.endsWith(".json", Qt::CaseInsensitive))
+    const QByteArray bytes = document.toJson(QJsonDocument::Indented);
+    if(file.write(bytes) != bytes.size() || !file.commit())
     {
-        filePath += ".json";
-    }
-
-    QJsonDocument doc = QJsonDocument::fromVariant(QVariant::fromValue(m_configManager->configs()));
-    QFile file(filePath);
-    if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
-    {
-        Logger::error("无法打开导出文件: " + filePath);
-        QMessageBox::critical(this, "错误", "无法保存文件！");
+        QMessageBox::critical(this, tr("导出失败"), file.errorString());
         return;
     }
-    file.write(doc.toJson(QJsonDocument::Indented));
-    file.close();
-
-    QString msg = tr("导出成功！已保存到: ") + filePath;
-    Logger::info(msg);
-    ui->statusBar->showMessage(msg, 3000);
-    QMessageBox::information(this, "成功", msg);
+    QMessageBox::information(this, tr("导出完成"), tr("配置已保存到：%1").arg(path));
 }
 
 /**
@@ -1655,10 +1783,6 @@ void MainWindow::buildInterfaceConfigMenu(QMenu *menu, bool includeManageActions
     // 一次调用获取全部接口详情，并使用缓存获取网络配置，避免多次netsh阻塞
     QList<InterfaceDetail> allDetails = NetworkInterfaceManager::getAllInterfaceDetails();
     QMap<QString, QVariantMap> configs = m_configManager->configs();
-    QStringList availableNames;
-    for(const InterfaceDetail &detail : allDetails)
-        if(!detail.name.isEmpty()) availableNames << detail.name;
-
     for(const InterfaceDetail &detail : allDetails)
     {
         if(detail.name.isEmpty()) continue;
@@ -1679,17 +1803,20 @@ void MainWindow::buildInterfaceConfigMenu(QMenu *menu, bool includeManageActions
         bool hasConfigs = false;
         for(auto it = configs.begin(); it != configs.end(); ++it)
         {
-            QString configInterface = ConfigManager::resolveInterfaceName(
-                it.value()["interface"].toString(), availableNames);
+            QString configInterface = ConfigManager::resolvedInterface(
+                it.value(), NetworkInterfaceManager::adapterNamesById());
             if(configInterface == rawInterface)
             {
                 QAction *action = interfaceMenu->addAction(it.key());
                 action->setCheckable(true);
                 action->setChecked(m_networkInfoCollector->compareConfigs(currentConfig, it.value()));
-                connect(action, &QAction::triggered, [this, config = it.value()]()
+                connect(action, &QAction::triggered, [this, config = it.value()]() mutable
                 {
                     Logger::info(tr("从菜单应用配置: %1").arg(config["interface"].toString()));
-                    QVariantMap currentConfig = m_networkInfoCollector->getCurrentNetworkConfig(config["interface"].toString(), m_configManager);
+                    bool timedRollback = false;
+                    if(!confirmApply(config, &timedRollback) || !ensureAdminForChange()) return;
+                    const QString name = ConfigManager::resolvedInterface(config, NetworkInterfaceManager::adapterNamesById());
+                    QVariantMap currentConfig = m_networkInfoCollector->getCurrentNetworkConfig(name, m_configManager);
                     if(m_networkInfoCollector->compareConfigs(currentConfig, config))
                     {
                         Logger::info("配置与当前相同，无需重复应用");
@@ -1710,6 +1837,7 @@ void MainWindow::buildInterfaceConfigMenu(QMenu *menu, bool includeManageActions
                             m_floatWindow->update();
                         });
                         showConfigResult(ConfigResult::Success, msg);
+                        if(timedRollback) confirmTimedRollback(name);
                     }
                 });
                 hasConfigs = true;
@@ -1881,6 +2009,7 @@ void MainWindow::refreshNetworkInterfaces()
 
 void MainWindow::onEnableInterface(const QString &interfaceName)
 {
+    if(!ensureAdminForChange()) return;
     QString interface = interfaceName.isEmpty() ? ui->networkInterfaceCombo->currentData().toString() : interfaceName;
     if(!interface.isEmpty())
     {
@@ -1936,6 +2065,7 @@ void MainWindow::onEnableInterface()
 
 void MainWindow::onDisableInterface(const QString &interfaceName)
 {
+    if(!ensureAdminForChange()) return;
     QString interface = interfaceName.isEmpty() ? ui->networkInterfaceCombo->currentData().toString() : interfaceName;
     if(!interface.isEmpty())
     {

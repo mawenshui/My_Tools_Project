@@ -372,44 +372,17 @@ bool NetworkInfoCollector::compareConfigs(const QVariantMap &current, const QVar
         Logger::debug("配置为空，不匹配");
         return false;
     }
-    QString currentInterface = ConfigManager::cleanInterfaceName(current["interface"].toString());
-    QString savedInterface = ConfigManager::cleanInterfaceName(saved["interface"].toString());
-    if(currentInterface != savedInterface)
+    const QString currentId = current.value("adapter_id").toString();
+    const QString savedId = saved.value("adapter_id").toString();
+    const QString currentInterface = current.value("interface").toString();
+    const QString savedInterface = saved.value("interface").toString().section('\r', 0, 0).section('\n', 0, 0).trimmed();
+    if((!savedId.isEmpty() && currentId.compare(savedId, Qt::CaseInsensitive) != 0) ||
+       (savedId.isEmpty() && currentInterface.compare(savedInterface, Qt::CaseInsensitive) != 0))
     {
         Logger::debug(tr("接口不匹配: %1 != %2").arg(currentInterface).arg(savedInterface));
         return false;
     }
-    QString currentMethod = current["method"].toString();
-    QString savedMethod = saved["method"].toString();
-    if(currentMethod != savedMethod)
-    {
-        Logger::debug(tr("方法不匹配: %1 != %2").arg(currentMethod).arg(savedMethod));
-        return false;
-    }
-    if(currentMethod == "static")
-    {
-        QString currentIp = current["ip"].toString();
-        QString savedIp = saved["ip"].toString();
-        if(currentIp != savedIp)
-        {
-            Logger::debug(tr("IP不匹配: %1 != %2").arg(currentIp).arg(savedIp));
-            return false;
-        }
-        QString currentSubnet = current["subnet"].toString();
-        QString savedSubnet = saved["subnet"].toString();
-        if(currentSubnet != savedSubnet)
-        {
-            Logger::debug(tr("子网掩码不匹配: %1 != %2").arg(currentSubnet).arg(savedSubnet));
-            return false;
-        }
-        QString currentGateway = current["gateway"].toString();
-        QString savedGateway = saved["gateway"].toString();
-        if(currentGateway != savedGateway)
-        {
-            Logger::debug(tr("网关不匹配: %1 != %2").arg(currentGateway).arg(savedGateway));
-            return false;
-        }
-    }
+    if(!ConfigManager::configDifferences(current, saved).isEmpty()) return false;
     Logger::debug("配置匹配");
     return true;
 }

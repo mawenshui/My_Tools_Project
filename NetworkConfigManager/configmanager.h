@@ -79,6 +79,11 @@ public:
     bool applyConfig(const QVariantMap &config, bool createBackup = true);
     int networkBackupCount(const QString &interfaceName) const;
     bool restoreLastNetworkBackup(const QString &interfaceName);
+    QList<QVariantMap> networkBackups(const QString &interfaceName) const;
+    bool restoreNetworkBackup(const QString &interfaceName, int index);
+    static QStringList configDifferences(const QVariantMap &actual, const QVariantMap &target);
+    static QString resolvedInterface(const QVariantMap &config, const QMap<QString, QString> &adapters);
+    static QString previewText(const QVariantMap &target);
 
     //线程安全的配置访问方法组 -------------------------------------
 
@@ -179,6 +184,7 @@ signals:
      * @param isAdmin 当前是否为管理员状态
      */
     void adminStatusChanged(bool isAdmin) const;
+    void applyStep(const QString &step, int exitCode, const QString &detail) const;
 
 private:
     //成员变量 -----------------------------------------------------
@@ -223,6 +229,9 @@ private:
     bool saveHistory();
     void loadNetworkBackups();
     bool saveNetworkBackups() const;
+    bool runNetshStep(const QString &step, const QStringList &args, int timeoutMs, QString *error,
+                      const QString &program = QStringLiteral("netsh")) const;
+    friend class ConfigManagerTest;
 
     /**
      * @brief 保存配置版本到历史记录

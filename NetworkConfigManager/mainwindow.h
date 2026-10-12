@@ -172,6 +172,9 @@ private:
     void showAdminWarning();    //显示管理员权限警告
     void initializeApplication();  //初始化应用程序
     void disableAdminFunctions();  //禁用需要管理员权限的功能
+    bool ensureAdminForChange();
+    bool confirmApply(QVariantMap &config, bool *timedRollback = nullptr);
+    void confirmTimedRollback(const QString &interfaceName);
     Q_INVOKABLE QVariantMap getCurrentFormConfig() const;  //获取当前表单配置
     bool isDhcpEnabled(const QString &dhcpOutput);  //检查DHCP是否启用
     void restoreWindowState();

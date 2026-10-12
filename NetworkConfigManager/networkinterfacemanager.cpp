@@ -24,6 +24,27 @@ NetworkInterfaceManager::NetworkInterfaceManager(QObject *parent)
 {
 }
 
+QMap<QString, QString> NetworkInterfaceManager::adapterNamesById()
+{
+    QMap<QString, QString> adapters;
+#ifdef _WIN32
+    ULONG size = 15000;
+    QByteArray buffer(static_cast<int>(size), '\0');
+    ULONG result = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_GATEWAYS, nullptr,
+                                        reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data()), &size);
+    if(result == ERROR_BUFFER_OVERFLOW)
+    {
+        buffer.resize(static_cast<int>(size));
+        result = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_GATEWAYS, nullptr,
+                                      reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data()), &size);
+    }
+    if(result == NO_ERROR)
+        for(auto *adapter = reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data()); adapter; adapter = adapter->Next)
+            adapters.insert(QString::fromLatin1(adapter->AdapterName), QString::fromWCharArray(adapter->FriendlyName));
+#endif
+    return adapters;
+}
+
 QVariantMap NetworkInterfaceManager::captureConfig(const QString &interfaceName)
 {
     QVariantMap config;
@@ -48,8 +69,11 @@ QVariantMap NetworkInterfaceManager::captureConfig(const QString &interfaceName)
     for(auto *adapter = reinterpret_cast<PIP_ADAPTER_ADDRESSES>(buffer.data()); adapter; adapter = adapter->Next)
     {
         const QString name = QString::fromWCharArray(adapter->FriendlyName);
-        if(name.compare(interfaceName, Qt::CaseInsensitive) != 0) continue;
+        const QString id = QString::fromLatin1(adapter->AdapterName);
+        if(name.compare(interfaceName, Qt::CaseInsensitive) != 0 &&
+           id.compare(interfaceName, Qt::CaseInsensitive) != 0) continue;
         config["interface"] = name;
+        config["adapter_id"] = id;
         config["method"] = (adapter->Flags & IP_ADAPTER_DHCP_ENABLED) ? "dhcp" : "static";
         config["custom_dns"] = false;
         for(auto *entry = adapter->FirstUnicastAddress; entry; entry = entry->Next)
@@ -116,32 +140,26 @@ QStringList NetworkInterfaceManager::getNetworkInterfaces()
 
 bool NetworkInterfaceManager::enableInterface(const QString &interfaceName)
 {
-    QString output = executeNetshCommand(QString("interface set interface \"%1\" enable").arg(interfaceName));
-    if(output.isEmpty())
-    {
-        return true;
-    }
-    if(output.contains("已经是启用状态"))
-    {
-        return true;
-    }
-    Logger::error(QString("启用网卡 %1 失败: %2").arg(interfaceName).arg(output));
-    return false;
+    if(interfaceName.contains(QRegularExpression(QStringLiteral("[\\x00-\\x1f\\x7f\"']"))) ||
+       !adapterNamesById().values().contains(interfaceName)) return false;
+    QProcess process;
+    process.start("netsh", {"interface", "set", "interface",
+                            QString("name=\"%1\"").arg(interfaceName), "admin=enabled"});
+    const bool finished = process.waitForStarted(3000) && process.waitForFinished(8000);
+    if(!finished && process.state() != QProcess::NotRunning) { process.kill(); process.waitForFinished(3000); }
+    return finished && process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
 }
 
 bool NetworkInterfaceManager::disableInterface(const QString &interfaceName)
 {
-    QString output = executeNetshCommand(QString("interface set interface \"%1\" disable").arg(interfaceName));
-    if(output.isEmpty())
-    {
-        return true;
-    }
-    if(output.contains("已经是禁用状态"))
-    {
-        return true;
-    }
-    Logger::error(QString("禁用网卡 %1 失败: %2").arg(interfaceName).arg(output));
-    return false;
+    if(interfaceName.contains(QRegularExpression(QStringLiteral("[\\x00-\\x1f\\x7f\"']"))) ||
+       !adapterNamesById().values().contains(interfaceName)) return false;
+    QProcess process;
+    process.start("netsh", {"interface", "set", "interface",
+                            QString("name=\"%1\"").arg(interfaceName), "admin=disabled"});
+    const bool finished = process.waitForStarted(3000) && process.waitForFinished(8000);
+    if(!finished && process.state() != QProcess::NotRunning) { process.kill(); process.waitForFinished(3000); }
+    return finished && process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
 }
 
 QString NetworkInterfaceManager::getInterfaceStatus(const QString &interfaceName)

@@ -11,6 +11,8 @@
 #include <QDateTime>
 #include <QHostAddress>
 #include <QTextCodec>
+#include <QThread>
+#include <algorithm>
 #include <windows.h>
 #include <sddl.h>
 
@@ -202,9 +204,20 @@ bool ConfigManager::loadConfigs()
     //清空现有配置并加载新配置
     m_configs.clear();
     QJsonObject obj = doc.object();
+    const QMap<QString, QString> adapters = NetworkInterfaceManager::adapterNamesById();
     for (auto it = obj.begin(); it != obj.end(); ++it)
     {
         QVariantMap config = it.value().toObject().toVariantMap();
+        // 旧版本把网卡描述拼在换行后；读取时迁移为真正的友好名。
+        const QString savedName = config.value("interface").toString();
+        if(savedName.contains('\r') || savedName.contains('\n'))
+            config["interface"] = savedName.section('\r', 0, 0).section('\n', 0, 0).trimmed();
+        if(config.value("adapter_id").toString().isEmpty())
+        {
+            const QString matched = resolveInterfaceName(config.value("interface").toString(), adapters.values());
+            for(auto adapter = adapters.cbegin(); adapter != adapters.cend(); ++adapter)
+                if(adapter.value() == matched) { config["adapter_id"] = adapter.key(); break; }
+        }
         if (validateConfig(config))
         {
             m_configs[it.key()] = config;
@@ -282,6 +295,9 @@ bool ConfigManager::addConfig(const QString &name, const QVariantMap &config)
     {
         return false;
     }
+    QVariantMap bound = config;
+    const QVariantMap adapter = NetworkInterfaceManager::captureConfig(config.value("interface").toString());
+    if(!adapter.isEmpty()) bound["adapter_id"] = adapter.value("adapter_id");
     {
         QMutexLocker locker(&m_mutex);
         if (m_configs.contains(name))
@@ -289,9 +305,9 @@ bool ConfigManager::addConfig(const QString &name, const QVariantMap &config)
             emit errorOccurred(tr("配置名称已存在: %1").arg(name));
             return false;
         }
-        m_configs[name] = config;
+        m_configs[name] = bound;
     }
-    saveConfigVersion(name, config);
+    saveConfigVersion(name, bound);
     return true;
 }
 
@@ -309,6 +325,9 @@ bool ConfigManager::updateConfig(const QString &oldName, const QString &newName,
         return false;
     }
     QVariantMap previous;
+    QVariantMap bound = config;
+    const QVariantMap adapter = NetworkInterfaceManager::captureConfig(config.value("interface").toString());
+    if(!adapter.isEmpty()) bound["adapter_id"] = adapter.value("adapter_id");
     {
         QMutexLocker locker(&m_mutex);
         if (!m_configs.contains(oldName))
@@ -322,11 +341,11 @@ bool ConfigManager::updateConfig(const QString &oldName, const QString &newName,
             return false;
         }
         previous = m_configs.take(oldName);
-        m_configs[newName] = config;
+        m_configs[newName] = bound;
         if(oldName != newName) m_configHistory[newName] = m_configHistory.take(oldName);
     }
     saveConfigVersion(newName, previous);
-    saveConfigVersion(newName, config);
+    saveConfigVersion(newName, bound);
     return true;
 }
 
@@ -420,36 +439,116 @@ QString ConfigManager::resolveInterfaceName(const QString &requestedName, const 
     const QString normalizedRequested = requestedName.trimmed();
     if(normalizedRequested.isEmpty() || availableNames.isEmpty())
     {
-        return normalizedRequested;
+        return QString();
     }
 
+    QString exact;
     for(const QString &candidate : availableNames)
-    {
         if(candidate.compare(normalizedRequested, Qt::CaseInsensitive) == 0)
         {
-            return candidate;
+            if(!exact.isEmpty()) return QString();
+            exact = candidate;
         }
-    }
+    if(!exact.isEmpty()) return exact;
 
     const QString displayName = normalizedRequested.section('\r', 0, 0).section('\n', 0, 0).trimmed();
+    QString legacy;
     for(const QString &candidate : availableNames)
-    {
         if(candidate.compare(displayName, Qt::CaseInsensitive) == 0)
         {
-            return candidate;
+            if(!legacy.isEmpty()) return QString();
+            legacy = candidate;
         }
-    }
+    if(!legacy.isEmpty()) return legacy;
 
-    const QString cleanedRequested = cleanInterfaceName(normalizedRequested);
-    for(const QString &candidate : availableNames)
+    return QString();
+}
+
+QString ConfigManager::resolvedInterface(const QVariantMap &config, const QMap<QString, QString> &adapters)
+{
+    const QString id = config.value("adapter_id").toString();
+    if(!id.isEmpty())
     {
-        if(cleanInterfaceName(candidate).compare(cleanedRequested, Qt::CaseInsensitive) == 0)
+        for(auto it = adapters.cbegin(); it != adapters.cend(); ++it)
+            if(it.key().compare(id, Qt::CaseInsensitive) == 0) return it.value();
+        return QString(); // 已绑定的网卡离线时不能误用同名网卡。
+    }
+    return resolveInterfaceName(config.value("interface").toString(), adapters.values());
+}
+
+QStringList ConfigManager::configDifferences(const QVariantMap &actual, const QVariantMap &target)
+{
+    QStringList differences;
+    if(actual.isEmpty()) return QStringList{QStringLiteral("网卡离线或无法读取系统配置")};
+    const QString method = target.value("method").toString();
+    if(actual.value("method") != method) differences << QStringLiteral("地址模式");
+    if(method == "static")
+    {
+        for(const QString &key : {"ip", "subnet", "gateway"})
+            if(actual.value(key).toString() != target.value(key).toString()) differences << key;
+        const QString firstDns = target.value("primary_dns").toString().isEmpty()
+            ? target.value("secondary_dns").toString() : target.value("primary_dns").toString();
+        const QString secondDns = target.value("primary_dns").toString().isEmpty()
+            ? QString() : target.value("secondary_dns").toString();
+        if(actual.value("primary_dns").toString() != firstDns) differences << QStringLiteral("首选 DNS");
+        if(actual.value("secondary_dns").toString() != secondDns) differences << QStringLiteral("备用 DNS");
+    }
+    else
+    {
+        if(actual.value("custom_dns").toBool() != target.value("custom_dns").toBool())
+            differences << QStringLiteral("DNS 模式");
+        if(target.value("custom_dns").toBool())
         {
-            return candidate;
+            const QString firstDns = target.value("primary_dns").toString().isEmpty()
+                ? target.value("secondary_dns").toString() : target.value("primary_dns").toString();
+            if(actual.value("primary_dns").toString() != firstDns) differences << QStringLiteral("首选 DNS");
+            if(!target.value("primary_dns").toString().isEmpty() &&
+               actual.value("secondary_dns").toString() != target.value("secondary_dns").toString())
+                differences << QStringLiteral("备用 DNS");
         }
     }
+    return differences;
+}
 
-    return normalizedRequested;
+QString ConfigManager::previewText(const QVariantMap &target)
+{
+    const QMap<QString, QString> adapters = NetworkInterfaceManager::adapterNamesById();
+    const QString name = resolvedInterface(target, adapters);
+    if(name.isEmpty()) return QObject::tr("目标网卡离线或名称匹配不唯一；请重新选择网卡。\n不会修改任何网卡。");
+    const QVariantMap current = NetworkInterfaceManager::captureConfig(name);
+    if(current.isEmpty()) return QObject::tr("无法读取目标网卡状态；不会修改网卡。");
+    const auto value = [](const QVariantMap &config, const QString &key) {
+        if(!config.contains(key)) return QStringLiteral("未设置");
+        const QString text = config.value(key).toString();
+        return text.isEmpty() ? QStringLiteral("设为空") : text;
+    };
+    QStringList lines{QObject::tr("网卡：%1").arg(name)};
+    for(const auto &field : {qMakePair(QStringLiteral("method"), QStringLiteral("地址模式")),
+                             qMakePair(QStringLiteral("ip"), QStringLiteral("IP 地址")),
+                             qMakePair(QStringLiteral("subnet"), QStringLiteral("子网掩码")),
+                             qMakePair(QStringLiteral("gateway"), QStringLiteral("默认网关")),
+                             qMakePair(QStringLiteral("primary_dns"), QStringLiteral("首选 DNS")),
+                             qMakePair(QStringLiteral("secondary_dns"), QStringLiteral("备用 DNS"))})
+        lines << QStringLiteral("%1：%2 → %3").arg(field.second, value(current, field.first), value(target, field.first));
+    if(target.value("method") == "static")
+    {
+        QHostAddress ip(target.value("ip").toString()), mask(target.value("subnet").toString());
+        QHostAddress gateway(target.value("gateway").toString());
+        if(!target.value("gateway").toString().isEmpty() &&
+           (ip.toIPv4Address() & mask.toIPv4Address()) !=
+           (gateway.toIPv4Address() & mask.toIPv4Address()))
+            lines << QObject::tr("注意：网关不在目标 IP 的同一子网；特殊拓扑可继续。");
+        for(auto it = adapters.cbegin(); it != adapters.cend(); ++it)
+        {
+            if(it.value() == name &&
+               (target.value("adapter_id").toString().isEmpty() ||
+                it.key() == target.value("adapter_id").toString())) continue;
+            if(NetworkInterfaceManager::captureConfig(it.key()).value("ip") == target.value("ip"))
+                lines << QObject::tr("注意：%1 当前使用相同 IP，可能冲突。").arg(it.value());
+        }
+    }
+    lines << QObject::tr("修改地址或 DNS 可能暂时中断连接。继续前请确认回滚备份可用。");
+    return lines.join('\n');
 }
 
 /**
@@ -470,10 +569,24 @@ bool ConfigManager::validateConfig(const QVariantMap &config) const
         emit errorOccurred(tr("配置缺少必要字段"));
         return false;
     }
+    const QRegularExpression unsafeName(QStringLiteral("[\\x00-\\x1f\\x7f\"']"));
+    if(config.value("interface").toString().contains(unsafeName) ||
+       config.value("adapter_id").toString().contains(unsafeName))
+    {
+        emit errorOccurred(tr("网卡名称或标识含无效字符"));
+        return false;
+    }
     QString method = config["method"].toString();
     if (method != "dhcp" && method != "static")
     {
         emit errorOccurred(tr("无效的网络配置方法: %1").arg(method));
+        return false;
+    }
+    if(method == "dhcp" && config.value("custom_dns").toBool() &&
+       config.value("primary_dns").toString().isEmpty() &&
+       config.value("secondary_dns").toString().isEmpty())
+    {
+        emit errorOccurred(tr("自定义 DNS 已启用，但未填写 DNS 地址"));
         return false;
     }
     //静态IP配置的详细验证
@@ -523,6 +636,20 @@ bool ConfigManager::validateConfig(const QVariantMap &config) const
         {
             emit errorOccurred(tr("备用DNS格式不正确"));
             return false;
+        }
+    }
+    else if(config.value("custom_dns").toBool())
+    {
+        for(const QString &key : {"primary_dns", "secondary_dns"})
+        {
+            const QString address = config.value(key).toString();
+            QHostAddress parsed;
+            if(!address.isEmpty() &&
+               (!parsed.setAddress(address) || parsed.protocol() != QAbstractSocket::IPv4Protocol))
+            {
+                emit errorOccurred(tr("自定义 DNS 地址格式不正确：%1").arg(key));
+                return false;
+            }
         }
     }
     return true;
@@ -622,300 +749,202 @@ int ConfigManager::getConfigVersionCount(const QString &configName) const
  *
  * 使用netsh命令修改网络接口配置
  */
+bool ConfigManager::runNetshStep(const QString &step, const QStringList &args, int timeoutMs,
+                                 QString *error, const QString &program) const
+{
+    QProcess process;
+    process.setProcessChannelMode(QProcess::MergedChannels);
+    process.start(program, args);
+    bool finished = process.waitForStarted(3000) && process.waitForFinished(timeoutMs);
+    if(!finished && process.state() != QProcess::NotRunning)
+    {
+        process.kill();
+        process.waitForFinished(3000);
+    }
+    QTextCodec *codec = QTextCodec::codecForName("GBK");
+    if(!codec) codec = QTextCodec::codecForLocale();
+    const QString output = codec->toUnicode(process.readAll()).trimmed().left(400);
+    const bool ok = finished && process.error() == QProcess::UnknownError &&
+                    process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
+    const QString detail = ok ? tr("成功") : tr("退出码 %1；%2")
+        .arg(process.exitCode()).arg(output.isEmpty() ? process.errorString() : output);
+    emit applyStep(step, process.exitCode(), detail);
+    if(!ok && error) *error = tr("%1失败：%2").arg(step, detail);
+    return ok;
+}
+
 bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
 {
-    //权限检查
-    if (!isAdmin())
+    if(!isAdmin())
     {
         emit errorOccurred(tr("需要管理员权限来修改网络配置"));
         emit configApplied(false, tr("需要管理员权限"));
         return false;
     }
-    //配置验证
-    if (!validateConfig(config))
+    if(!validateConfig(config))
     {
         emit configApplied(false, tr("配置验证失败"));
         return false;
     }
-    //处理网络接口名称
-    NetworkInterfaceManager interfaceManager;
-    const QString rawInterface = resolveInterfaceName(
-        config["interface"].toString(), interfaceManager.getNetworkInterfaces());
-    if (rawInterface.isEmpty())
+    const QMap<QString, QString> adapters = NetworkInterfaceManager::adapterNamesById();
+    const QString interfaceName = resolvedInterface(config, adapters);
+    if(interfaceName.isEmpty())
     {
-        emit errorOccurred(tr("无效的网络接口名称"));
-        emit configApplied(false, tr("无效的网络接口"));
+        const QString reason = config.value("adapter_id").toString().isEmpty()
+            ? tr("旧配置网卡名称无法唯一匹配，请重新选择网卡并更新配置")
+            : tr("已绑定的网卡离线或已拔出，未修改其他网卡");
+        emit errorOccurred(reason);
+        emit configApplied(false, reason);
+        return false;
+    }
+    QVariantMap target = config;
+    target["interface"] = interfaceName;
+    const QVariantMap current = NetworkInterfaceManager::captureConfig(interfaceName);
+    if(current.isEmpty() || !validateConfig(current))
+    {
+        const QString reason = tr("无法读取 %1 的完整当前配置，未修改网卡").arg(interfaceName);
+        emit errorOccurred(reason);
+        emit configApplied(false, reason);
+        return false;
+    }
+    target["adapter_id"] = current.value("adapter_id");
+    if(!validateConfig(target))
+    {
+        emit configApplied(false, tr("网卡名称验证失败"));
         return false;
     }
     if(createBackup)
     {
-        QVariantMap previous = NetworkInterfaceManager::captureConfig(rawInterface);
-        if(!previous.isEmpty() && validateConfig(previous))
+        QVariantMap previous = current;
+        previous["saved_at"] = QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs);
+        const QString key = current.value("adapter_id").toString().isEmpty()
+            ? interfaceName : current.value("adapter_id").toString();
+        QMutexLocker locker(&m_mutex);
+        const QList<QVariantMap> oldStack = m_networkBackups.value(key);
+        m_networkBackups[key].append(previous);
+        if(!saveNetworkBackups())
         {
-            previous["saved_at"] = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
-            QMutexLocker locker(&m_mutex);
-            const QList<QVariantMap> oldStack = m_networkBackups.value(rawInterface);
-            QList<QVariantMap> &stack = m_networkBackups[rawInterface];
-            stack.append(previous);
-            while(stack.size() > 5) stack.removeFirst();
-            if(!saveNetworkBackups())
-            {
-                if(oldStack.isEmpty()) m_networkBackups.remove(rawInterface);
-                else stack = oldStack;
-                emit errorOccurred(tr("网络配置备份写入失败，未修改网卡"));
-                emit configApplied(false, tr("网络配置备份写入失败"));
-                return false;
-            }
-        }
-        else
-        {
-            emit errorOccurred(tr("无法读取 %1 的完整当前配置，未生成回滚备份").arg(rawInterface));
-            emit configApplied(false, tr("无法生成回滚备份"));
+            if(oldStack.isEmpty()) m_networkBackups.remove(key);
+            else m_networkBackups[key] = oldStack;
+            const QString reason = tr("网络配置备份写入失败，未修改网卡");
+            emit errorOccurred(reason);
+            emit configApplied(false, reason);
             return false;
         }
     }
-    QString method = config["method"].toString();
-    bool useCustomDns = config["custom_dns"].toBool();
-    bool success = true;
-    QString message;
-    if (method == "dhcp")
+
+    const QString nameArg = QString("name=\"%1\"").arg(interfaceName);
+    const QString method = target.value("method").toString();
+    QString error;
+    bool success = false;
+    if(method == "dhcp")
     {
-        //设置DHCP地址
-        QStringList dhcpAddressCmd =
+        success = runNetshStep(tr("设置 DHCP 地址"),
+            {"interface", "ipv4", "set", "address", nameArg, "source=dhcp"}, 15000, &error);
+        if(success && target.value("custom_dns").toBool() &&
+           (!target.value("primary_dns").toString().isEmpty() ||
+            !target.value("secondary_dns").toString().isEmpty()))
         {
-            "interface", "ipv4", "set", "address",
-            QString("name=\"%1\"").arg(rawInterface),
-            "source=dhcp"
-        };
-        QProcess netshProcess;
-        netshProcess.start("netsh", dhcpAddressCmd);
-        if(!netshProcess.waitForFinished(15000))
-        {
-            netshProcess.kill();
-            netshProcess.waitForFinished(3000);
+            const QString first = target.value("primary_dns").toString().isEmpty()
+                ? target.value("secondary_dns").toString() : target.value("primary_dns").toString();
+            success = runNetshStep(tr("设置首选 DNS"),
+                {"interface", "ipv4", "set", "dns", nameArg, "static", first}, 8000, &error);
+            if(success && !target.value("primary_dns").toString().isEmpty() &&
+               !target.value("secondary_dns").toString().isEmpty())
+                success = runNetshStep(tr("设置备用 DNS"),
+                    {"interface", "ipv4", "add", "dns", nameArg,
+                     target.value("secondary_dns").toString(), "index=2"}, 8000, &error);
         }
-        if (netshProcess.error() != QProcess::UnknownError || netshProcess.exitStatus() != QProcess::NormalExit || netshProcess.exitCode() != 0)
+        else if(success)
+            success = runNetshStep(tr("设置 DHCP DNS"),
+                {"interface", "ipv4", "set", "dns", nameArg, "source=dhcp"}, 8000, &error);
+    }
+    else
+    {
+        QStringList addressArgs{"interface", "ipv4", "set", "address", nameArg, "static",
+                                target.value("ip").toString(), target.value("subnet").toString()};
+        if(!target.value("gateway").toString().isEmpty())
+            addressArgs << target.value("gateway").toString() << "1";
+        success = runNetshStep(tr("设置静态地址"), addressArgs, 15000, &error);
+        const QString first = target.value("primary_dns").toString().isEmpty()
+            ? target.value("secondary_dns").toString() : target.value("primary_dns").toString();
+        if(success && !first.isEmpty())
         {
-            // 使用 GBK 编码处理 netsh 输出，兼容中文 Windows
-            QTextCodec *gbkCodec = QTextCodec::codecForName("GBK");
-            if(!gbkCodec) gbkCodec = QTextCodec::codecForLocale();
-            QString errorOutput = gbkCodec->toUnicode(netshProcess.readAllStandardError()).trimmed();
-            if(errorOutput.isEmpty())
-                errorOutput = gbkCodec->toUnicode(netshProcess.readAllStandardOutput()).trimmed();
-            if(errorOutput.isEmpty())
-                errorOutput = tr("%1 (退出码 %2)").arg(netshProcess.errorString()).arg(netshProcess.exitCode());
-            emit errorOccurred(tr("设置DHCP地址失败: %1").arg(errorOutput));
+            success = runNetshStep(tr("设置首选 DNS"),
+                {"interface", "ipv4", "set", "dns", nameArg, "static", first}, 8000, &error);
+            if(success && !target.value("primary_dns").toString().isEmpty() &&
+               !target.value("secondary_dns").toString().isEmpty())
+                success = runNetshStep(tr("设置备用 DNS"),
+                    {"interface", "ipv4", "add", "dns", nameArg,
+                     target.value("secondary_dns").toString(), "index=2"}, 8000, &error);
+        }
+        else if(success)
+            success = runNetshStep(tr("清空 DNS"),
+                {"interface", "ipv4", "set", "dnsservers", nameArg, "source=static", "address=none"},
+                8000, &error);
+    }
+    if(success)
+    {
+        QStringList differences;
+        for(int attempt = 0; attempt < 5; ++attempt)
+        {
+            differences = configDifferences(NetworkInterfaceManager::captureConfig(interfaceName), target);
+            if(differences.isEmpty()) break;
+            QThread::msleep(500);
+        }
+        if(!differences.isEmpty())
+        {
             success = false;
-            message = tr("设置DHCP地址失败: %1").arg(errorOutput);
-        }
-        else
-        {
-            QString primaryDns = config["primary_dns"].toString();
-            QString secondaryDns = config["secondary_dns"].toString();
-            const QString dnsServer = primaryDns.isEmpty() ? secondaryDns : primaryDns;
-            if (useCustomDns && !dnsServer.isEmpty())
-            {
-                //设置自定义DNS
-                QStringList primaryDnsCmd =
-                {
-                    "interface", "ipv4", "set", "dns",
-                    QString("name=\"%1\"").arg(rawInterface),
-                    "static", dnsServer
-                };
-                netshProcess.start("netsh", primaryDnsCmd);
-                if(!netshProcess.waitForFinished(5000))
-                {
-                    netshProcess.kill();
-                    netshProcess.waitForFinished(3000);
-                }
-                if (netshProcess.error() != QProcess::UnknownError || netshProcess.exitStatus() != QProcess::NormalExit || netshProcess.exitCode() != 0)
-                {
-                    QTextCodec *gbkCodec = QTextCodec::codecForName("GBK");
-                    if(!gbkCodec) gbkCodec = QTextCodec::codecForLocale();
-                    QString errorOutput = gbkCodec->toUnicode(netshProcess.readAllStandardError());
-                    emit errorOccurred(tr("设置主DNS失败: %1").arg(errorOutput));
-                    success = false;
-                    message = tr("设置主DNS失败: %1").arg(errorOutput);
-                }
-                else if (!primaryDns.isEmpty() && !secondaryDns.isEmpty())
-                {
-                    //设置备用DNS
-                    QStringList secondaryDnsCmd =
-                    {
-                        "interface", "ipv4", "add", "dns",
-                        QString("name=\"%1\"").arg(rawInterface),
-                        secondaryDns, "index=2"
-                    };
-                    {
-                        QProcess proc;
-                        proc.start("netsh", secondaryDnsCmd);
-                        if(!proc.waitForFinished(5000)) { proc.kill(); proc.waitForFinished(3000); }
-                        if (proc.error() != QProcess::UnknownError || proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0)
-                        {
-                            emit errorOccurred(tr("设置备用DNS失败"));
-                            message = tr("设置备用DNS失败 (主DNS已设置)");
-                        }
-                    }
-                }
-            }
-            else
-            {
-                //设置DHCP DNS
-                QStringList dhcpDnsCmd =
-                {
-                    "interface", "ipv4", "set", "dns",
-                    QString("name=\"%1\"").arg(rawInterface),
-                    "source=dhcp"
-                };
-                netshProcess.start("netsh", dhcpDnsCmd);
-                if(!netshProcess.waitForFinished(5000))
-                {
-                    netshProcess.kill();
-                    netshProcess.waitForFinished(3000);
-                }
-                if (netshProcess.error() != QProcess::UnknownError || netshProcess.exitStatus() != QProcess::NormalExit || netshProcess.exitCode() != 0)
-                {
-                    QTextCodec *gbkCodec = QTextCodec::codecForName("GBK");
-                    if(!gbkCodec) gbkCodec = QTextCodec::codecForLocale();
-                    QString errorOutput = gbkCodec->toUnicode(netshProcess.readAllStandardError());
-                    emit errorOccurred(tr("设置DHCP DNS失败: %1").arg(errorOutput));
-                    success = false;
-                    message = tr("设置DHCP DNS失败: %1").arg(errorOutput);
-                }
-            }
+            error = tr("命令已执行，但以下字段未生效：%1").arg(differences.join("、"));
         }
     }
     else
     {
-        //设置静态IP配置
-        QString ip = config["ip"].toString();
-        QString subnet = config["subnet"].toString();
-        QString gateway = config["gateway"].toString();
-        QString primaryDns = config["primary_dns"].toString();
-        QString secondaryDns = config["secondary_dns"].toString();
-        //设置IP地址和子网掩码
-        QStringList addressCmd =
-        {
-            "interface", "ip", "set", "address",
-            QString("name=\"%1\"").arg(rawInterface),
-            "static", ip, subnet
-        };
-        if (!gateway.isEmpty())
-        {
-            addressCmd << gateway << "1";  //1表示默认网关的跃点数
-        }
-        {
-            QProcess proc;
-            proc.start("netsh", addressCmd);
-            if(!proc.waitForFinished(5000)) { proc.kill(); proc.waitForFinished(3000); }
-            if (proc.error() != QProcess::UnknownError || proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0)
-            {
-                emit errorOccurred(tr("设置静态IP地址失败"));
-                success = false;
-                message = tr("设置静态IP地址失败");
-            }
-        }
-        //设置DNS
-        const QString dnsServer = primaryDns.isEmpty() ? secondaryDns : primaryDns;
-        if (success && !dnsServer.isEmpty())
-        {
-            QStringList primaryDnsCmd =
-            {
-                "interface", "ip", "set", "dns",
-                QString("name=\"%1\"").arg(rawInterface),
-                "static", dnsServer
-            };
-            {
-                QProcess proc;
-                proc.start("netsh", primaryDnsCmd);
-                if(!proc.waitForFinished(5000)) { proc.kill(); proc.waitForFinished(3000); }
-                if (proc.error() != QProcess::UnknownError || proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0)
-                {
-                    emit errorOccurred(tr("设置主DNS失败"));
-                    success = false;
-                    message = tr("设置主DNS失败");
-                }
-            }
-            //设置备用DNS
-            if (success && !primaryDns.isEmpty() && !secondaryDns.isEmpty())
-            {
-                QStringList secondaryDnsCmd =
-                {
-                    "interface", "ip", "add", "dns",
-                    QString("name=\"%1\"").arg(rawInterface),
-                    secondaryDns, "index=2"
-                };
-                {
-                    QProcess proc;
-                    proc.start("netsh", secondaryDnsCmd);
-                    if(!proc.waitForFinished(5000)) { proc.kill(); proc.waitForFinished(3000); }
-                    if (proc.error() != QProcess::UnknownError || proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0)
-                    {
-                        emit errorOccurred(tr("设置备用DNS失败"));
-                        message = tr("设置备用DNS失败 (主DNS已设置)");
-                        //不标记为完全失败，因为主DNS已设置
-                    }
-                }
-            }
-        }
-        else if (success)
-        {
-            //未指定DNS时清空静态DNS列表，恢复无DNS的备份
-            QStringList clearDnsCmd =
-            {
-                "interface", "ipv4", "set", "dnsservers",
-                QString("name=\"%1\"").arg(rawInterface),
-                "source=static", "address=none"
-            };
-            {
-                QProcess proc;
-                proc.start("netsh", clearDnsCmd);
-                if(!proc.waitForFinished(5000)) { proc.kill(); proc.waitForFinished(3000); }
-                if (proc.error() != QProcess::UnknownError || proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0)
-                {
-                    emit errorOccurred(tr("清空DNS失败"));
-                    success = false;
-                    message = tr("清空DNS失败 (IP地址已设置)");
-                }
-            }
-        }
+        const QStringList differences = configDifferences(
+            NetworkInterfaceManager::captureConfig(interfaceName), target);
+        if(!differences.isEmpty()) error += tr("；未生效：%1").arg(differences.join("、"));
     }
-    //发送配置应用结果信号
-    emit configApplied(success, success ? QString(tr("配置应用成功: %1")).arg(config["method"].toString() == "dhcp" ? rawInterface + "[自动获取IP]" : rawInterface + QString("[%1]").arg(config["ip"].toString())) : message);
-    if (success)
+    if(success)
     {
-        //更新接口缓存
         m_cachedInterfaces.clear();
         m_lastInterfaceUpdate = QDateTime();
     }
+    else emit errorOccurred(error);
+    emit configApplied(success, success ? tr("配置应用并核验成功：%1").arg(interfaceName) : error);
     return success;
 }
 
 int ConfigManager::networkBackupCount(const QString &interfaceName) const
 {
+    return networkBackups(interfaceName).size();
+}
+
+QList<QVariantMap> ConfigManager::networkBackups(const QString &interfaceName) const
+{
+    const QVariantMap adapter = NetworkInterfaceManager::captureConfig(interfaceName);
+    const QString id = adapter.value("adapter_id").toString();
     QMutexLocker locker(&m_mutex);
-    return m_networkBackups.value(interfaceName).size();
+    if(!id.isEmpty() && m_networkBackups.contains(id)) return m_networkBackups.value(id);
+    return m_networkBackups.value(interfaceName);
 }
 
 bool ConfigManager::restoreLastNetworkBackup(const QString &interfaceName)
 {
-    QVariantMap previous;
+    return restoreNetworkBackup(interfaceName, networkBackupCount(interfaceName) - 1);
+}
+
+bool ConfigManager::restoreNetworkBackup(const QString &interfaceName, int index)
+{
+    const QList<QVariantMap> backups = networkBackups(interfaceName);
+    if(index < 0 || index >= backups.size()) return false;
+    QVariantMap previous = backups.at(index);
+    const QVariantMap adapter = NetworkInterfaceManager::captureConfig(interfaceName);
+    if(!adapter.isEmpty())
     {
-        QMutexLocker locker(&m_mutex);
-        const auto stack = m_networkBackups.value(interfaceName);
-        if(stack.isEmpty()) return false;
-        previous = stack.last();
+        previous["interface"] = adapter.value("interface");
+        previous["adapter_id"] = adapter.value("adapter_id");
     }
-    if(!applyConfig(previous, false)) return false;
-    QMutexLocker locker(&m_mutex);
-    auto &stack = m_networkBackups[interfaceName];
-    if(!stack.isEmpty() && stack.last() == previous)
-    {
-        stack.removeLast();
-        if(stack.isEmpty()) m_networkBackups.remove(interfaceName);
-        return saveNetworkBackups();
-    }
-    return true;
+    return applyConfig(previous, true);
 }
 
 void ConfigManager::loadNetworkBackups()
@@ -925,17 +954,32 @@ void ConfigManager::loadNetworkBackups()
     const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
     if(!document.isObject()) return;
     const QJsonObject root = document.object();
+    const QMap<QString, QString> adapters = NetworkInterfaceManager::adapterNamesById();
     for(auto it = root.begin(); it != root.end(); ++it)
     {
+        QString key = it.key();
+        if(!adapters.contains(key))
+        {
+            const QString name = resolveInterfaceName(key, adapters.values());
+            for(auto adapter = adapters.cbegin(); adapter != adapters.cend(); ++adapter)
+                if(adapter.value() == name) { key = adapter.key(); break; }
+        }
         QList<QVariantMap> stack;
         for(const QJsonValue &entry : it.value().toArray())
         {
-            const QVariantMap config = entry.toObject().toVariantMap();
+            QVariantMap config = entry.toObject().toVariantMap();
+            const QString oldName = config.value("interface").toString();
+            if(oldName.contains('\r') || oldName.contains('\n'))
+                config["interface"] = oldName.section('\r', 0, 0).section('\n', 0, 0).trimmed();
+            if(adapters.contains(key)) config["adapter_id"] = key;
             if(validateConfig(config)) stack.append(config);
         }
-        while(stack.size() > 5) stack.removeFirst();
-        if(!stack.isEmpty()) m_networkBackups[it.key()] = stack;
+        m_networkBackups[key].append(stack);
     }
+    for(auto it = m_networkBackups.begin(); it != m_networkBackups.end(); ++it)
+        std::sort(it.value().begin(), it.value().end(), [](const QVariantMap &a, const QVariantMap &b) {
+            return a.value("saved_at").toString() < b.value("saved_at").toString();
+        });
 }
 
 bool ConfigManager::saveNetworkBackups() const
@@ -949,7 +993,8 @@ bool ConfigManager::saveNetworkBackups() const
     }
     QSaveFile file(m_networkBackupFile);
     if(!file.open(QIODevice::WriteOnly)) return false;
-    if(file.write(QJsonDocument(root).toJson()) < 0) return false;
+    const QByteArray bytes = QJsonDocument(root).toJson();
+    if(file.write(bytes) != bytes.size()) return false;
     return file.commit();
 }
 
