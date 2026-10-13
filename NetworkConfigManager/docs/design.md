@@ -1,6 +1,6 @@
 # NetworkConfigManager 设计文档
 
-- **版本号**：v2.5.1
+- **版本号**：v2.5.2
 - **更新日期**：2026-10-13
 
 ---
@@ -516,7 +516,7 @@ main() 入口
   │
   ├─► QApplication 构造
   │   ├─ setApplicationName("NetworkConfigManager")
-  │   ├─ setApplicationVersion("2.5.1")
+  │   ├─ setApplicationVersion("2.5.2")
   │   ├─ setQuitOnLastWindowClosed(false)                   # 关闭最后窗口不退出
   │   └─ qInstallMessageHandler(Qt→Logger)                  # Qt 消息桥接
   │
@@ -852,3 +852,9 @@ pos=@Point(1280 720)
 
 - IP 地址与子网掩码不再使用 Qt 输入掩码，空白时 `text()`、`displayText()` 均为空；用户手动输入点分地址。
 - 网关及 DNS 继续使用输入掩码，未填写的 `...` 仍由 `getCurrentFormConfig()` 转为空字符串。`ConfigManager::validateConfig()` 保持保存和应用前的 IPv4、连续子网掩码校验。
+
+## 13. v2.5.2 IPv4 输入显示修正
+
+- 主界面 IP、掩码、网关、首选及备用 DNS 共用 `000.000.000.000` 掩码，空位填充符改为零宽字符 U+2060；初始视觉仅显示三个句点，没有预设空格。
+- 附加 IPv4 地址、路径 MTU 目标及局域网主机 IP 同样显示句点分隔。接受 CIDR、IPv6、主机名的多用途输入框继续自由输入。
+- `getCurrentFormConfig()` 将五个字段未填写的 `...` 统一转为空字符串；非空地址继续经原有校验路径处理。

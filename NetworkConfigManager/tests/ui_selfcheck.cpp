@@ -14,6 +14,7 @@
 #include <QDialog>
 #include <iostream>
 #include <QElapsedTimer>
+#include <QFontMetrics>
 #include <QHostAddress>
 #include <QLineEdit>
 #include <QPushButton>
@@ -34,34 +35,66 @@ int main(int argc, char *argv[])
     MainWindow window;
     auto *ip = window.findChild<QLineEdit *>("ipEdit");
     auto *subnet = window.findChild<QLineEdit *>("subnetEdit");
-    if(!ip || !subnet || !ip->text().isEmpty() || !subnet->text().isEmpty() ||
-       !ip->displayText().isEmpty() || !subnet->displayText().isEmpty()) return 33;
     auto *gateway = window.findChild<QLineEdit *>("gatewayEdit");
     auto *primaryDns = window.findChild<QLineEdit *>("primaryDnsEdit");
     auto *secondaryDns = window.findChild<QLineEdit *>("secondaryDnsEdit");
-    if(!gateway || !primaryDns || !secondaryDns) return 17;
-    if(gateway->text() != QStringLiteral("...") ||
-       primaryDns->text() != QStringLiteral("...") ||
-       secondaryDns->text() != QStringLiteral("...")) return 18;
+    if(!ip || !subnet || !gateway || !primaryDns || !secondaryDns) return 17;
+    const auto dotsOnly = [](QLineEdit *edit) {
+        return edit && edit->text() == QStringLiteral("...") &&
+            QString(edit->displayText()).remove(QChar(0x2060)) == QStringLiteral("...") &&
+            !edit->displayText().contains(' ') &&
+            QFontMetrics(edit->font()).horizontalAdvance(edit->displayText()) ==
+                QFontMetrics(edit->font()).horizontalAdvance(QStringLiteral("..."));
+    };
+    for(QLineEdit *edit : {ip, subnet, gateway, primaryDns, secondaryDns})
+        if(!dotsOnly(edit)) return 18;
     window.findChild<QRadioButton *>("staticRadio")->click();
     auto *interfaceCombo = window.findChild<QComboBox *>("interfaceCombo");
     if(interfaceCombo->currentText().isEmpty()) interfaceCombo->addItem(QStringLiteral("test-adapter"));
+    QVariantMap form;
+    if(!QMetaObject::invokeMethod(&window, "getCurrentFormConfig", Q_RETURN_ARG(QVariantMap, form)) ||
+       !form.value("ip").toString().isEmpty() || !form.value("subnet").toString().isEmpty() ||
+       !form.value("gateway").toString().isEmpty() ||
+       !form.value("primary_dns").toString().isEmpty() ||
+       !form.value("secondary_dns").toString().isEmpty()) return 33;
+    ip->setText(QStringLiteral("192.168.4.1"));
+    subnet->setText(QStringLiteral("255.255.255.0"));
+    if(ip->text() != QStringLiteral("192.168.4.1") ||
+       subnet->text() != QStringLiteral("255.255.255.0")) return 35;
     ip->setText(QStringLiteral("192.168.100.200"));
     subnet->setText(QStringLiteral("255.255.255.128"));
-    QVariantMap form;
     if(!QMetaObject::invokeMethod(&window, "getCurrentFormConfig", Q_RETURN_ARG(QVariantMap, form))) return 19;
-    if(!form.value("gateway").toString().isEmpty() ||
+    if(form.value("ip").toString() != QStringLiteral("192.168.100.200") ||
+       form.value("subnet").toString() != QStringLiteral("255.255.255.128") ||
+       !form.value("gateway").toString().isEmpty() ||
        !form.value("primary_dns").toString().isEmpty() ||
        !form.value("secondary_dns").toString().isEmpty()) return 20;
     ConfigManager profileManager;
     NetworkAdapterDialog adapterDialog(&profileManager);
     auto *adapterTabs = adapterDialog.findChild<QTabWidget *>();
     if(!adapterTabs || adapterTabs->count() != 6) return 29;
+    auto *addIpv4 = [&adapterDialog]() -> QPushButton * {
+        for(auto *button : adapterDialog.findChildren<QPushButton *>())
+            if(button->text() == QStringLiteral("添加附加 IPv4")) return button;
+        return nullptr;
+    }();
+    if(!addIpv4) return 36;
+    bool addIpv4MaskOk = false;
+    QTimer::singleShot(0, [&]() {
+        auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+        if(!dialog) return;
+        addIpv4MaskOk = dotsOnly(dialog->findChild<QLineEdit *>("newIpAddress"));
+        dialog->reject();
+    });
+    addIpv4->click();
+    if(!addIpv4MaskOk) return 37;
     QString scanRange;
     if(!NetworkLabDialog::subnetSummary("192.0.2.4/31", &scanRange).contains(QStringLiteral("可用地址 2")) ||
        scanRange != QStringLiteral("192.0.2.4/31") ||
        !NetworkLabDialog::subnetSummary("2001:db8::1/128").contains(QStringLiteral("地址数量 1"))) return 30;
     NetworkLabDialog lab(QString{});
+    if(!dotsOnly(lab.findChild<QLineEdit *>("mtuTarget")) ||
+       !dotsOnly(lab.findChild<QLineEdit *>("lanHost"))) return 38;
     auto *labTabs = lab.findChild<QTabWidget *>();
     if(!labTabs || labTabs->count() != 8)
     { std::cerr << "Lab tabs: " << (labTabs ? labTabs->count() : -1) << '\n'; return 31; }

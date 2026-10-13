@@ -258,7 +258,10 @@ void MainWindow::setupUi()
         label->setMinimumWidth(150);
     for(QLineEdit *edit : {ui->ipEdit, ui->subnetEdit, ui->gatewayEdit,
                            ui->primaryDnsEdit, ui->secondaryDnsEdit})
+    {
+        edit->setInputMask(QStringLiteral("000.000.000.000;") + QChar(0x2060));
         edit->setMinimumHeight(28);
+    }
     m_statusIndicator = new QLabel(this);
     m_statusIndicator->setFixedSize(16, 16);
     m_historyListWidget = ui->historyListWidget;
@@ -1417,8 +1420,8 @@ QVariantMap MainWindow::getCurrentFormConfig() const
     config["adapter_id"] = NetworkInterfaceManager::captureConfig(config.value("interface").toString()).value("adapter_id");
     config["method"] = ui->dhcpRadio->isChecked() ? "dhcp" : "static";
     config["custom_dns"] = ui->customDnsCheckBox->isChecked();
-    config["ip"] = ui->ipEdit->text();
-    config["subnet"] = ui->subnetEdit->text();
+    config["ip"] = optionalAddress(ui->ipEdit);
+    config["subnet"] = optionalAddress(ui->subnetEdit);
     config["gateway"] = optionalAddress(ui->gatewayEdit);
     config["primary_dns"] = optionalAddress(ui->primaryDnsEdit);
     config["secondary_dns"] = optionalAddress(ui->secondaryDnsEdit);

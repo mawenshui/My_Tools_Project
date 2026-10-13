@@ -1,6 +1,6 @@
 # NetworkConfigManager 项目规范文档
 
-> **版本**：2.5.1
+> **版本**：2.5.2
 > **更新日期**：2026-10-13  
 > **状态**：现行规范
 
@@ -566,7 +566,7 @@ fix(ui): 修复悬浮窗在多显示器环境下的位置异常
 MAJOR.MINOR.PATCH
 ```
 
-**当前版本**：**2.5.1**
+**当前版本**：**2.5.2**
 
 ### 8.2 版本号递增规则
 
@@ -581,7 +581,7 @@ MAJOR.MINOR.PATCH
 版本号在 [main.cpp](../main.cpp) 中定义：
 
 ```cpp
-a.setApplicationVersion("2.5.1");
+a.setApplicationVersion("2.5.2");
 ```
 
 发布新版本时，应同步更新此处的版本号字符串。
@@ -601,3 +601,9 @@ a.setApplicationVersion("2.5.1");
 7. Windows 平台目视检查默认浅色界面的按钮、输入框、进度条和下拉箭头；`ui_selfcheck` 验证工具区双行布局和最小窗口尺寸。
 8. `networkscan_selfcheck` 验证同网段 CIDR 换算、2048 地址上限和一键扫描本地 TCP 端口；未取得网卡地址时仍可手动输入范围。
 9. `ui_selfcheck` 验证 IP 与子网掩码输入框初始为空、有效静态配置通过校验、无效 IP 被拒绝；网关与 DNS 空值行为不变。
+
+## 十、v2.5.2 发布检查
+
+1. `ui_selfcheck` 验证八个纯 IPv4 输入框初始仅显示 `...`，无可见空格；主界面空地址按空值读取，短地址及已存配置正常回填。
+2. 原有配置校验、网段扫描及 UI 自检继续通过；多用途 CIDR、IPv6、主机名输入格式不受 IPv4 掩码限制。
+3. 发布 `networkconfigmanager-v2.5.2`，同步源码、文档、测试、安装包和免安装 ZIP。
