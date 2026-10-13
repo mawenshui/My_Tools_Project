@@ -1,6 +1,6 @@
 # NetworkConfigManager
 
-> Windows 桌面网络配置管理工具 | v2.5.0 | 2026-10-12
+> Windows 桌面网络配置管理工具 | v2.5.0 | 2026-10-13
 
 ## 项目简介
 
