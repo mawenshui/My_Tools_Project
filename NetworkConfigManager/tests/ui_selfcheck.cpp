@@ -6,8 +6,10 @@
 #include "../networkscandialog.h"
 #include "../networktoolsdialog.h"
 #include "../networkadapterdialog.h"
+#include "../networklabdialog.h"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDialog>
 #include <iostream>
@@ -17,6 +19,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QRegularExpression>
+#include <QSpinBox>
 #include <QTabWidget>
 #include <QTcpServer>
 #include <QTcpSocket>
@@ -50,6 +53,14 @@ int main(int argc, char *argv[])
     NetworkAdapterDialog adapterDialog(&profileManager);
     auto *adapterTabs = adapterDialog.findChild<QTabWidget *>();
     if(!adapterTabs || adapterTabs->count() != 6) return 29;
+    QString scanRange;
+    if(!NetworkLabDialog::subnetSummary("192.0.2.4/31", &scanRange).contains(QStringLiteral("可用地址 2")) ||
+       scanRange != QStringLiteral("192.0.2.4/31") ||
+       !NetworkLabDialog::subnetSummary("2001:db8::1/128").contains(QStringLiteral("地址数量 1"))) return 30;
+    NetworkLabDialog lab(QString{});
+    auto *labTabs = lab.findChild<QTabWidget *>();
+    if(!labTabs || labTabs->count() != 8)
+    { std::cerr << "Lab tabs: " << (labTabs ? labTabs->count() : -1) << '\n'; return 31; }
     if(!profileManager.validateConfig(form)) return 21;
     if(window.styleSheet().isEmpty()) return 1;
     if(!window.styleSheet().contains("qlineargradient") ||
@@ -166,7 +177,7 @@ int main(int argc, char *argv[])
     if(source->itemData(0).toString() != QStringLiteral("https://speed.cloudflare.com/__down?bytes=50000000") ||
        source->itemData(1).toString() != QStringLiteral("https://fsn1-speed.hetzner.com/100MB.bin")) return 16;
     region->setCurrentIndex(0);
-    auto *url = diagnostics.findChild<QLineEdit *>();
+    auto *url = diagnostics.findChild<QLineEdit *>("speedUrl");
     auto *output = diagnostics.findChildren<QTextEdit *>().last();
     QPushButton *speed = nullptr;
     for(QPushButton *button : diagnostics.findChildren<QPushButton *>())
@@ -189,7 +200,8 @@ int main(int argc, char *argv[])
     wait.restart();
     while(wait.elapsed() < 1000) { app.processEvents(); QThread::msleep(10); }
     if(speed->text() == QStringLiteral("停止测速")) speed->click();
-    if(!output->toPlainText().contains(QStringLiteral("平均"))) return 14;
+    if(!output->toPlainText().contains(QStringLiteral("平均")))
+    { std::cerr << "Second speed result: " << output->toPlainText().toLocal8Bit().constData() << '\n'; return 14; }
     if(qEnvironmentVariableIsSet("NETWORKCONFIGMANAGER_TEST_HTTPS"))
     {
         const QString testUrl = qEnvironmentVariable("NETWORKCONFIGMANAGER_TEST_URL",
@@ -204,6 +216,47 @@ int main(int argc, char *argv[])
                                      .match(output->toPlainText());
         if(!transferred.hasMatch() || transferred.captured(1).toDouble() <= 0.0)
         { std::cerr << "HTTPS result: " << output->toPlainText().toLocal8Bit().constData() << '\n'; return 12; }
+    }
+    lab.findChild<QLineEdit *>("httpDiagnosticUrl")
+       ->setText(QString("http://127.0.0.1:%1/test").arg(server.serverPort()));
+    lab.findChild<QPushButton *>("httpDiagnosticButton")->click();
+    wait.restart();
+    while(wait.elapsed() < 3000 && !lab.findChild<QTextEdit *>("httpOutput")
+          ->toPlainText().contains(QStringLiteral("状态：HTTP/1.1 200")))
+    { app.processEvents(); QThread::msleep(10); }
+    if(!lab.findChild<QTextEdit *>("httpOutput")->toPlainText().contains(QStringLiteral("状态：HTTP/1.1 200")))
+    { std::cerr << "HTTP diagnostic: " << lab.findChild<QTextEdit *>("httpOutput")->toPlainText().toLocal8Bit().constData() << '\n'; return 32; }
+    if(qEnvironmentVariableIsSet("NETWORKCONFIGMANAGER_TEST_REPORT") && !routed.isEmpty())
+    {
+        lab.findChild<QComboBox *>("labAdapter")->setCurrentText(routed);
+        lab.findChild<QPushButton *>("captureReportButton")->click();
+        wait.restart();
+        auto *preview = lab.findChild<QTextEdit *>("reportPreview");
+        while(wait.elapsed() < 30000 && !preview->toPlainText().contains(QStringLiteral("\"snapshot\"")))
+        { app.processEvents(); QThread::msleep(20); }
+        if(!preview->toPlainText().contains(QStringLiteral("\"snapshot\"")))
+        { std::cerr << "Report capture: " << preview->toPlainText().toLocal8Bit().constData() << '\n'; return 33; }
+        lab.findChild<QCheckBox *>("reportRedact")->click();
+        if(!preview->toPlainText().contains(QStringLiteral("[IP]"))) return 34;
+    }
+    if(qEnvironmentVariableIsSet("NETWORKCONFIGMANAGER_TEST_LAN") && !routed.isEmpty())
+    {
+        const QString localIp = NetworkInterfaceManager::captureConfig(routed).value("ip").toString();
+        NetworkLabDialog receiver(routed);
+        lab.findChild<QComboBox *>("labAdapter")->setCurrentText(routed);
+        const int port = 52011;
+        receiver.findChild<QSpinBox *>("lanPort")->setValue(port);
+        lab.findChild<QSpinBox *>("lanPort")->setValue(port);
+        receiver.findChild<QPushButton *>("lanListen")->click();
+        lab.findChild<QLineEdit *>("lanHost")->setText(localIp);
+        lab.findChild<QSpinBox *>("lanSeconds")->setValue(1);
+        lab.findChild<QPushButton *>("lanSend")->click();
+        wait.restart();
+        while(wait.elapsed() < 3500 && !receiver.findChild<QTextEdit *>("lanOutput")
+              ->toPlainText().contains(QStringLiteral("接收")))
+        { app.processEvents(); QThread::msleep(10); }
+        if(!receiver.findChild<QTextEdit *>("lanOutput")->toPlainText().contains(QStringLiteral("接收")))
+        { std::cerr << "LAN result: " << receiver.findChild<QTextEdit *>("lanOutput")->toPlainText().toLocal8Bit().constData() << '\n'; return 35; }
     }
     return 0;
 }

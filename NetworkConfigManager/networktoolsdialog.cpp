@@ -4,6 +4,7 @@
 #include "networkscandialog.h"
 #include "networkdiagnosticsdialog.h"
 #include "networkadapterdialog.h"
+#include "networklabdialog.h"
 
 #include <QComboBox>
 #include <QCoreApplication>
@@ -21,7 +22,7 @@ NetworkToolsDialog::NetworkToolsDialog(ConfigManager *manager, QWidget *parent)
       m_interfaces(new QListWidget(this))
 {
     setWindowTitle(tr("网络工具"));
-    resize(560, 420);
+    resize(900, 440);
     auto *layout = new QVBoxLayout(this);
     layout->addWidget(new QLabel(tr("选择网卡和已保存的配置；静态配置批量应用可能造成 IP 冲突。"), this));
     layout->addWidget(m_interfaces);
@@ -42,10 +43,12 @@ NetworkToolsDialog::NetworkToolsDialog(ConfigManager *manager, QWidget *parent)
     auto *scan = new QPushButton(tr("扫描所选网段"), this);
     auto *diagnostics = new QPushButton(tr("延迟与测速"), this);
     auto *adapterTools = new QPushButton(tr("网卡、地址与路由"), this);
+    auto *lab = new QPushButton(tr("诊断、局域网与报告"), this);
     systemButtons->addWidget(refresh);
     systemButtons->addWidget(scan);
     systemButtons->addWidget(diagnostics);
     systemButtons->addWidget(adapterTools);
+    systemButtons->addWidget(lab);
     systemButtons->addWidget(connections);
     layout->addLayout(systemButtons);
 
@@ -69,6 +72,10 @@ NetworkToolsDialog::NetworkToolsDialog(ConfigManager *manager, QWidget *parent)
     });
     connect(adapterTools, &QPushButton::clicked, this, [this]() {
         NetworkAdapterDialog dialog(m_manager, this);
+        dialog.exec();
+    });
+    connect(lab, &QPushButton::clicked, this, [this]() {
+        NetworkLabDialog dialog(checkedInterfaces().value(0), this);
         dialog.exec();
     });
     connect(connections, &QPushButton::clicked, this, [this]() {

@@ -20,6 +20,7 @@ class NetworkAdapterDialog : public QDialog
 public:
     explicit NetworkAdapterDialog(ConfigManager *manager, QWidget *parent = nullptr);
     ~NetworkAdapterDialog() override;
+    static QString snapshotScript();
 
 private:
     using Completion = std::function<void(bool, const QString &)>;

@@ -33,6 +33,7 @@ private:
     QComboBox *m_region;
     QComboBox *m_source;
     QLineEdit *m_url;
+    QLineEdit *m_target;
     QTextEdit *m_latencyOutput;
     QTextEdit *m_speedOutput;
     QPushButton *m_latencyButton;

@@ -1,5 +1,6 @@
 #include "networkdiagnosticsdialog.h"
 #include "networkinterfacemanager.h"
+#include "networklabdialog.h"
 
 #include <QComboBox>
 #include <QHBoxLayout>
@@ -69,7 +70,7 @@ QString downloadOnce(const QUrl &url, std::atomic<bool> &running, std::atomic<qi
     QString path = url.path(QUrl::FullyEncoded);
     if(path.isEmpty()) path = "/";
     if(url.hasQuery()) path += "?" + url.query(QUrl::FullyEncoded);
-    const HINTERNET session = WinHttpOpen(L"NetworkConfigManager/2.4.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+    const HINTERNET session = WinHttpOpen(L"NetworkConfigManager/2.5.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                            WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     if(!session) return QObject::tr("WinHTTP 初始化失败（%1）").arg(GetLastError());
     WinHttpSetTimeouts(session, 3000, 3000, 3000, 3000);
@@ -112,6 +113,7 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
                                                    bool showSpeed)
     : QDialog(parent), m_interface(new QComboBox(this)),
       m_region(new QComboBox(this)), m_source(new QComboBox(this)), m_url(new QLineEdit(this)),
+      m_target(new QLineEdit(this)),
       m_latencyOutput(new QTextEdit(this)), m_speedOutput(new QTextEdit(this)),
       m_latencyButton(new QPushButton(tr("开始检测"), this)),
       m_speedButton(new QPushButton(tr("开始测速"), this)),
@@ -130,8 +132,10 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
         if(!detail.name.isEmpty()) m_interface->addItem(detail.name);
     const int selected = m_interface->findText(interfaceName);
     if(selected >= 0) m_interface->setCurrentIndex(selected);
-    latencyLayout->addWidget(new QLabel(tr("目标来自当前选中网卡的网关、DNS，并检测公网 DNS。"), latencyPage));
+    latencyLayout->addWidget(new QLabel(tr("仅检测所选网卡的网关、DNS 和手动填写的目标。"), latencyPage));
     latencyLayout->addWidget(m_interface);
+    m_target->setPlaceholderText(tr("可选：目标 IP 或主机名；不自动访问公网"));
+    latencyLayout->addWidget(m_target);
     const QVariantMap selectedConfig = NetworkInterfaceManager::captureConfig(m_interface->currentText());
     auto *interfaceHint = new QLabel(latencyPage);
     if(selectedConfig.value("gateway").toString().isEmpty() ||
@@ -155,6 +159,12 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
     connect(m_interface, QOverload<int>::of(&QComboBox::currentIndexChanged), interfaceHint,
             [interfaceHint](int) { interfaceHint->hide(); });
     latencyLayout->addWidget(m_latencyButton);
+    auto *labButton = new QPushButton(tr("Ping、DNS、HTTP 与本地报告..."), latencyPage);
+    latencyLayout->addWidget(labButton);
+    connect(labButton, &QPushButton::clicked, this, [this]() {
+        NetworkLabDialog dialog(m_interface->currentText(), this);
+        dialog.exec();
+    });
     m_latencyOutput->setObjectName("latencyOutput");
     m_latencyOutput->setReadOnly(true);
     latencyLayout->addWidget(m_latencyOutput);
@@ -170,6 +180,7 @@ NetworkDiagnosticsDialog::NetworkDiagnosticsDialog(const QString &interfaceName,
     selection->addWidget(m_source);
     speedLayout->addLayout(selection);
     m_url->setPlaceholderText(tr("http(s)://... 下载文件地址"));
+    m_url->setObjectName("speedUrl");
     speedLayout->addWidget(m_url);
     speedLayout->addWidget(new QLabel(tr("主动测速：最多 4 路并发（Hetzner 单路）、10 秒、100 MiB；数据不保存。"), speedPage));
     speedLayout->addWidget(m_speedButton);
@@ -222,14 +233,16 @@ void NetworkDiagnosticsDialog::startLatency()
     const QString source = config.value("ip").toString();
     const QString gateway = config.value("gateway").toString();
     const QString dns = config.value("primary_dns").toString();
+    const QString target = m_target->text().trimmed();
     m_latencyButton->setEnabled(false);
     m_latencyOutput->setPlainText(tr("检测中..."));
-    m_latencyThread = QThread::create([this, source, gateway, dns]() {
-        const QString output = QStringList{
+    m_latencyThread = QThread::create([this, source, gateway, dns, target]() {
+        QStringList lines{
             probe(QObject::tr("网关"), gateway, source, 80),
-            probe(QObject::tr("首选 DNS"), dns, source, 53),
-            probe(QObject::tr("公网 DNS"), "223.5.5.5", source, 53)
-        }.join("\n");
+            probe(QObject::tr("首选 DNS"), dns, source, 53)
+        };
+        if(!target.isEmpty()) lines << probe(QObject::tr("指定目标"), target, source, 80);
+        const QString output = lines.join("\n");
         QMetaObject::invokeMethod(this, [this, output]() {
             m_latencyOutput->setPlainText(output);
             m_latencyButton->setEnabled(true);

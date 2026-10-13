@@ -26,15 +26,16 @@ int main(int argc, char *argv[])
     QTcpServer server;
     if(!server.listen(QHostAddress::LocalHost)) return 7;
     NetworkScanDialog dialog;
-    const auto inputs = dialog.findChildren<QLineEdit *>();
-    if(inputs.size() != 2) return 8;
-    inputs[1]->setText(QString::number(server.serverPort()));
+    auto *range = dialog.findChild<QLineEdit *>("scanRange");
+    auto *ports = dialog.findChild<QLineEdit *>("scanPorts");
+    if(!range || !ports) return 8;
+    ports->setText(QString::number(server.serverPort()));
     const auto start = dialog.findChild<QPushButton *>();
     const auto progress = dialog.findChild<QProgressBar *>("scanProgress");
     const auto results = dialog.findChild<QTableWidget *>();
     if(!start || !results || !progress) return 9;
     if(!dialog.autoScan("127.0.0.1", "255.255.255.255")) return 17;
-    if(inputs[0]->text() != "127.0.0.1/32") return 18;
+    if(range->text() != "127.0.0.1/32") return 18;
     if(progress->isHidden() || progress->maximum() != 1) return 11;
     QElapsedTimer wait;
     wait.start();
@@ -44,15 +45,15 @@ int main(int argc, char *argv[])
         QThread::msleep(10);
     }
     if(results->rowCount() != 1 || results->item(0, 0)->text() != "127.0.0.1" ||
-       results->item(0, 3)->text() != QString::number(server.serverPort())) return 10;
+       !results->item(0, 3)->text().contains(QString::number(server.serverPort()) + " 开放")) return 10;
     if(progress->value() != 1) return 12;
     while(wait.elapsed() < 6000 && start->text() != QStringLiteral("开始扫描")) app.processEvents();
-    inputs[0]->setText("127.0.0.1");
+    range->setText("127.0.0.1");
     start->click();
     if(progress->maximum() != 1 || results->rowCount() != 0) return 19;
     wait.restart();
     while(wait.elapsed() < 6000 && results->rowCount() == 0)
     { app.processEvents(); QThread::msleep(10); }
-    if(results->rowCount() != 1 || results->item(0, 3)->text() != QString::number(server.serverPort())) return 20;
+    if(results->rowCount() != 1 || !results->item(0, 3)->text().contains(QString::number(server.serverPort()) + " 开放")) return 20;
     return 0;
 }

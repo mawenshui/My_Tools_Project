@@ -112,6 +112,11 @@ bool validPrefix(const QString &text)
 }
 }
 
+QString NetworkAdapterDialog::snapshotScript()
+{
+    return ::snapshotScript();
+}
+
 NetworkAdapterDialog::NetworkAdapterDialog(ConfigManager *manager, QWidget *parent)
     : QDialog(parent), m_manager(manager), m_adapter(new QComboBox(this)),
       m_details(new QPlainTextEdit(this)), m_dns(new QPlainTextEdit(this)),
