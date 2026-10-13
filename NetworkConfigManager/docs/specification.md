@@ -1,7 +1,7 @@
 # NetworkConfigManager 项目规范文档
 
-> **版本**：2.3.0
-> **更新日期**：2026-10-09  
+> **版本**：2.5.1
+> **更新日期**：2026-10-13  
 > **状态**：现行规范
 
 ---
@@ -403,7 +403,7 @@ NetworkConfigManager/
 
 | 目录 | 职责 | 规则 |
 |---|---|---|
-| `bin/` | 构建产物输出目录 | 由 qmake 的 `DESTDIR` 配置自动生成，不应手动提交其中内容到版本控制 |
+| `bin/` | 正式可执行文件与运行时目录 | 仅将已验证的 `NetworkConfigManager.exe` 随版本提交；运行时配置和日志不纳入版本控制 |
 | `bin/config/` | 运行时配置文件 | 由程序自动创建和管理，不应删除 |
 | `bin/logs/` | 运行时日志文件 | 日志按日期滚动，应定期清理过期日志 |
 | `images/` | 图标和图片资源 | 仅存放 `.png`、`.ico` 等静态资源文件 |
@@ -417,7 +417,7 @@ NetworkConfigManager/
 - **新增 UI 文件**：`.ui` 文件放置在项目根目录下，并在 `.pro` 文件的 `FORMS` 中注册。
 - **新增资源**：图片放入 `images/` 目录，样式表放入 `styles/` 目录，并在 `resources.qrc` 中注册对应的文件路径。
 - **新增文档**：放入 `docs/` 目录。
-- **构建产物**：不应提交到版本控制，应在 `.gitignore` 中忽略 `bin/` 目录。
+- **构建产物**：仅提交已验证的 `bin/NetworkConfigManager.exe`；隔离构建目录、运行时配置和日志应忽略。
 
 ---
 
@@ -566,7 +566,7 @@ fix(ui): 修复悬浮窗在多显示器环境下的位置异常
 MAJOR.MINOR.PATCH
 ```
 
-**当前版本**：**2.3.0**
+**当前版本**：**2.5.1**
 
 ### 8.2 版本号递增规则
 
@@ -581,7 +581,7 @@ MAJOR.MINOR.PATCH
 版本号在 [main.cpp](../main.cpp) 中定义：
 
 ```cpp
-a.setApplicationVersion("2.3.0");
+a.setApplicationVersion("2.5.1");
 ```
 
 发布新版本时，应同步更新此处的版本号字符串。
@@ -590,13 +590,14 @@ a.setApplicationVersion("2.3.0");
 
 > **文档维护说明**：本文档应随着项目的发展持续更新。当编码规范、目录结构或构建流程发生变更时，请同步修改本文档。对于源码中暂时未体现但希望在后续项目中采用的规范，建议通过团队讨论后明确加入本文档。
 
-## 九、v2.3.0 发布检查
+## 九、v2.5.1 发布检查
 
 1. 在 Qt 5.12.12 MinGW 64 位环境以 Release 配置构建，保留隔离目录 `build_auto/app/bin/NetworkConfigManager.exe`。
 2. 运行 `tests/configmanager_test.pro`、`tests/networkscan_selfcheck.pro`、`tests/ui_selfcheck.pro` 的可执行检查，设置 `QT_QPA_PLATFORM=offscreen`；在可访问公网环境设置 `NETWORKCONFIGMANAGER_TEST_HTTPS=1` 并用 `NETWORKCONFIGMANAGER_TEST_URL` 分别验证 Cloudflare 和 Hetzner 预设。网络修改类操作在隔离管理员环境单独验收。
 3. 执行 `package.ps1 -QtBin <Qt bin目录> -Iscc <Inno Setup 6 ISCC.exe>`；脚本收集运行库、生成安装包和免安装 ZIP，输出 SHA-256。
 4. 安装版默认放在当前用户目录，并提供卸载；不打包 `bin/config/`、日志或开发机历史。校验安装后可启动、卸载后用户数据处理符合预期。
-5. GitHub 发布使用 `networkconfigmanager-v2.3.0` 标签，上传安装包和 ZIP；代码、文档、测试与打包脚本保持同一提交。
+5. GitHub 发布使用 `networkconfigmanager-v2.5.1` 标签，上传安装包和 ZIP；代码、文档、测试与打包脚本保持同一提交。
 6. 静态 IP 表单留空网关与 DNS 后可通过校验；无 DNS 备份的回滚命令清空 DNS 列表。真实网卡回滚在隔离管理员环境验收。
 7. Windows 平台目视检查默认浅色界面的按钮、输入框、进度条和下拉箭头；`ui_selfcheck` 验证工具区双行布局和最小窗口尺寸。
 8. `networkscan_selfcheck` 验证同网段 CIDR 换算、2048 地址上限和一键扫描本地 TCP 端口；未取得网卡地址时仍可手动输入范围。
+9. `ui_selfcheck` 验证 IP 与子网掩码输入框初始为空、有效静态配置通过校验、无效 IP 被拒绝；网关与 DNS 空值行为不变。

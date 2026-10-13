@@ -1,7 +1,7 @@
 # NetworkConfigManager 设计文档
 
-- **版本号**：v2.3.0
-- **更新日期**：2026-10-09
+- **版本号**：v2.5.1
+- **更新日期**：2026-10-13
 
 ---
 
@@ -324,7 +324,7 @@
 - method 取值校验：必须为 `"dhcp"` 或 `"static"`
 - 静态 IP 模式下：ip 和 subnet 为必填
 - IP 格式校验：正则 `^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$`，每段 0–255 范围检查
-- 子网掩码、网关、DNS 均为可选，但如果提供则必须符合 IP 格式
+- 子网掩码在静态 IP 模式下必填；网关、DNS 可选，但如果提供则必须符合 IP 格式
 
 **配置应用（applyConfig）**：
 1. 权限检查（非管理员直接返回失败）
@@ -516,7 +516,7 @@ main() 入口
   │
   ├─► QApplication 构造
   │   ├─ setApplicationName("NetworkConfigManager")
-  │   ├─ setApplicationVersion("2.3.0")
+  │   ├─ setApplicationVersion("2.5.1")
   │   ├─ setQuitOnLastWindowClosed(false)                   # 关闭最后窗口不退出
   │   └─ qInstallMessageHandler(Qt→Logger)                  # Qt 消息桥接
   │
@@ -847,3 +847,8 @@ pos=@Point(1280 720)
 
 - 主页扫描入口读取所选网卡的实时 IPv4 地址和掩码，换算 CIDR 后调用原有扫描器；批量工具页勾选网卡时使用同一路径。无有效地址或网段超过 2048 个地址时在扫描窗提示，保留手动输入。
 - 默认检测 22、80、443、445、3389、8080 六个 TCP 端口；用户可在扫描窗修改端口列表或范围，结果列仅表示已检测端口中开放的 TCP 端口。
+
+## 12. v2.5.1 静态地址表单
+
+- IP 地址与子网掩码不再使用 Qt 输入掩码，空白时 `text()`、`displayText()` 均为空；用户手动输入点分地址。
+- 网关及 DNS 继续使用输入掩码，未填写的 `...` 仍由 `getCurrentFormConfig()` 转为空字符串。`ConfigManager::validateConfig()` 保持保存和应用前的 IPv4、连续子网掩码校验。

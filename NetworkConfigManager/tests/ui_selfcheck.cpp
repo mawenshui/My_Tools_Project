@@ -32,6 +32,10 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     app.setApplicationName("NetworkConfigManagerSelfcheck");
     MainWindow window;
+    auto *ip = window.findChild<QLineEdit *>("ipEdit");
+    auto *subnet = window.findChild<QLineEdit *>("subnetEdit");
+    if(!ip || !subnet || !ip->text().isEmpty() || !subnet->text().isEmpty() ||
+       !ip->displayText().isEmpty() || !subnet->displayText().isEmpty()) return 33;
     auto *gateway = window.findChild<QLineEdit *>("gatewayEdit");
     auto *primaryDns = window.findChild<QLineEdit *>("primaryDnsEdit");
     auto *secondaryDns = window.findChild<QLineEdit *>("secondaryDnsEdit");
@@ -42,8 +46,8 @@ int main(int argc, char *argv[])
     window.findChild<QRadioButton *>("staticRadio")->click();
     auto *interfaceCombo = window.findChild<QComboBox *>("interfaceCombo");
     if(interfaceCombo->currentText().isEmpty()) interfaceCombo->addItem(QStringLiteral("test-adapter"));
-    window.findChild<QLineEdit *>("ipEdit")->setText(QStringLiteral("192.168.100.200"));
-    window.findChild<QLineEdit *>("subnetEdit")->setText(QStringLiteral("255.255.255.128"));
+    ip->setText(QStringLiteral("192.168.100.200"));
+    subnet->setText(QStringLiteral("255.255.255.128"));
     QVariantMap form;
     if(!QMetaObject::invokeMethod(&window, "getCurrentFormConfig", Q_RETURN_ARG(QVariantMap, form))) return 19;
     if(!form.value("gateway").toString().isEmpty() ||
@@ -62,6 +66,10 @@ int main(int argc, char *argv[])
     if(!labTabs || labTabs->count() != 8)
     { std::cerr << "Lab tabs: " << (labTabs ? labTabs->count() : -1) << '\n'; return 31; }
     if(!profileManager.validateConfig(form)) return 21;
+    ip->setText(QStringLiteral("invalid"));
+    if(!QMetaObject::invokeMethod(&window, "getCurrentFormConfig", Q_RETURN_ARG(QVariantMap, form)) ||
+       profileManager.validateConfig(form)) return 34;
+    ip->setText(QStringLiteral("192.168.100.200"));
     if(window.styleSheet().isEmpty()) return 1;
     if(!window.styleSheet().contains("qlineargradient") ||
        !window.styleSheet().contains("#fbfdff")) return 23;
