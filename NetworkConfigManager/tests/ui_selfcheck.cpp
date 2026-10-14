@@ -16,6 +16,7 @@
 #include <QElapsedTimer>
 #include <QFontMetrics>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QHostAddress>
 #include <QLineEdit>
 #include <QPushButton>
@@ -70,6 +71,32 @@ int main(int argc, char *argv[])
             QApplication::sendEvent(edit, &event);
         }
     };
+    for(const int position : {1, 5, 10, 14})
+    {
+        ip->clear();
+        ip->setCursorPosition(position);
+        if(ip->cursorPosition() != 0) return 43;
+        typeKeys(ip, QStringLiteral("192"));
+        if(ip->text() != QStringLiteral("192...")) return 44;
+    }
+    ip->clear();
+    const QPointF click(70, ip->height() / 2);
+    QMouseEvent press(QEvent::MouseButtonPress, click, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+    QMouseEvent release(QEvent::MouseButtonRelease, click, Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+    QApplication::sendEvent(ip, &press);
+    QApplication::sendEvent(ip, &release);
+    if(ip->cursorPosition() != 0) return 48;
+    typeKeys(ip, QStringLiteral("192"));
+    if(ip->text() != QStringLiteral("192...")) return 49;
+    ip->clear();
+    ip->setCursorPosition(10);
+    ip->insert(QStringLiteral("192.168.4.1"));
+    if(ip->text() != QStringLiteral("192.168.4.1")) return 45;
+    ip->setCursorPosition(1);
+    if(ip->cursorPosition() != 1) return 46;
+    typeKeys(ip, QStringLiteral("0"));
+    if(ip->text() != QStringLiteral("102.168.4.1")) return 47;
+    ip->clear();
     typeKeys(ip, QStringLiteral("256"));
     if(ip->text() != QStringLiteral("25...") || ip->cursorPosition() != 2) return 39;
     typeKeys(ip, QStringLiteral("5"));

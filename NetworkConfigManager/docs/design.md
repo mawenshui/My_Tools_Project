@@ -1,6 +1,6 @@
 # NetworkConfigManager 设计文档
 
-- **版本号**：v2.5.3
+- **版本号**：v2.5.4
 - **更新日期**：2026-10-14
 
 ---
@@ -516,7 +516,7 @@ main() 入口
   │
   ├─► QApplication 构造
   │   ├─ setApplicationName("NetworkConfigManager")
-  │   ├─ setApplicationVersion("2.5.3")
+  │   ├─ setApplicationVersion("2.5.4")
   │   ├─ setQuitOnLastWindowClosed(false)                   # 关闭最后窗口不退出
   │   └─ qInstallMessageHandler(Qt→Logger)                  # Qt 消息桥接
   │
@@ -864,3 +864,8 @@ pos=@Point(1280 720)
 - 纯 IPv4 字段使用 Qt 输入掩码和非空格字符 U+2800 作为视觉留白：四段各留三位宽度，句点固定，空段不包含空格字符。
 - 共用 `Ipv4OctetValidator` 在编辑时拒绝超过 255 的段值。掩码在三位填满后自动越过句点；一两位段可输入句点跳段，回删仍由 Qt 处理。
 - 主界面完整地址实时用 IPv4 解析结果提示有效性；保存及应用继续走 `ConfigManager::validateConfig()`，包括连续子网掩码校验。IPv6、CIDR 和主机名输入不使用该掩码。
+
+## 15. v2.5.4 空字段光标定位
+
+- `configureIpv4Input()` 在字段完全为空时把光标定位到首段，防止鼠标点击占位位后输入的数字被写入第二位或下一段。
+- 字段已有内容时不调整光标位置，保留选中、定位修改及原有逐段校验行为。八个纯 IPv4 字段共用该规则。

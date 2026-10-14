@@ -31,6 +31,9 @@ inline void configureIpv4Input(QLineEdit *edit)
 {
     edit->setInputMask(QStringLiteral("000.000.000.000;") + QChar(0x2800));
     edit->setValidator(new Ipv4OctetValidator(edit));
+    QObject::connect(edit, &QLineEdit::cursorPositionChanged, edit, [edit](int, int position) {
+        if(position != 0 && edit->text() == QStringLiteral("...")) edit->setCursorPosition(0);
+    });
 }
 
 #endif
