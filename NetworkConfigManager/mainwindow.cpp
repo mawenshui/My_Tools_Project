@@ -30,6 +30,8 @@
 #include "networkscandialog.h"
 #include "networkdiagnosticsdialog.h"
 #include "networktrafficmonitor.h"
+#include "ipv4input.h"
+#include <QHostAddress>
 
 /**
  * @brief MainWindow构造函数
@@ -259,7 +261,7 @@ void MainWindow::setupUi()
     for(QLineEdit *edit : {ui->ipEdit, ui->subnetEdit, ui->gatewayEdit,
                            ui->primaryDnsEdit, ui->secondaryDnsEdit})
     {
-        edit->setInputMask(QStringLiteral("000.000.000.000;") + QChar(0x2060));
+        configureIpv4Input(edit);
         edit->setMinimumHeight(28);
     }
     m_statusIndicator = new QLabel(this);
@@ -1604,7 +1606,6 @@ void MainWindow::toggleAutostart(bool enabled)
  */
 void MainWindow::onInputTextChanged()
 {
-    QRegularExpression ipRegex(R"(^(\d{1,3}\.){3}\d{1,3}$)");
     QList<QLineEdit*> ipEdits = {ui->ipEdit, ui->subnetEdit, ui->gatewayEdit, ui->primaryDnsEdit, ui->secondaryDnsEdit};
 
     for(QLineEdit* edit : ipEdits)
@@ -1618,8 +1619,8 @@ void MainWindow::onInputTextChanged()
                 continue;
             }
 
-            QRegularExpressionMatch match = ipRegex.match(text);
-            if(match.hasMatch())
+            QHostAddress address;
+            if(address.setAddress(text) && address.protocol() == QAbstractSocket::IPv4Protocol)
             {
                 // 简单的颜色边框
                 edit->setStyleSheet("QLineEdit { border: 2px solid #168264; }");

@@ -2,6 +2,7 @@
 #include "networkadapterdialog.h"
 #include "networkinterfacemanager.h"
 #include "networkscandialog.h"
+#include "ipv4input.h"
 
 #include <QAbstractSocket>
 #include <QCheckBox>
@@ -213,7 +214,7 @@ NetworkLabDialog::NetworkLabDialog(const QString &adapterName, QWidget *parent)
     subnetRow->addWidget(m_cidr, 1); subnetRow->addWidget(calculate); subnetRow->addWidget(scan);
     subnetLayout->addLayout(subnetRow); subnetLayout->addWidget(m_subnetOutput);
     auto *mtuRow = new QHBoxLayout;
-    m_mtuTarget->setInputMask(QStringLiteral("000.000.000.000;") + QChar(0x2060));
+    configureIpv4Input(m_mtuTarget);
     m_mtuTarget->setToolTip(tr("路径 MTU：IPv4 目标"));
     m_mtuTarget->setObjectName("mtuTarget");
     mtuRow->addWidget(m_mtuTarget, 1); mtuRow->addWidget(m_mtuButton);
@@ -263,7 +264,7 @@ NetworkLabDialog::NetworkLabDialog(const QString &adapterName, QWidget *parent)
     auto *lanPage = new QWidget(tabs);
     auto *lanLayout = new QVBoxLayout(lanPage);
     auto *lanRow = new QHBoxLayout;
-    m_lanHost->setInputMask(QStringLiteral("000.000.000.000;") + QChar(0x2060));
+    configureIpv4Input(m_lanHost);
     m_lanHost->setToolTip(tr("另一台局域网主机 IP"));
     m_lanHost->setObjectName("lanHost");
     m_lanPort->setRange(1024, 65535); m_lanPort->setValue(52011); m_lanPort->setPrefix(tr("端口 "));

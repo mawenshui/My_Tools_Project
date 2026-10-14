@@ -1,7 +1,7 @@
 # NetworkConfigManager 设计文档
 
-- **版本号**：v2.5.2
-- **更新日期**：2026-10-13
+- **版本号**：v2.5.3
+- **更新日期**：2026-10-14
 
 ---
 
@@ -516,7 +516,7 @@ main() 入口
   │
   ├─► QApplication 构造
   │   ├─ setApplicationName("NetworkConfigManager")
-  │   ├─ setApplicationVersion("2.5.2")
+  │   ├─ setApplicationVersion("2.5.3")
   │   ├─ setQuitOnLastWindowClosed(false)                   # 关闭最后窗口不退出
   │   └─ qInstallMessageHandler(Qt→Logger)                  # Qt 消息桥接
   │
@@ -858,3 +858,9 @@ pos=@Point(1280 720)
 - 主界面 IP、掩码、网关、首选及备用 DNS 共用 `000.000.000.000` 掩码，空位填充符改为零宽字符 U+2060；初始视觉仅显示三个句点，没有预设空格。
 - 附加 IPv4 地址、路径 MTU 目标及局域网主机 IP 同样显示句点分隔。接受 CIDR、IPv6、主机名的多用途输入框继续自由输入。
 - `getCurrentFormConfig()` 将五个字段未填写的 `...` 统一转为空字符串；非空地址继续经原有校验路径处理。
+
+## 14. v2.5.3 IPv4 分段输入
+
+- 纯 IPv4 字段使用 Qt 输入掩码和非空格字符 U+2800 作为视觉留白：四段各留三位宽度，句点固定，空段不包含空格字符。
+- 共用 `Ipv4OctetValidator` 在编辑时拒绝超过 255 的段值。掩码在三位填满后自动越过句点；一两位段可输入句点跳段，回删仍由 Qt 处理。
+- 主界面完整地址实时用 IPv4 解析结果提示有效性；保存及应用继续走 `ConfigManager::validateConfig()`，包括连续子网掩码校验。IPv6、CIDR 和主机名输入不使用该掩码。

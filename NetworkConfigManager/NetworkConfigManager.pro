@@ -41,6 +41,7 @@ SOURCES += \
 
 HEADERS += \
     configmanager.h \
+    ipv4input.h \
     floatwindow.h \
     logger.h \
     mainwindow.h \

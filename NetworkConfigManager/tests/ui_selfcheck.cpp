@@ -15,6 +15,7 @@
 #include <iostream>
 #include <QElapsedTimer>
 #include <QFontMetrics>
+#include <QKeyEvent>
 #include <QHostAddress>
 #include <QLineEdit>
 #include <QPushButton>
@@ -39,15 +40,18 @@ int main(int argc, char *argv[])
     auto *primaryDns = window.findChild<QLineEdit *>("primaryDnsEdit");
     auto *secondaryDns = window.findChild<QLineEdit *>("secondaryDnsEdit");
     if(!ip || !subnet || !gateway || !primaryDns || !secondaryDns) return 17;
-    const auto dotsOnly = [](QLineEdit *edit) {
-        return edit && edit->text() == QStringLiteral("...") &&
-            QString(edit->displayText()).remove(QChar(0x2060)) == QStringLiteral("...") &&
-            !edit->displayText().contains(' ') &&
-            QFontMetrics(edit->font()).horizontalAdvance(edit->displayText()) ==
+    const auto spacedOctets = [](QLineEdit *edit) {
+        if(!edit) return false;
+        for(const QChar character : edit->displayText())
+            if(character.isSpace()) return false;
+        return edit->text() == QStringLiteral("...") &&
+            QString(edit->displayText()).remove(QChar(0x2800)) == QStringLiteral("...") &&
+            edit->displayText().count(QChar(0x2800)) == 12 &&
+            QFontMetrics(edit->font()).horizontalAdvance(edit->displayText()) >
                 QFontMetrics(edit->font()).horizontalAdvance(QStringLiteral("..."));
     };
     for(QLineEdit *edit : {ip, subnet, gateway, primaryDns, secondaryDns})
-        if(!dotsOnly(edit)) return 18;
+        if(!spacedOctets(edit)) return 18;
     window.findChild<QRadioButton *>("staticRadio")->click();
     auto *interfaceCombo = window.findChild<QComboBox *>("interfaceCombo");
     if(interfaceCombo->currentText().isEmpty()) interfaceCombo->addItem(QStringLiteral("test-adapter"));
@@ -57,6 +61,26 @@ int main(int argc, char *argv[])
        !form.value("gateway").toString().isEmpty() ||
        !form.value("primary_dns").toString().isEmpty() ||
        !form.value("secondary_dns").toString().isEmpty()) return 33;
+    const auto typeKeys = [](QLineEdit *edit, const QString &keys) {
+        edit->setFocus();
+        for(const QChar key : keys)
+        {
+            QKeyEvent event(QEvent::KeyPress, key == '.' ? Qt::Key_Period : Qt::Key_0 + key.digitValue(),
+                            Qt::NoModifier, QString(key));
+            QApplication::sendEvent(edit, &event);
+        }
+    };
+    typeKeys(ip, QStringLiteral("256"));
+    if(ip->text() != QStringLiteral("25...") || ip->cursorPosition() != 2) return 39;
+    typeKeys(ip, QStringLiteral("5"));
+    if(ip->text() != QStringLiteral("255...") || ip->cursorPosition() != 4) return 40;
+    QKeyEvent backspace(QEvent::KeyPress, Qt::Key_Backspace, Qt::NoModifier);
+    QApplication::sendEvent(ip, &backspace);
+    if(ip->text() != QStringLiteral("25...") || ip->cursorPosition() != 2) return 42;
+    ip->clear();
+    typeKeys(ip, QStringLiteral("1921684.1"));
+    if(ip->text() != QStringLiteral("192.168.4.1") || !ip->hasAcceptableInput()) return 41;
+    ip->clear();
     ip->setText(QStringLiteral("192.168.4.1"));
     subnet->setText(QStringLiteral("255.255.255.0"));
     if(ip->text() != QStringLiteral("192.168.4.1") ||
@@ -83,7 +107,7 @@ int main(int argc, char *argv[])
     QTimer::singleShot(0, [&]() {
         auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
         if(!dialog) return;
-        addIpv4MaskOk = dotsOnly(dialog->findChild<QLineEdit *>("newIpAddress"));
+        addIpv4MaskOk = spacedOctets(dialog->findChild<QLineEdit *>("newIpAddress"));
         dialog->reject();
     });
     addIpv4->click();
@@ -93,8 +117,8 @@ int main(int argc, char *argv[])
        scanRange != QStringLiteral("192.0.2.4/31") ||
        !NetworkLabDialog::subnetSummary("2001:db8::1/128").contains(QStringLiteral("地址数量 1"))) return 30;
     NetworkLabDialog lab(QString{});
-    if(!dotsOnly(lab.findChild<QLineEdit *>("mtuTarget")) ||
-       !dotsOnly(lab.findChild<QLineEdit *>("lanHost"))) return 38;
+    if(!spacedOctets(lab.findChild<QLineEdit *>("mtuTarget")) ||
+       !spacedOctets(lab.findChild<QLineEdit *>("lanHost"))) return 38;
     auto *labTabs = lab.findChild<QTabWidget *>();
     if(!labTabs || labTabs->count() != 8)
     { std::cerr << "Lab tabs: " << (labTabs ? labTabs->count() : -1) << '\n'; return 31; }

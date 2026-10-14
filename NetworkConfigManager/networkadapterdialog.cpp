@@ -1,6 +1,7 @@
 #include "networkadapterdialog.h"
 #include "configmanager.h"
 #include "networkinterfacemanager.h"
+#include "ipv4input.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -507,7 +508,7 @@ void NetworkAdapterDialog::addAddress(bool ipv6)
     auto *layout = new QFormLayout(&dialog);
     auto *address = new QLineEdit(&dialog);
     address->setObjectName("newIpAddress");
-    if(!ipv6) address->setInputMask(QStringLiteral("000.000.000.000;") + QChar(0x2060));
+    if(!ipv6) configureIpv4Input(address);
     auto *prefix = new QSpinBox(&dialog);
     prefix->setRange(1, ipv6 ? 128 : 32);
     prefix->setValue(ipv6 ? 64 : 24);

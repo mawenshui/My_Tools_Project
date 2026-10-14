@@ -1,6 +1,6 @@
 # NetworkConfigManager
 
-> Windows 桌面网络配置管理工具 | v2.5.2 | 2026-10-13
+> Windows 桌面网络配置管理工具 | v2.5.3 | 2026-10-14
 
 ## 项目简介
 
@@ -10,7 +10,7 @@ NetworkConfigManager 是一个 Windows 桌面应用程序，用于便捷管理�
 
 - **网络配置管理**：新增、修改、删除、应用多套 IP 配置（静态 IP / DHCP）；静态 IP 只要求 IP 地址和子网掩码，网关及 DNS 可留空
 
-- **IPv4 地址输入**：纯 IPv4 输入框默认只显示三个句点分隔符，无空格占位；保存和应用前仍校验 IPv4 地址及掩码
+- **IPv4 地址输入**：纯 IPv4 输入框预留四段输入宽度及三个句点，无空格字符；每段输入到三位自动跳段，超出 255 即时拒绝，保存和应用前仍校验地址及掩码
 - **网卡管理**：查看网卡状态，启用/禁用网络接口
 - **网卡、地址与路由**：查看双栈地址、网卡详情、路由、DNS、MTU 与 Wi-Fi；添加附加 IPv4、静态 IPv6 和静态路由，操作前保存本地快照，支持恢复最近修改
 - **快捷切换**：系统托盘右键菜单、桌面悬浮球，无需打开主窗口即可切换配置
@@ -92,9 +92,9 @@ mingw32-make release
 Pop-Location
 ```
 
-`tests/networkscan_selfcheck.pro` 验证网段/端口解析、同网段自动换算、扫描进度及本地 TCP 端口状态；`tests/ui_selfcheck.pro` 验证纯 IPv4 输入框初始仅显示句点、空值和短地址读回、无效地址被配置校验拒绝、浅色主题、主页布局与入口、子网边界、测速预设、本地 HTTP 下载测速和 HEAD 诊断。两个自检程序使用 `QT_QPA_PLATFORM=offscreen` 运行；设置 `NETWORKCONFIGMANAGER_SCREENSHOT=<绝对路径>` 并使用 `QT_QPA_PLATFORM=windows` 可保存主页面截图。设置 `NETWORKCONFIGMANAGER_TEST_HTTPS=1` 可额外测试公网 HTTPS 数据传输，`NETWORKCONFIGMANAGER_TEST_URL` 可指定测试地址。自动化验证不修改真实网卡；IP/DNS 应用、网卡启停和备份恢复需要在隔离的管理员测试机验收。
+`tests/networkscan_selfcheck.pro` 验证网段/端口解析、同网段自动换算、扫描进度及本地 TCP 端口状态；`tests/ui_selfcheck.pro` 验证纯 IPv4 输入框的无空格分段、0–255 输入校验、自动跳段、回删、空值和短地址读回，以及浅色主题、主页布局与入口、子网边界、测速预设、本地 HTTP 下载测速和 HEAD 诊断。两个自检程序使用 `QT_QPA_PLATFORM=offscreen` 运行；设置 `NETWORKCONFIGMANAGER_SCREENSHOT=<绝对路径>` 并使用 `QT_QPA_PLATFORM=windows` 可保存主页面截图。设置 `NETWORKCONFIGMANAGER_TEST_HTTPS=1` 可额外测试公网 HTTPS 数据传输，`NETWORKCONFIGMANAGER_TEST_URL` 可指定测试地址。自动化验证不修改真实网卡；IP/DNS 应用、网卡启停和备份恢复需要在隔离的管理员测试机验收。
 
-发布时先将已验证的 Release 可执行文件构建到 `build_auto/app/bin/`，再执行 `package.ps1 -QtBin <Qt的bin目录> -Iscc <ISCC.exe路径>`。脚本调用 `windeployqt`，生成 `releases/NetworkConfigManager-Setup-2.5.2-win64.exe` 与免安装 ZIP，并输出 SHA-256。安装版支持开始菜单、可选桌面快捷方式和卸载。
+发布时先将已验证的 Release 可执行文件构建到 `build_auto/app/bin/`，再执行 `package.ps1 -QtBin <Qt的bin目录> -Iscc <ISCC.exe路径>`。脚本调用 `windeployqt`，生成 `releases/NetworkConfigManager-Setup-2.5.3-win64.exe` 与免安装 ZIP，并输出 SHA-256。安装版支持开始菜单、可选桌面快捷方式和卸载。
 
 ## 项目结构
 
