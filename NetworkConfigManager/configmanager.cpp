@@ -833,7 +833,7 @@ bool ConfigManager::applyConfig(const QVariantMap &config, bool createBackup)
         }
     }
 
-    const QString nameArg = QString("name=\"%1\"").arg(interfaceName);
+    const QString nameArg = QString("name=%1").arg(interfaceName);
     const QString method = target.value("method").toString();
     QString error;
     bool success = false;

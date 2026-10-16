@@ -2043,21 +2043,13 @@ void MainWindow::onEnableInterface(const QString &interfaceName)
 
     showLoading(tr("正在启用网卡 %1...").arg(interface));
 
-    QThread* thread = new QThread();
-    QObject* worker = new QObject();
-    worker->moveToThread(thread);
-
-    connect(thread, &QThread::started, this, [this, interface, worker]() {
+    QThread* thread = QThread::create([this, interface]() {
         NetworkInterfaceManager mgr;
         bool result = mgr.enableInterface(interface);
-        QString status = mgr.getInterfaceAdminStatus(interface);
-
         QString message = result ? tr("网卡 %1 已启用").arg(interface) : tr("启用网卡 %1 失败").arg(interface);
         QMetaObject::invokeMethod(this, "onEnableCompleted", Qt::QueuedConnection,
             Q_ARG(bool, result), Q_ARG(QString, interface), Q_ARG(QString, message));
     });
-
-    connect(thread, &QThread::finished, worker, &QObject::deleteLater);
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
 }
@@ -2099,21 +2091,13 @@ void MainWindow::onDisableInterface(const QString &interfaceName)
 
     showLoading(tr("正在禁用网卡 %1...").arg(interface));
 
-    QThread* thread = new QThread();
-    QObject* worker = new QObject();
-    worker->moveToThread(thread);
-
-    connect(thread, &QThread::started, this, [this, interface, worker]() {
+    QThread* thread = QThread::create([this, interface]() {
         NetworkInterfaceManager mgr;
         bool result = mgr.disableInterface(interface);
-        QString status = mgr.getInterfaceAdminStatus(interface);
-
         QString message = result ? tr("网卡 %1 已禁用").arg(interface) : tr("禁用网卡 %1 失败").arg(interface);
         QMetaObject::invokeMethod(this, "onDisableCompleted", Qt::QueuedConnection,
             Q_ARG(bool, result), Q_ARG(QString, interface), Q_ARG(QString, message));
     });
-
-    connect(thread, &QThread::finished, worker, &QObject::deleteLater);
     connect(thread, &QThread::finished, thread, &QThread::deleteLater);
     thread->start();
 }

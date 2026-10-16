@@ -734,7 +734,7 @@ void NetworkLabDialog::runHttp()
                                    : static_cast<QAbstractSocket *>(new QTcpSocket(this));
         QAbstractSocket *socket = m_httpSocket;
         const QByteArray request = "HEAD " + m_httpPath.toUtf8() + " HTTP/1.1\r\nHost: " +
-            m_httpHost.toUtf8() + "\r\nUser-Agent: NetworkConfigManager/2.5.0\r\nConnection: close\r\n\r\n";
+            m_httpHost.toUtf8() + "\r\nUser-Agent: NetworkConfigManager/2.5.5\r\nConnection: close\r\n\r\n";
         connect(socket, &QAbstractSocket::connected, this, [this, socket, request]() {
             if(socket != m_httpSocket) return;
             m_httpConnectMs = m_httpClock.elapsed() - m_httpDnsMs;

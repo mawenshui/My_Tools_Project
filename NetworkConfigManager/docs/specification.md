@@ -1,7 +1,7 @@
 # NetworkConfigManager 项目规范文档
 
-> **版本**：2.5.4
-> **更新日期**：2026-10-14
+> **版本**：2.5.5
+> **更新日期**：2026-10-16
 > **状态**：现行规范
 
 ---
@@ -566,7 +566,7 @@ fix(ui): 修复悬浮窗在多显示器环境下的位置异常
 MAJOR.MINOR.PATCH
 ```
 
-**当前版本**：**2.5.4**
+**当前版本**：**2.5.5**
 
 ### 8.2 版本号递增规则
 
@@ -581,7 +581,7 @@ MAJOR.MINOR.PATCH
 版本号在 [main.cpp](../main.cpp) 中定义：
 
 ```cpp
-a.setApplicationVersion("2.5.4");
+a.setApplicationVersion("2.5.5");
 ```
 
 发布新版本时，应同步更新此处的版本号字符串。
@@ -619,3 +619,9 @@ a.setApplicationVersion("2.5.4");
 1. `ui_selfcheck` 验证空字段在不同光标位置及鼠标点击后均从首段输入 `192`；完整地址插入、已有地址中间编辑和原有逐段校验继续通过。
 2. 配置、扫描与界面自检通过；实际网卡操作仍在隔离管理员环境验收。
 3. 发布 `networkconfigmanager-v2.5.4`，同步源码、文档、测试、安装包和免安装 ZIP。
+
+## 十三、v2.5.5 发布检查
+
+1. 只读检查确认禁用后的网卡仍出现在 `netsh interface show interface` 的管理列表；启停操作按该列表校验，不依赖可能缺少禁用网卡的 IPv4 地址枚举。
+2. `configmanager_test`、`networkscan_selfcheck` 和 `ui_selfcheck` 通过；真实网卡启停与恢复仍需在隔离管理员环境验收，自动测试不改变用户网络。
+3. 核对安装包和免安装 ZIP 的版本、SHA-256 与可执行文件；发布 `networkconfigmanager-v2.5.5` 并同步源码、文档及两份产物。

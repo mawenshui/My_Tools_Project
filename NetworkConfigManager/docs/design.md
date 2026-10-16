@@ -1,7 +1,7 @@
 # NetworkConfigManager 设计文档
 
-- **版本号**：v2.5.4
-- **更新日期**：2026-10-14
+- **版本号**：v2.5.5
+- **更新日期**：2026-10-16
 
 ---
 
@@ -516,7 +516,7 @@ main() 入口
   │
   ├─► QApplication 构造
   │   ├─ setApplicationName("NetworkConfigManager")
-  │   ├─ setApplicationVersion("2.5.4")
+  │   ├─ setApplicationVersion("2.5.5")
   │   ├─ setQuitOnLastWindowClosed(false)                   # 关闭最后窗口不退出
   │   └─ qInstallMessageHandler(Qt→Logger)                  # Qt 消息桥接
   │
@@ -869,3 +869,9 @@ pos=@Point(1280 720)
 
 - `configureIpv4Input()` 在字段完全为空时把光标定位到首段，防止鼠标点击占位位后输入的数字被写入第二位或下一段。
 - 字段已有内容时不调整光标位置，保留选中、定位修改及原有逐段校验行为。八个纯 IPv4 字段共用该规则。
+
+## 16. v2.5.5 网卡启停调用链
+
+- 主界面通过 `getAllInterfaceDetails()` 读取 `netsh interface show interface` 的管理状态，禁用网卡仍能出现在下拉列表和启用入口。`enableInterface()` 与 `disableInterface()` 使用同一来源校验名称，避免 IPv4 地址枚举漏掉禁用网卡。
+- `QProcess` 参数列表中的网卡名使用 `name=<友好名>`，空格由 Qt 处理；配置应用与状态读取遵循同一规则。空名、控制字符及引号仍被拒绝。
+- 每次启停操作使用 `QThread::create` 执行命令，完成信号排入 UI 线程后刷新列表，线程自行结束并释放；配置应用对禁用网卡仍明确拒绝，防止无法读取完整备份时修改地址。

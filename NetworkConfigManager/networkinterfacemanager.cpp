@@ -140,11 +140,12 @@ QStringList NetworkInterfaceManager::getNetworkInterfaces()
 
 bool NetworkInterfaceManager::enableInterface(const QString &interfaceName)
 {
-    if(interfaceName.contains(QRegularExpression(QStringLiteral("[\\x00-\\x1f\\x7f\"']"))) ||
-       !adapterNamesById().values().contains(interfaceName)) return false;
+    if(interfaceName.isEmpty() ||
+       interfaceName.contains(QRegularExpression(QStringLiteral("[\\x00-\\x1f\\x7f\"']"))) ||
+       !getNetworkInterfaces().contains(interfaceName)) return false;
     QProcess process;
     process.start("netsh", {"interface", "set", "interface",
-                            QString("name=\"%1\"").arg(interfaceName), "admin=enabled"});
+                            QString("name=%1").arg(interfaceName), "admin=enabled"});
     const bool finished = process.waitForStarted(3000) && process.waitForFinished(8000);
     if(!finished && process.state() != QProcess::NotRunning) { process.kill(); process.waitForFinished(3000); }
     return finished && process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
@@ -152,11 +153,12 @@ bool NetworkInterfaceManager::enableInterface(const QString &interfaceName)
 
 bool NetworkInterfaceManager::disableInterface(const QString &interfaceName)
 {
-    if(interfaceName.contains(QRegularExpression(QStringLiteral("[\\x00-\\x1f\\x7f\"']"))) ||
-       !adapterNamesById().values().contains(interfaceName)) return false;
+    if(interfaceName.isEmpty() ||
+       interfaceName.contains(QRegularExpression(QStringLiteral("[\\x00-\\x1f\\x7f\"']"))) ||
+       !getNetworkInterfaces().contains(interfaceName)) return false;
     QProcess process;
     process.start("netsh", {"interface", "set", "interface",
-                            QString("name=\"%1\"").arg(interfaceName), "admin=disabled"});
+                            QString("name=%1").arg(interfaceName), "admin=disabled"});
     const bool finished = process.waitForStarted(3000) && process.waitForFinished(8000);
     if(!finished && process.state() != QProcess::NotRunning) { process.kill(); process.waitForFinished(3000); }
     return finished && process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
